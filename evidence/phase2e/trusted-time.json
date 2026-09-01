@@ -1,0 +1,22 @@
+{
+  "source": "https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest",
+  "http_status": 200,
+  "raw_date_header": "Tue, 01 Sep 2026 07:54:24 GMT",
+  "parsed_timestamp_seconds": 1788249264,
+  "created_at": 1788249264,
+  "ttl_seconds": 300,
+  "calculated_expires_at": 1788249564,
+  "calculation": "parsed_timestamp_seconds + ttl_seconds",
+  "responses_during_operator_preparation": [
+    {
+      "index": 0,
+      "http_status": 200,
+      "raw_date_header": "Tue, 01 Sep 2026 07:54:13 GMT"
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "raw_date_header": "Tue, 01 Sep 2026 07:54:24 GMT"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "request": {
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449"
+  },
+  "request_fields": [
+    "incident_id"
+  ],
+  "target_fields_in_request": false,
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass",
+  "version": "1.0.0",
+  "function": "execute-incident",
+  "result": {
+    "authority": {
+      "action": "revoke_github_deploy_key",
+      "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "created_at": 1788249264,
+      "expires_at": 1788249564,
+      "max_uses": 1,
+      "status": "CONSUMED",
+      "uses": 1
+    },
+    "before": {
+      "exists": true,
+      "http_status": 200
+    },
+    "destructive_call": {
+      "attempted": true,
+      "count": 1,
+      "http_status": 204,
+      "method": "DELETE"
+    },
+    "egress": {
+      "exact": true,
+      "host": "https://api.github.com"
+    },
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+    "note": "authoritative GET proved the key absent after the attempted DELETE",
+    "replay_guard": {
+      "destructive_call_count": 1,
+      "replay_refused": false
+    },
+    "state": {
+      "after": "CONSUMED",
+      "before": "EXECUTING"
+    },
+    "status": "CONSUMED",
+    "target": {
+      "deploy_key_id": 161921323,
+      "host": "https://api.github.com",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox"
+    },
+    "verification": {
+      "absent": true,
+      "attempted": true,
+      "authoritative": true,
+      "http_status": 404
+    }
+  },
+  "target_endpoint_from_authority": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys/161921323",
+  "credential_flags": {
+    "github_credential_in_process": false,
+    "operator_credential_in_process": false
+  }
+}

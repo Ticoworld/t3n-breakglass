@@ -1,0 +1,68 @@
+{
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "request": {
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449"
+  },
+  "result": {
+    "authority": {
+      "action": "revoke_github_deploy_key",
+      "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "created_at": 1788249264,
+      "expires_at": 1788249564,
+      "max_uses": 1,
+      "status": "CONSUMED",
+      "uses": 1
+    },
+    "before": {
+      "exists": false,
+      "http_status": null
+    },
+    "destructive_call": {
+      "attempted": false,
+      "count": 0,
+      "http_status": null,
+      "method": "NONE"
+    },
+    "egress": {
+      "exact": true,
+      "host": "https://api.github.com"
+    },
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+    "note": "incident is already consumed; no GitHub request was issued",
+    "replay_guard": {
+      "destructive_call_count": 0,
+      "replay_refused": true
+    },
+    "state": {
+      "after": "CONSUMED",
+      "before": "CONSUMED"
+    },
+    "status": "REPLAY_REFUSED",
+    "target": {
+      "deploy_key_id": 161921323,
+      "host": "https://api.github.com",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox"
+    },
+    "verification": {
+      "absent": false,
+      "attempted": false,
+      "authoritative": false,
+      "http_status": null
+    }
+  },
+  "authority_after_replay": {
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161921323,
+    "created_at": 1788249264,
+    "expires_at": 1788249564,
+    "max_uses": 1,
+    "uses": 1,
+    "status": "CONSUMED"
+  },
+  "delete_attempted": false
+}

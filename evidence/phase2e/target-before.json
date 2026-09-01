@@ -1,0 +1,19 @@
+{
+  "host": "https://api.github.com",
+  "repository": "Ticoworld/t3n-breakglass-sandbox",
+  "repository_get_http_status": 200,
+  "exact_deploy_key_endpoint": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys/161921323",
+  "exact_deploy_key_get_http_status": 200,
+  "deploy_key_list_endpoint": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys",
+  "deploy_key_list_http_status": 200,
+  "target_deploy_key_id": 161921323,
+  "target_present": true,
+  "list_count": 1,
+  "read_only": true,
+  "title": "breakglass-phase2-disposable",
+  "new_target_post_count": 1,
+  "new_target_post_http_statuses": [
+    201
+  ],
+  "private_key_recorded": false
+}

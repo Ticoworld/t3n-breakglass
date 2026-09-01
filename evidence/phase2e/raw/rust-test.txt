@@ -1,0 +1,18 @@
+
+running 11 tests
+test authority::tests::consumed_authority_is_replay_refused ... ok
+test authority::tests::ambiguous_outcome_requires_reconciliation_without_consuming ... ok
+test authority::tests::expired_authority_is_persisted_expired ... ok
+test authority::tests::max_use_is_enforced ... ok
+test authority::tests::reconciliation_can_consume_only_after_absence_is_proven ... ok
+test authority::tests::nonexistent_incident_is_not_executable ... ok
+test authority::tests::invalid_state_transition_is_rejected ... ok
+test authority::tests::target_is_loaded_from_record_and_caller_has_no_target_fields ... ok
+test tests::contract_version_is_phase1_semver ... ok
+test authority::tests::wrong_agent_is_denied_before_execution ... ok
+test authority::tests::valid_active_authority_enters_executing ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.70s
+     Running unittests src\lib.rs (contract\target\debug\deps\breakglass_contract-546246e5797dfdcf.exe)

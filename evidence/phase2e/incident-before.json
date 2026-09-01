@@ -1,0 +1,17 @@
+{
+  "map_private": true,
+  "authority": {
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161921323,
+    "created_at": 1788249264,
+    "expires_at": 1788249564,
+    "max_uses": 1,
+    "uses": 0,
+    "status": "ACTIVE"
+  },
+  "operator_confirmation": true
+}

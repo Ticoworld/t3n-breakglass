@@ -1,0 +1,10 @@
+{
+  "classification": "INDEPENDENT GITHUB VERIFICATION",
+  "host": "https://api.github.com",
+  "repository": "Ticoworld/t3n-breakglass-sandbox",
+  "exact_deploy_key_get_http_status": 404,
+  "deploy_key_list_http_status": 200,
+  "target_deploy_key_id": 161921323,
+  "target_absent": true,
+  "list_count": 0
+}

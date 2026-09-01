@@ -1,0 +1,271 @@
+{
+  "environment": {
+    "environment": "testnet",
+    "node": "v22.14.0",
+    "sdk": "@terminal3/t3n-sdk 5.2.0",
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)",
+    "rustup_active_toolchain": "stable-x86_64-pc-windows-msvc (default)",
+    "contract_version": "1.0.0",
+    "contract_function": "execute-incident",
+    "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io"
+  },
+  "target_before": {
+    "host": "https://api.github.com",
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "repository_get_http_status": 200,
+    "exact_deploy_key_endpoint": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys/161921323",
+    "exact_deploy_key_get_http_status": 200,
+    "deploy_key_list_endpoint": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys",
+    "deploy_key_list_http_status": 200,
+    "target_deploy_key_id": 161921323,
+    "target_present": true,
+    "list_count": 1,
+    "read_only": true,
+    "title": "breakglass-phase2-disposable",
+    "new_target_post_count": 1,
+    "new_target_post_http_statuses": [
+      201
+    ],
+    "private_key_recorded": false
+  },
+  "trusted_time": {
+    "source": "https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest",
+    "http_status": 200,
+    "raw_date_header": "Tue, 01 Sep 2026 07:54:24 GMT",
+    "parsed_timestamp_seconds": 1788249264,
+    "created_at": 1788249264,
+    "ttl_seconds": 300,
+    "calculated_expires_at": 1788249564,
+    "calculation": "parsed_timestamp_seconds + ttl_seconds",
+    "responses_during_operator_preparation": [
+      {
+        "index": 0,
+        "http_status": 200,
+        "raw_date_header": "Tue, 01 Sep 2026 07:54:13 GMT"
+      },
+      {
+        "index": 1,
+        "http_status": 200,
+        "raw_date_header": "Tue, 01 Sep 2026 07:54:24 GMT"
+      }
+    ]
+  },
+  "incident_before": {
+    "map_private": true,
+    "authority": {
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+      "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "action": "revoke_github_deploy_key",
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "deploy_key_id": 161921323,
+      "created_at": 1788249264,
+      "expires_at": 1788249564,
+      "max_uses": 1,
+      "uses": 0,
+      "status": "ACTIVE"
+    },
+    "operator_confirmation": true
+  },
+  "agent_request": {
+    "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+    "fields": [
+      "incident_id"
+    ],
+    "target_fields_supplied": false
+  },
+  "t3n_execution": {
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "request": {
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449"
+    },
+    "request_fields": [
+      "incident_id"
+    ],
+    "target_fields_in_request": false,
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass",
+    "version": "1.0.0",
+    "function": "execute-incident",
+    "result": {
+      "authority": {
+        "action": "revoke_github_deploy_key",
+        "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "created_at": 1788249264,
+        "expires_at": 1788249564,
+        "max_uses": 1,
+        "status": "CONSUMED",
+        "uses": 1
+      },
+      "before": {
+        "exists": true,
+        "http_status": 200
+      },
+      "destructive_call": {
+        "attempted": true,
+        "count": 1,
+        "http_status": 204,
+        "method": "DELETE"
+      },
+      "egress": {
+        "exact": true,
+        "host": "https://api.github.com"
+      },
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+      "note": "authoritative GET proved the key absent after the attempted DELETE",
+      "replay_guard": {
+        "destructive_call_count": 1,
+        "replay_refused": false
+      },
+      "state": {
+        "after": "CONSUMED",
+        "before": "EXECUTING"
+      },
+      "status": "CONSUMED",
+      "target": {
+        "deploy_key_id": 161921323,
+        "host": "https://api.github.com",
+        "owner": "Ticoworld",
+        "repository": "t3n-breakglass-sandbox"
+      },
+      "verification": {
+        "absent": true,
+        "attempted": true,
+        "authoritative": true,
+        "http_status": 404
+      }
+    },
+    "target_endpoint_from_authority": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys/161921323",
+    "credential_flags": {
+      "github_credential_in_process": false,
+      "operator_credential_in_process": false
+    }
+  },
+  "github_independent_after": {
+    "classification": "INDEPENDENT GITHUB VERIFICATION",
+    "host": "https://api.github.com",
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "exact_deploy_key_endpoint": "https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox/keys/161921323",
+    "exact_deploy_key_get_http_status": 404,
+    "deploy_key_list_http_status": 200,
+    "target_deploy_key_id": 161921323,
+    "target_absent": true,
+    "list_count": 0
+  },
+  "incident_after": {
+    "map_private": true,
+    "authority": {
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+      "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "action": "revoke_github_deploy_key",
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "deploy_key_id": 161921323,
+      "created_at": 1788249264,
+      "expires_at": 1788249564,
+      "max_uses": 1,
+      "uses": 1,
+      "status": "CONSUMED"
+    }
+  },
+  "replay": {
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "request": {
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449"
+    },
+    "result": {
+      "authority": {
+        "action": "revoke_github_deploy_key",
+        "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "created_at": 1788249264,
+        "expires_at": 1788249564,
+        "max_uses": 1,
+        "status": "CONSUMED",
+        "uses": 1
+      },
+      "before": {
+        "exists": false,
+        "http_status": null
+      },
+      "destructive_call": {
+        "attempted": false,
+        "count": 0,
+        "http_status": null,
+        "method": "NONE"
+      },
+      "egress": {
+        "exact": true,
+        "host": "https://api.github.com"
+      },
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+      "note": "incident is already consumed; no GitHub request was issued",
+      "replay_guard": {
+        "destructive_call_count": 0,
+        "replay_refused": true
+      },
+      "state": {
+        "after": "CONSUMED",
+        "before": "CONSUMED"
+      },
+      "status": "REPLAY_REFUSED",
+      "target": {
+        "deploy_key_id": 161921323,
+        "host": "https://api.github.com",
+        "owner": "Ticoworld",
+        "repository": "t3n-breakglass-sandbox"
+      },
+      "verification": {
+        "absent": false,
+        "attempted": false,
+        "authoritative": false,
+        "http_status": null
+      }
+    },
+    "authority_after_replay": {
+      "incident_id": "INC-PHASE2E-LIVE-1788249253449",
+      "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "action": "revoke_github_deploy_key",
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "deploy_key_id": 161921323,
+      "created_at": 1788249264,
+      "expires_at": 1788249564,
+      "max_uses": 1,
+      "uses": 1,
+      "status": "CONSUMED"
+    },
+    "delete_attempted": false
+  },
+  "github_after_replay": {
+    "classification": "INDEPENDENT GITHUB VERIFICATION",
+    "host": "https://api.github.com",
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "exact_deploy_key_get_http_status": 404,
+    "deploy_key_list_http_status": 200,
+    "target_deploy_key_id": 161921323,
+    "target_absent": true,
+    "list_count": 0
+  },
+  "classification": {
+    "contract_reported": [
+      "t3n_execution.result.before",
+      "t3n_execution.result.destructive_call",
+      "t3n_execution.result.verification",
+      "t3n_execution.result.authority",
+      "replay.result"
+    ],
+    "independently_verified": [
+      "target_before GitHub statuses",
+      "github_independent_after",
+      "incident_after private map read",
+      "github_after_replay"
+    ],
+    "inferred": [
+      "ACTIVE → EXECUTING is represented by authority ACTIVE plus result state.before EXECUTING; no separate externally observable transition event was invented",
+      "target endpoint string is a sanitized projection of the private authority target"
+    ],
+    "delete_204": "T3N-CONTRACT-REPORTED EXTERNAL HTTP RESULT"
+  },
+  "secrets_printed": false,
+  "original_phase2_evidence_overwritten": false
+}
