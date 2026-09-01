@@ -1,0 +1,50 @@
+{
+  "question": "Can two genuinely simultaneous invocations cause two destructive calls?",
+  "environment": "Terminal 3 testnet + GitHub private sandbox Ticoworld/t3n-breakglass-sandbox",
+  "incident_id": "INC-C0-RACE-1788258001834",
+  "target": {
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161935325,
+    "read_only": true
+  },
+  "started_at_unix_ms": 1788258027129,
+  "results": [
+    {
+      "label": "a",
+      "exit_code": 0,
+      "stdout": "{\n  \"incident_id\": \"INC-C0-RACE-1788258001834\",\n  \"outcome\": \"CONSUMED\",\n  \"previous_status\": \"EXECUTING\",\n  \"current_status\": \"CONSUMED\",\n  \"target\": {\n    \"host\": \"https://api.github.com\",\n    \"owner\": \"Ticoworld\",\n    \"repository\": \"t3n-breakglass-sandbox\",\n    \"deploy_key_id\": 161935325\n  },\n  \"verification\": {\n    \"attempted\": true,\n    \"authoritative\": true,\n    \"http_status\": 404,\n    \"absent\": true\n  },\n  \"destructive_call_count\": 1,\n  \"destructive_call_http_status\": 204,\n  \"audit_reference\": {\n    \"contract_function\": \"execute-incident\",\n    \"contract_version\": \"1.0.0\",\n    \"incident_id\": \"INC-C0-RACE-1788258001834\"\n  }\n}",
+      "stderr": ""
+    },
+    {
+      "label": "b",
+      "exit_code": 0,
+      "stdout": "{\n  \"incident_id\": \"INC-C0-RACE-1788258001834\",\n  \"outcome\": \"CONSUMED\",\n  \"previous_status\": \"EXECUTING\",\n  \"current_status\": \"CONSUMED\",\n  \"target\": {\n    \"host\": \"https://api.github.com\",\n    \"owner\": \"Ticoworld\",\n    \"repository\": \"t3n-breakglass-sandbox\",\n    \"deploy_key_id\": 161935325\n  },\n  \"verification\": {\n    \"attempted\": true,\n    \"authoritative\": true,\n    \"http_status\": 404,\n    \"absent\": true\n  },\n  \"destructive_call_count\": 1,\n  \"destructive_call_http_status\": 204,\n  \"audit_reference\": {\n    \"contract_function\": \"execute-incident\",\n    \"contract_version\": \"1.0.0\",\n    \"incident_id\": \"INC-C0-RACE-1788258001834\"\n  }\n}",
+      "stderr": ""
+    }
+  ],
+  "final_authority": {
+    "incident_id": "INC-C0-RACE-1788258001834",
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161935325,
+    "created_at": 1788258018,
+    "expires_at": 1788258318,
+    "max_uses": 1,
+    "uses": 1,
+    "status": "CONSUMED"
+  },
+  "github_after": {
+    "host": "https://api.github.com",
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deployKeyId": 161935325,
+    "exactKeyGetHttpStatus": 404,
+    "keyListHttpStatus": 200,
+    "keyCount": 0,
+    "absent": true
+  },
+  "secret_values_printed": false
+}

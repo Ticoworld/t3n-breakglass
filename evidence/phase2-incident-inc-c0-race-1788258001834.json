@@ -1,0 +1,34 @@
+{
+  "phase": "2",
+  "stage": "operator_incident_authority_created",
+  "environment": "testnet",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "storage": {
+    "map": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:incidents",
+    "private": true,
+    "key": "INC-C0-RACE-1788258001834"
+  },
+  "authority": {
+    "incident_id": "INC-C0-RACE-1788258001834",
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161935325,
+    "created_at": 1788258018,
+    "expires_at": 1788258318,
+    "max_uses": 1,
+    "uses": 0,
+    "status": "ACTIVE"
+  },
+  "target_preflight": {
+    "host": "https://api.github.com",
+    "repository_private": true,
+    "key_get_verified": true,
+    "key_read_only": true
+  },
+  "operator_confirmation": true,
+  "github_pat_read_by_agent": false,
+  "github_pat_logged": false
+}

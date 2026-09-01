@@ -1,0 +1,65 @@
+{
+  "question": "Can a caller with the wrong DID invoke reconciliation on an existing RECONCILE_REQUIRED authority?",
+  "environment": "Terminal 3 testnet; pre-existing GitHub sandbox incident",
+  "incident_id": "INC-PHASE1-FUNDED-20260830",
+  "caller_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "expected_authorized_agent_did": "did:t3n:06cb1776cc1bc4596b4195112813453e95709500",
+  "before": {
+    "status": "RECONCILE_REQUIRED",
+    "uses": 0
+  },
+  "contract_result": {
+    "authority": {
+      "action": "revoke_github_deploy_key",
+      "agent_did": "did:t3n:06cb1776cc1bc4596b4195112813453e95709500",
+      "created_at": 1788089148,
+      "expires_at": 1788090048,
+      "max_uses": 1,
+      "status": "RECONCILE_REQUIRED",
+      "uses": 0
+    },
+    "before": {
+      "exists": false,
+      "http_status": null
+    },
+    "destructive_call": {
+      "attempted": false,
+      "count": 0,
+      "http_status": null,
+      "method": "NONE"
+    },
+    "egress": {
+      "exact": true,
+      "host": "https://api.github.com"
+    },
+    "incident_id": "INC-PHASE1-FUNDED-20260830",
+    "note": "authoritative reconciliation was ambiguous; no DELETE was issued",
+    "replay_guard": {
+      "destructive_call_count": 0,
+      "replay_refused": false
+    },
+    "state": {
+      "after": "RECONCILE_REQUIRED",
+      "before": "RECONCILE_REQUIRED"
+    },
+    "status": "RECONCILE_REQUIRED",
+    "target": {
+      "deploy_key_id": 161682082,
+      "host": "https://api.github.com",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox"
+    },
+    "verification": {
+      "absent": false,
+      "attempted": true,
+      "authoritative": true,
+      "http_status": null
+    }
+  },
+  "after": {
+    "status": "RECONCILE_REQUIRED",
+    "uses": 0
+  },
+  "destructive_call_requested_by_probe": false,
+  "note": "This probe invokes the normal contract function. The existing authority was already RECONCILE_REQUIRED; the contract's reconciliation branch performs only a provider GET and persists reconciliation state."
+}

@@ -9,16 +9,106 @@
   "entries": [
     {
       "level": "info",
-      "message": "BreakGlass Phase 0 result recorded; credential omitted",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
       "span_id_present": false
     },
     {
       "level": "info",
-      "message": "BreakGlass Phase 0 result recorded; credential omitted",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
       "span_id_present": false
     }
   ],
-  "next_seq": 1,
+  "next_seq": 19,
   "truncated": false,
   "likely_secret_pattern_found": false,
   "github_pat_in_process": false

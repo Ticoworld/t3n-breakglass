@@ -1,0 +1,42 @@
+{
+  "evidence_type": "sanitized_t3n_contract_logs",
+  "experiment": "C-0 concurrency race",
+  "environment": "Terminal 3 testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "contract_tail": "breakglass",
+  "incident_id": "INC-C0-RACE-1788258001834",
+  "race_common_start_unix_ms": 1788258027129,
+  "entries": [
+    {
+      "ts_ms": 1788258029932,
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id": null,
+      "attribution": "one of the two race calls; the logging API did not expose a call ID"
+    },
+    {
+      "ts_ms": 1788258089427,
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id": null,
+      "attribution": "one of the two race calls; the logging API did not expose a call ID"
+    }
+  ],
+  "query": {
+    "limit": 50,
+    "min_level": "info",
+    "next_seq": 19,
+    "truncated": false
+  },
+  "secret_checks": {
+    "likely_secret_pattern_found": false,
+    "github_pat_in_process": false,
+    "credential_values_included": false
+  },
+  "limitations": [
+    "The retained race runner captured one common launch timestamp, not separate child-process start timestamps.",
+    "The T3N debug-log API returned no per-entry sequence, caller DID, request ID, or span ID; the two entries are therefore temporally relevant but not individually attributable.",
+    "The invocation result artifact is the source for the two per-call contract-reported DELETE results; this log artifact is not an independent provider observer."
+  ]
+}
