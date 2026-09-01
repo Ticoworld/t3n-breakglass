@@ -1,0 +1,44 @@
+
+> test
+> node --import tsx --test tests/product-boundaries.test.ts
+
+TAP version 13
+# Subtest: agent interface accepts only incident_id
+ok 1 - agent interface accepts only incident_id
+  ---
+  duration_ms: 2.5142
+  ...
+# Subtest: agent surface cannot create authorities
+ok 2 - agent surface cannot create authorities
+  ---
+  duration_ms: 0.183
+  ...
+# Subtest: operator preview freezes the exact target and one-use policy
+ok 3 - operator preview freezes the exact target and one-use policy
+  ---
+  duration_ms: 1.197
+  ...
+# Subtest: invalid TTL and malformed incident IDs are rejected
+ok 4 - invalid TTL and malformed incident IDs are rejected
+  ---
+  duration_ms: 0.301
+  ...
+# Subtest: duplicate incident IDs are rejected before authority write
+ok 5 - duplicate incident IDs are rejected before authority write
+  ---
+  duration_ms: 0.180
+  ...
+# Subtest: structured agent output excludes secrets and preserves replay/reconciliation semantics
+ok 6 - structured agent output excludes secrets and preserves replay/reconciliation semantics
+  ---
+  duration_ms: 0.285
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 896.5336

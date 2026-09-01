@@ -1,0 +1,5 @@
+
+> build
+> node --import tsx scripts/build-contract.ts
+
+    Finished `release` profile [optimized] target(s) in 4.48s
