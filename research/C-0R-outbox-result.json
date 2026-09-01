@@ -1,0 +1,45 @@
+{
+  "experiment": "R1 host:outbox/outbox@1.0.0 public testnet availability",
+  "date_utc": "2026-09-01T11:58:52.753Z",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "node_environment": "testnet",
+  "tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "safe_request": {
+    "method": "GET",
+    "url": "https://example.com/",
+    "secret_headers": false
+  },
+  "registration_attempts": [
+    {
+      "tail": "c0r-outbox-probe",
+      "version": "0.1.0",
+      "contract_id": 836,
+      "result": "success"
+    },
+    {
+      "tail": "c0r-outbox-probe",
+      "version": "0.1.1",
+      "contract_id": 837,
+      "result": "success"
+    }
+  ],
+  "invocation": {
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-outbox-probe",
+    "contract_id": 837,
+    "result": "error",
+    "error_type": "RpcError",
+    "rpc_code": "RPC_ERROR",
+    "http_status": -32603,
+    "message": "RPC Error: Internal error",
+    "request_id": "a9f9edbf-d244-4b8c-b2d9-c6a7330422d4",
+    "detail": null,
+    "contract_logs": {
+      "entries": [],
+      "next_seq": null,
+      "truncated": false
+    }
+  },
+  "ack_or_status": "not returned; invocation failed before guest execution",
+  "classification": "PROVEN IMPOSSIBLE / UNAVAILABLE FOR CURRENT PUBLIC TESTNET TENANT-Z EXECUTION PATH",
+  "scope_note": "Registration acceptance proves the component is syntactically/registerable. The exact private linker/host subcause of -32603 was not returned and is not generalized to all Terminal 3 worlds."
+}

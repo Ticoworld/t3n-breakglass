@@ -40,3 +40,28 @@ Material `UNKNOWN`: **0**. The unavailable items are bounded platform limitation
 - A provider App token is a credible JIT improvement, but an App private key or equivalent broker authority remains standing.
 - “Verified incident” must be an ingress protocol with HMAC/delivery dedupe/raw-body hashing and T3N anchoring; operator-created map entries are not evidence.
 - Independent receipts require the platform audit/activity surface or an externally verifiable signed receipt; application JSON is insufficient.
+
+## C-0R reopened register — missed material threads
+
+Added 2026-09-01 after C-0V rejected the original exhaustion claim. These rows
+are the C-0R closure state. They do not erase the historical C-0 rows above.
+
+| Item | Final status | Closure evidence and conservative consequence |
+|---|---|---|
+| OUTBOX-AVAILABLE-TO-Z-WORLD | PROVEN IMPOSSIBLE / UNAVAILABLE | `research/C-0R-outbox-probe/` compiled and registered against public testnet, but both an enqueue call and a no-op function in a component importing outbox returned JSON-RPC `-32603 Internal error` with no contract logs. The no-op link probe closes the connector/upstream rejection alternative. Public call-centre/flight/AgentGate worlds vendor but do not import outbox. Scope is current public participant tenant-z execution, not all private/system T3N worlds. |
+| OUTBOX-CONNECTOR-CONFIG | PROVEN IMPOSSIBLE / UNAVAILABLE | `host-outbox@1.0.0` WIT defines upstream allowlist/connector concepts, but SDK 5.2.0, public docs, current tenant map operations, and inspected reference contracts expose no tenant connector registry/configuration path. |
+| OUTBOX-ACK-RECEIPT | PROVEN IMPOSSIBLE / UNAVAILABLE | The WIT defines `status`, committed ack, `at-seq`, upstream reference, and response digest, but current testnet invocation cannot execute outbox and SDK 5.2.0 exposes no public outbox status or Merkle-proof method. |
+| CURRENT-KV-OCC-RESERVATION | PROVEN | `research/C-0R-occ-result.json` used two separate processes at a common barrier against a fresh key. Both initially read null; one committed `contender-b`, the other was retried and returned `LOST`; final and repeated readback matched. No external reservation DB is required for this narrower one-winner property. |
+| AUDIT-ACTIVITY-LIVE-BINDING | PROVEN | `research/C-0R-audit-result.json` retrieved host activity sequence/hash/timestamp/caller/actor/on-behalf-of/org/contract/function/outcome after a live safe call. It is stronger than guest JSON, but does not bind target/provider response and no Merkle proof was retrieved. |
+| GITHUB-APP-JIT-LIVE-PATH | BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION | A repository/org owner must create and install a least-privilege GitHub App on a disposable private repo, generate its private key outside the repo, and provide App/installation IDs plus secret-injected key location. Then the mandatory JWT -> scoped token -> DELETE -> explicit revoke -> 401/403 retry must run. `research/C-0R-app-jit-result.json` contains the exact setup. The App private key remains standing. |
+| WEBHOOK-AUTH-DEDUPE | PROVEN | `research/C-0R-webhook-result.json` proves raw-byte HMAC verification, canonical parse after verification, exact replay rejection, invalid-signature rejection, and same-delivery-ID body conflict rejection with accepted count 1. Real GitHub ingress was not configured; the algorithm and local gateway are live-proven. |
+| POST-EFFECT-AMBIGUITY | PROVEN | `research/C-0R-ambiguity-result.json` shows dropped-after-effect and dropped-before-effect cases both appear as client transport errors, while verification separates present/absent. Current BreakGlass avoids blind retry but cannot obtain provider acknowledgement from a dropped response. |
+| OFFICIAL-REFERENCE-RACE-CLASS | PROVEN | Call-centre source at commit `bf08f0ba0fb1ce585696e78b7162a0785afab97f` orders marker read -> external relay POST -> marker write. The synchronized disposable model emitted two relay requests; live T3N OCC evidence proves the host overlap premise. Duplicate Circle payment effect was not attempted or claimed. |
+| MERKLE-PROOF-PUBLIC-ACCESS | PROVEN IMPOSSIBLE / UNAVAILABLE | The outbox WIT mentions an admin audit/Merkle proof, but current public SDK 5.2.0 has no proof method and the current BreakGlass tenant cannot execute outbox. Activity hash/sequence is live; proof verification is not. |
+| OUTBOX-GITHUB-DIRECT-IDEMPOTENCY | PROVEN IMPOSSIBLE / UNAVAILABLE | GitHub deploy-key DELETE documentation does not define an idempotency-key or provider-side atomic fence. A separate idempotent remediation connector could qualify in principle, but no tenant-configurable connector is available in this public path. |
+
+### C-0R count
+
+The reopened C-0R rows contain **0 `UNKNOWN`** statuses. The sole external
+block is explicit and includes the exact account action required; it is not a
+placeholder for a research question.

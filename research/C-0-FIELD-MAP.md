@@ -34,3 +34,19 @@ Proofly/MediPass can also beat current BreakGlass on privacy/product completenes
 ## What rivals cannot easily follow
 
 A rival that only has an application-level policy engine may not easily reproduce: T3N-native tenant isolation, agent DID/grant enforcement, secret confinement, host egress, and a real GitHub App token/effect receipt bound into the T3N ledger. Those are potential moat mechanisms, not current BreakGlass proof. A rival can imitate the UI and JSON proof easily; it cannot imitate a platform-enforced receipt unless T3N surfaces are actually used and independently demonstrated.
+
+## C-0R benchmark correction — AgentGate
+
+The formal challenge-submission status remains unconfirmed; that status is not
+the benchmark question. At HEAD
+`d76f3570fb9bd41247dc1b8b63df74e3d183c4ec`,
+[Anshv784/agentgate](https://github.com/Anshv784/agentgate) is a material elite
+benchmark. Source inspection proves a T3N contract with endpoint/path/marker
+policy, placeholder HTTP, KV credential reads, response projection, an
+application audit ledger, and an MCP list/call/audit surface. The README's
+testnet/real-email claims are kept as README claims, not independently
+reproduced evidence. Against current BreakGlass it wins the maintainability,
+generic MCP, policy breadth, and 60-second comprehension comparisons; current
+BreakGlass's independently evidenced GitHub destructive vertical remains the
+narrower edge. See `research/C-0R-MISSED-THREADS.md` R9 and
+`research/C-0R-SOURCE-LEDGER.md`.

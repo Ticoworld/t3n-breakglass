@@ -1,0 +1,17 @@
+package z:c0r-outbox-probe@0.1.0;
+
+world outbox-probe {
+    import host:outbox/outbox@1.0.0;
+    export contracts;
+}
+
+interface contracts {
+    record generic-input {
+        input: option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context: option<list<u8>>,
+    }
+
+    enqueue-probe: func(req: generic-input) -> result<list<u8>, string>;
+    link-probe: func(req: generic-input) -> result<list<u8>, string>;
+}

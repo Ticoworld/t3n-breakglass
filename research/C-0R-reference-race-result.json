@@ -1,0 +1,27 @@
+{
+  "experiment": "R8 local model of call-centre read -> relay -> marker ordering",
+  "date_utc": "2026-09-01T12:11:50.996Z",
+  "destructive": false,
+  "provider": "127.0.0.1 disposable HTTP fixture; no Circle/GitHub/provider resource",
+  "idempotency_key": "c0r-reference-race-fixture-01",
+  "results": [
+    {
+      "contender": "contender-a",
+      "started_at_ms": 1788264710947,
+      "marker_read": false,
+      "marker_written": true,
+      "relay_request_at_ms": 1788264710947
+    },
+    {
+      "contender": "contender-b",
+      "started_at_ms": 1788264710953,
+      "marker_read": false,
+      "marker_written": true,
+      "relay_request_at_ms": 1788264710953
+    }
+  ],
+  "relay_request_count": 2,
+  "final_marker_used": true,
+  "classification": "MODEL_PROVES_OUTBOUND_RACE_WINDOW; DUPLICATE_PROVIDER_EFFECT_NOT_PROVEN",
+  "conclusion": "Both modeled calls can pass the uncommitted marker check and issue relay requests before either marker write. The reference source and the live T3N OCC result establish the same ordering hazard at the contract-to-relay boundary. This artifact does not prove that Circle executes duplicate payment effects."
+}

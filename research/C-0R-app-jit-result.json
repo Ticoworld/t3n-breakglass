@@ -1,0 +1,22 @@
+{
+  "experiment": "R5 GitHub App installation-token JIT path",
+  "date_utc": "2026-09-01",
+  "status": "BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION",
+  "classification_scope": "The public GitHub API path is source-proven; the live token/delete/revoke sequence was not run because this workspace has no disposable GitHub App installation and creating one requires the owner/UI configuration below.",
+  "required_user_action": [
+    "As the owner of a disposable private repository, create a GitHub App in the owner or organization settings.",
+    "Grant only repository Administration read/write permission required for deploy-key deletion; do not grant unrelated permissions.",
+    "Generate and download the App private key, keeping it outside the repository and never placing it in evidence.",
+    "Install the App on the disposable private repository and record the App ID and installation ID without publishing the private key.",
+    "Provide the experiment runner with App ID, private-key path or secret injection, installation ID, repository owner/name, and a disposable deploy-key ID through environment configuration."
+  ],
+  "mandatory_sequence_after_setup": [
+    "Sign a short-lived RS256 App JWT.",
+    "Exchange it for an installation token restricted to the disposable repository and minimum Administration permission.",
+    "GET the disposable deploy key, DELETE it, then explicitly revoke the installation token.",
+    "Attempt another authorized provider call with the revoked token and require 401/403.",
+    "Capture token expiry, HTTP responses, and independent GitHub before/after state without publishing credentials."
+  ],
+  "standing_root": "The App private key remains a standing trust root. This experiment cannot support a zero-standing-provider-authority claim.",
+  "not_run": "No GitHub App was created, no private key was handled, and no provider mutation was issued in C-0R."
+}

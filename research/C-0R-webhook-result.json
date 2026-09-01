@@ -1,0 +1,67 @@
+{
+  "experiment": "R6 raw-body GitHub webhook HMAC and delivery dedupe",
+  "date_utc": "2026-09-01T12:06:19.494Z",
+  "implementation": "research-only Node gateway; no product import",
+  "algorithm": [
+    "verify HMAC-SHA256 over exact raw bytes",
+    "parse canonical event only after verification",
+    "dedupe by delivery ID and body digest"
+  ],
+  "fixture": {
+    "secret": "not published; deterministic test-only fixture in gateway source",
+    "delivery_id": "delivery-1",
+    "body_sha256": "3d6f6da85ca44daec20dc8d842e6686aeb05c97fda4c8ff41726ed88d8d3a155"
+  },
+  "cases": [
+    {
+      "name": "valid_signed_delivery",
+      "result": {
+        "accepted": true,
+        "reason": "accepted_once",
+        "body_sha256": "3d6f6da85ca44daec20dc8d842e6686aeb05c97fda4c8ff41726ed88d8d3a155"
+      }
+    },
+    {
+      "name": "replay_exact_delivery",
+      "result": {
+        "accepted": false,
+        "reason": "duplicate_delivery",
+        "body_sha256": "3d6f6da85ca44daec20dc8d842e6686aeb05c97fda4c8ff41726ed88d8d3a155"
+      }
+    },
+    {
+      "name": "altered_body_old_signature",
+      "result": {
+        "accepted": false,
+        "reason": "invalid_signature",
+        "body_sha256": "b1ab92e313e91ebfe9da79675b137cb56eb07b46c8cdb099b24cbee8994faf1e"
+      }
+    },
+    {
+      "name": "same_body_wrong_signature",
+      "result": {
+        "accepted": false,
+        "reason": "invalid_signature",
+        "body_sha256": "3d6f6da85ca44daec20dc8d842e6686aeb05c97fda4c8ff41726ed88d8d3a155"
+      }
+    },
+    {
+      "name": "same_delivery_id_altered_body_with_valid_signature",
+      "result": {
+        "accepted": false,
+        "reason": "delivery_id_body_conflict",
+        "body_sha256": "b1ab92e313e91ebfe9da79675b137cb56eb07b46c8cdb099b24cbee8994faf1e"
+      }
+    }
+  ],
+  "accepted_record_count": 1,
+  "accepted_records": [
+    {
+      "delivery_id": "delivery-1",
+      "body_sha256": "3d6f6da85ca44daec20dc8d842e6686aeb05c97fda4c8ff41726ed88d8d3a155",
+      "event": "created",
+      "accepted_at": "2026-09-01T12:06:19.492Z"
+    }
+  ],
+  "real_github_ingress": "not exercised: creating a GitHub webhook and public ingress requires owner/UI configuration; local raw-byte and dedupe semantics are proven here"
+}

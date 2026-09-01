@@ -1,0 +1,32 @@
+{
+  "experiment": "R1 outbox-link probe: import present, no outbox call",
+  "date_utc": "2026-09-01T12:23:54.632Z",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "node_environment": "testnet",
+  "contract_tail": "c0r-outbox-link-probe",
+  "contract_version": "0.1.2",
+  "credentials_in_probe": false,
+  "tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "registration": {
+    "outcome": "success",
+    "result": {
+      "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-outbox-link-probe",
+      "contract_id": 840
+    }
+  },
+  "invocation": {
+    "outcome": "error",
+    "function_called": "link-probe",
+    "outbox_call_made": false,
+    "error": {
+      "message": "RPC Error: Internal error [e0bcd4b5-8184-4a4b-be35-9ac32cca8e0a]",
+      "name": "RpcError",
+      "code": "RPC_ERROR",
+      "httpStatus": -32603,
+      "requestId": "e0bcd4b5-8184-4a4b-be35-9ac32cca8e0a",
+      "detail": "undefined"
+    }
+  },
+  "classification": "PROVEN IMPOSSIBLE / UNAVAILABLE FOR CURRENT PUBLIC TESTNET TENANT-Z EXECUTION PATH",
+  "conclusion": "A component that imports host:outbox but never calls the interface also fails at invocation. This closes the alternative explanation that the first error was only a downstream connector or upstream-host rejection. The internal linker/host cause remains unexposed by the node."
+}

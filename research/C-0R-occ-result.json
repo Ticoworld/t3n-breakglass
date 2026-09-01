@@ -1,0 +1,168 @@
+{
+  "experiment": "R2 current KV/OCC reservation",
+  "date_utc": "2026-09-01T12:04:31.910Z",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "node_environment": "testnet",
+  "contract_tail": "c0r-occ-1788264265515",
+  "contract_version": "0.1.0",
+  "map_tail": "c0r-occ-reservations",
+  "target_id": "fresh-target-1788264265515",
+  "common_launch_barrier": {
+    "path": "omitted",
+    "created_by_runner": true
+  },
+  "caller_credentials_in_evidence": false,
+  "registration": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+    "contract_id": 839
+  },
+  "map_acl": "repointed",
+  "ready_files_observed": [
+    {
+      "path": "omitted",
+      "exists": true,
+      "contents": {
+        "contender_id": "contender-a",
+        "ready_at_unix_ms": 1788264281316,
+        "process_id": 28760
+      }
+    },
+    {
+      "path": "omitted",
+      "exists": true,
+      "contents": {
+        "contender_id": "contender-b",
+        "ready_at_unix_ms": 1788264282609,
+        "process_id": 18100
+      }
+    }
+  ],
+  "barrier_released_at_unix_ms": 1788264282638,
+  "invocations": [
+    {
+      "child": {
+        "contender_id": "contender-a",
+        "input": {
+          "target_id": "fresh-target-1788264265515",
+          "contender_id": "contender-a"
+        },
+        "process_id": 28760,
+        "caller_tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "started_at_unix_ms": 1788264282649,
+        "started_at_monotonic_ms": 7724.8528,
+        "response": {
+          "caller_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+          "checksum": 7591300303376571000,
+          "contender_id": "contender-a",
+          "read_state": "contender-b",
+          "result": "LOST",
+          "seq_after": 173793,
+          "seq_before": 173793,
+          "target_id": "fresh-target-1788264265515"
+        },
+        "finished_at_unix_ms": 1788264283469
+      },
+      "exit_code": 0,
+      "stderr_present": false
+    },
+    {
+      "child": {
+        "contender_id": "contender-b",
+        "input": {
+          "target_id": "fresh-target-1788264265515",
+          "contender_id": "contender-b"
+        },
+        "process_id": 18100,
+        "caller_tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "started_at_unix_ms": 1788264282649,
+        "started_at_monotonic_ms": 7712.9772,
+        "response": {
+          "caller_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+          "checksum": 7591300303376571000,
+          "contender_id": "contender-b",
+          "read_state": null,
+          "result": "WON",
+          "seq_after": 173788,
+          "seq_before": 173788,
+          "target_id": "fresh-target-1788264265515"
+        },
+        "finished_at_unix_ms": 1788264283624
+      },
+      "exit_code": 0,
+      "stderr_present": false
+    }
+  ],
+  "final_reservation": "contender-b",
+  "repeat_readback": "contender-b",
+  "contract_logs": {
+    "entries": [
+      {
+        "ts_ms": 1788264282864,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=None contender=contender-b",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282864,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=WON checksum=7591300303376571585 seq=173788",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282941,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=None contender=contender-a",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282941,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=WON checksum=7591300303376571585 seq=173788",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264283145,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=Some(\"contender-b\") contender=contender-a",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264283145,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=LOST checksum=7591300303376571585 seq=173793",
+        "span_id": null
+      }
+    ],
+    "next_seq": 5,
+    "truncated": false
+  },
+  "activity": {
+    "entries": [
+      {
+        "seq_no": 173797,
+        "hash": "117763213d7ce35d3f79e05d9ec725bce229c3b42ed236b2b2f09e4fb75b6535",
+        "timestamp_ms": 1788264283221,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+        "function": "reserve",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 173796,
+        "hash": "38c42da6706cecdab81f5c82cb882cc3e30b6079314abdbf0111bd690a868429",
+        "timestamp_ms": 1788264283150,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+        "function": "reserve",
+        "outcome": "success"
+      }
+    ],
+    "next_seq": null
+  }
+}

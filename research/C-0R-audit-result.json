@@ -1,0 +1,123 @@
+{
+  "experiment": "R4 live T3N activity/audit receipt binding",
+  "date_utc": "2026-09-01T12:05:25.598Z",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "node_environment": "testnet",
+  "contract_tail": "c0r-occ-1788264265515",
+  "contract_version": "0.1.0",
+  "safe_input": {
+    "target_id": "audit-probe-1788264325598",
+    "contender_id": "audit-probe"
+  },
+  "credentials_in_evidence": false,
+  "caller_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "invocation": {
+    "caller_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "checksum": 7591300303376571000,
+    "contender_id": "audit-probe",
+    "read_state": null,
+    "result": "WON",
+    "seq_after": 173812,
+    "seq_before": 173812,
+    "target_id": "audit-probe-1788264325598"
+  },
+  "activity": {
+    "entries": [
+      {
+        "seq_no": 173816,
+        "hash": "c44555c54d2d715b9b866ad0666b9e72d11e65b4f329f36a83ec0e5eb04dedb7",
+        "timestamp_ms": 1788264333269,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+        "function": "reserve",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 173797,
+        "hash": "117763213d7ce35d3f79e05d9ec725bce229c3b42ed236b2b2f09e4fb75b6535",
+        "timestamp_ms": 1788264283221,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+        "function": "reserve",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 173796,
+        "hash": "38c42da6706cecdab81f5c82cb882cc3e30b6079314abdbf0111bd690a868429",
+        "timestamp_ms": 1788264283150,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:c0r-occ-1788264265515",
+        "function": "reserve",
+        "outcome": "success"
+      }
+    ],
+    "next_seq": null
+  },
+  "audit_events": {
+    "batches": [],
+    "next_cursor": null
+  },
+  "contract_logs": {
+    "entries": [
+      {
+        "ts_ms": 1788264282864,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=None contender=contender-b",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282864,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=WON checksum=7591300303376571585 seq=173788",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282941,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=None contender=contender-a",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264282941,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=WON checksum=7591300303376571585 seq=173788",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264283145,
+        "level": "info",
+        "message": "c0r-occ read target=fresh-target-1788264265515 current=Some(\"contender-b\") contender=contender-a",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264283145,
+        "level": "info",
+        "message": "c0r-occ write target=fresh-target-1788264265515 result=LOST checksum=7591300303376571585 seq=173793",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264333264,
+        "level": "info",
+        "message": "c0r-occ read target=audit-probe-1788264325598 current=None contender=audit-probe",
+        "span_id": null
+      },
+      {
+        "ts_ms": 1788264333264,
+        "level": "info",
+        "message": "c0r-occ write target=audit-probe-1788264325598 result=WON checksum=7591300303376571585 seq=173812",
+        "span_id": null
+      }
+    ],
+    "next_seq": 7,
+    "truncated": false
+  }
+}

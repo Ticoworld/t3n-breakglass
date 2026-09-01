@@ -1,0 +1,18 @@
+package z:c0r-occ-probe@0.1.0;
+
+world occ-probe {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+    export contracts;
+}
+
+interface contracts {
+    record generic-input {
+        input: option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context: option<list<u8>>,
+    }
+
+    reserve: func(req: generic-input) -> result<list<u8>, string>;
+}

@@ -1,0 +1,63 @@
+{
+  "experiment": "R7 post-effect ambiguity with disposable local connector",
+  "date_utc": "2026-09-01T12:07:24.079Z",
+  "connector": "127.0.0.1 disposable HTTP fixture; no GitHub/Circle/provider resource",
+  "operation_identity": "c0r-ambiguous-operation-01",
+  "cases": [
+    {
+      "name": "NOT_ATTEMPTED",
+      "provider_requests_before": 0,
+      "provider_requests_after": 0,
+      "classification": "NOT_ATTEMPTED"
+    },
+    {
+      "name": "ATTEMPTED_OUTCOME_UNKNOWN",
+      "client_response": {
+        "ok": false,
+        "error": "TypeError"
+      },
+      "provider_request_count": 1,
+      "provider_side_effect_observed_by_fixture": true,
+      "verification": "unavailable",
+      "retry_count": 0,
+      "classification": "ATTEMPTED_OUTCOME_UNKNOWN"
+    },
+    {
+      "name": "PROVIDER_ACKNOWLEDGED",
+      "client_response": {
+        "ok": true,
+        "status": 204
+      },
+      "provider_request_count": 1,
+      "classification": "PROVIDER_ACKNOWLEDGED"
+    },
+    {
+      "name": "VERIFIED_ABSENT",
+      "delete_response": {
+        "ok": false,
+        "error": "TypeError"
+      },
+      "verification_response": {
+        "ok": true,
+        "status": 404
+      },
+      "classification": "VERIFIED_ABSENT"
+    },
+    {
+      "name": "VERIFIED_PRESENT",
+      "delete_response": {
+        "ok": false,
+        "error": "TypeError"
+      },
+      "verification_response": {
+        "ok": true,
+        "status": 200
+      },
+      "classification": "VERIFIED_PRESENT"
+    }
+  ],
+  "total_provider_requests": 6,
+  "unknown_operation_request_count": 1,
+  "no_blind_retry_proven": true,
+  "conclusion": "A dropped response is not an acknowledgement. A safe system needs an explicit unknown state plus provider verification or an idempotent connector operation identity; retrying the destructive call blindly is unsound."
+}
