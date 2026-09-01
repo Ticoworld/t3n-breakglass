@@ -47,18 +47,22 @@ The DELETE and internal verification statuses are explicitly classified as T3N-c
 
 ```text
 Trusted Operator
-  -> private Incident Authority
-  -> separate organization-owned Agent
-  -> execute-incident Rust/WASM contract
-  -> sealed GitHub PAT
-  -> api.github.com DELETE
-  -> authoritative GET
-  -> CONSUMED
+      |
+      | writes
+      v
+private Incident Authority map
+      ^ private read
+      |
+Rust/WASM execute-incident contract <---- incident_id only ---- BreakGlass Agent
+      |
+      | reads sealed credential
+      v
+sealed GitHub PAT -> api.github.com -> DELETE exact key -> GET verify -> CONSUMED
 ```
 
 ## Security and adversarial tests
 
-The agent surface accepts only `incident_id`, rejects extra target/action fields, exposes no operator creation tool, and cannot widen the authority. Rust tests cover nonexistent incidents, wrong agents, expiry, replay, ambiguous outcomes, reconciliation, state transitions, and authority-loaded targets. Product tests pass 6/6 and Rust tests pass 11/11. A repository-wide audit found no credential values or private-key markers in tracked or untracked non-ignored files.
+The agent surface accepts only `incident_id`, rejects extra target/action fields, exposes no operator creation tool, and cannot widen the authority. Rust tests cover nonexistent incidents, wrong agents, expiry, replay, ambiguous outcomes, reconciliation, state transitions, and authority-loaded targets. Current product tests pass 7/7 and Rust tests pass 11/11. A repository-wide audit found no credential values or private-key markers in tracked or untracked non-ignored files.
 
 ## How to run
 

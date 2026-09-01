@@ -61,22 +61,27 @@ The operator creates the authority. The T3N contract resolves the private record
 ```mermaid
 flowchart LR
   subgraph OP["Trusted operator / incident control plane"]
-    O["Operator"] --> IA["Private Incident Authority"]
+    O["Trusted Operator"] -->|writes| IA[("Private Incident Authority")]
+  end
+
+  subgraph AG["BreakGlass agent boundary"]
+    LLM["LLM / Agent"] -->|incident_id only| A["Organization-owned Agent"]
+    A --- K["Own T3N credential"]
+    N["Agent does NOT receive:\nprivate authority record\nGitHub PAT\ntarget / action\nexpiry / max_uses"]
   end
 
   subgraph T3N["Terminal 3 trust boundary"]
-    IA --> A["Separate organization-owned Agent"]
-    LLM["LLM / agent caller"] -->|incident_id only| A
-    A --> C["Rust/WASM execute-incident contract"]
-    C --> P["Sealed GitHub PAT"]
+    A -->|incident_id only| C["Rust/WASM execute-incident contract"]
+    IA -->|private read| C
+    C -->|reads sealed credential| P[("Sealed GitHub PAT")]
     C --> H["api.github.com"]
     H --> D["DELETE exact deploy key"]
     D --> V["Authoritative GET"]
     V --> S["CONSUMED"]
   end
-
-  LLM -. "no PAT, target, action, expiry, max_uses" .-> C
 ```
+
+The agent knows only its own T3N credential and the `incident_id`. It does not receive the private authority record, GitHub PAT, target, action, expiry, or `max_uses`.
 
 The operator knows the operator T3N credential, GitHub credential, and requested target while creating an authority. The private incident map knows the authority. The agent knows its own T3N credential and the incident ID. The contract knows the private authority, caller DID, trusted time, and sealed credential. GitHub sees only the credential presented inside the T3N HTTP call.
 
@@ -186,6 +191,10 @@ The detailed boundaries and out-of-scope cases are in [`docs/THREAT_MODEL.md`](d
 [`docs/EVIDENCE.md`](docs/EVIDENCE.md) indexes claims to the exact sanitized evidence and identifies whether each claim is directly observed, contract-reported, or independently verified.
 
 [`docs/BUGS.md`](docs/BUGS.md) preserves the SDK 5.3.0 compatibility issue, the createAgent/default-card API ambiguity, the observed zero-credit limitation, and the observed diagnostic limitation without overstating them.
+
+## License
+
+BreakGlass is available under the [MIT License](LICENSE).
 
 ## Post-challenge
 

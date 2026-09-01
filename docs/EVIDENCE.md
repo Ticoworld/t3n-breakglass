@@ -4,6 +4,8 @@ This index points a reviewer from each major claim to the smallest useful artifa
 
 Canonical proof: [`evidence/phase2e/phase2e-live-proof.json`](../evidence/phase2e/phase2e-live-proof.json)
 
+The canonical Phase 2E artifact records the product boundary suite as 6/6 at that checkpoint. The current post-hardening suite is 7/7; the original raw artifact is intentionally unchanged.
+
 Canonical run:
 
 ```text
@@ -31,7 +33,7 @@ Target:   Ticoworld/t3n-breakglass-sandbox#161921323
 | Agent surface exposes only execution | [`raw/mcp-tool-list.txt`](../evidence/phase2e/raw/mcp-tool-list.txt) | Directly observed MCP tool list |
 | Extra target/action fields are rejected | [`raw/mcp-extra-fields.txt`](../evidence/phase2e/raw/mcp-extra-fields.txt) | Directly observed boundary check |
 | Operator creation is unavailable through MCP | [`raw/mcp-operator-tool.txt`](../evidence/phase2e/raw/mcp-operator-tool.txt) | Directly observed unknown-tool response |
-| Product boundary tests pass | [`raw/npm-test.txt`](../evidence/phase2e/raw/npm-test.txt) | Unit: 6/6 |
+| Product boundary tests pass | [`raw/npm-test.txt`](../evidence/phase2e/raw/npm-test.txt) | Canonical Phase 2E artifact: unit 6/6; current post-hardening suite: unit 7/7 |
 | Rust authority tests pass | [`raw/rust-test.txt`](../evidence/phase2e/raw/rust-test.txt) | Unit: 11/11 |
 | Doctor passes | [`raw/npm-doctor.txt`](../evidence/phase2e/raw/npm-doctor.txt) | Safe live check: overall PASS; optional GitHub target subcheck warns when target env is not configured |
 | Build passes | [`raw/npm-build.txt`](../evidence/phase2e/raw/npm-build.txt) | Native/build check: PASS |

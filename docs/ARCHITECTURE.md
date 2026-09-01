@@ -4,30 +4,32 @@ BreakGlass gives an AI agent incident-bound emergency authority for one otherwis
 
 The only Phase 2 capability is `revoke_github_deploy_key`.
 
-```text
-Trusted Operator
-      |
-      v
-private T3N Incident Authority
-      |
-      v
-separate organization-owned Agent
-      |
-      v
-execute-incident
-      |
-      v
-Rust/WASM TEE contract
-      |
-      v
-sealed GitHub PAT in private T3N map
-      |
-      v
-api.github.com: GET -> DELETE -> authoritative GET
-      |
-      v
-CONSUMED
+```mermaid
+flowchart LR
+  subgraph OP["Trusted operator / incident control plane"]
+    O["Trusted Operator"] -->|writes| IA[("Private Incident Authority map")]
+  end
+
+  subgraph AG["BreakGlass agent boundary"]
+    A["Organization-owned Agent"]
+    A --- K["Own T3N credential"]
+    N["Agent does NOT receive:\nprivate authority record\nGitHub PAT\ntarget / action\nexpiry / max_uses"]
+  end
+
+  subgraph T3N["Terminal 3 trust boundary"]
+    C["Rust/WASM execute-incident contract"]
+    C -->|private read| IA
+    C -->|reads sealed credential| P[("Sealed GitHub PAT")]
+    C --> G["api.github.com"]
+    G --> D["DELETE exact key"]
+    D --> V["GET verification"]
+    V --> S["CONSUMED"]
+  end
+
+  A -->|incident_id only| C
 ```
+
+The authority map and the agent are separate inputs to the contract. The contract privately reads the authority map; the agent does not receive or read it. The agent knows only its own T3N credential and the `incident_id`; it does not receive the GitHub PAT, target, action, expiry, or `max_uses`.
 
 ## Two planes
 
