@@ -1,36 +1,81 @@
 # BreakGlass Bug Package
 
-These findings are preserved from the live Phase 0/Phase 1 work. They are not replaced by unit tests or hidden by the Phase 2 product layer.
+These findings come from the live Phase 0 and Phase 1 work. They are classified conservatively and remain separate from the product proof. No unsafe trust bypass was used.
 
-## BUG 1 — SDK 5.3.0 trust-manifest regression
+## Finding 1 — SDK 5.3.0 trust-manifest compatibility regression
 
-The same live testnet trust manifest was accepted by exact SDK 5.2.0 and rejected by SDK 5.3.0. The manifest returned HTTP 200 but contained `cluster`, `version`, `peer_ids`, `rtmr3_allowlist`, `signed_at`, and `signature`; 5.3.0 newly required `rtmr1_allowlist` and failed with a malformed-manifest error.
+Classification: **LOCAL COMPATIBILITY FINDING / REPRODUCIBLE SDK COMPATIBILITY ISSUE**
 
-The project remains pinned to `@terminal3/t3n-sdk@5.2.0`. `unsafe_trust_server` was not used because bypassing attestation would invalidate the trust-boundary proof.
+Environment: Terminal 3 testnet, endpoint `https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest`.
+
+The same live HTTP `200` manifest was accepted by exact `@terminal3/t3n-sdk@5.2.0` and rejected by `@terminal3/t3n-sdk@5.3.0`. The observed manifest contained `cluster`, `version`, `peer_ids`, `rtmr3_allowlist`, `signed_at`, and `signature`, but not `rtmr1_allowlist`.
+
+The exact 5.3.0 error was:
+
+```text
+Trust manifest at https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest is malformed.
+```
+
+Minimal reproduction:
+
+```ts
+import { fetchTrustedManifest, setEnvironment } from "@terminal3/t3n-sdk";
+
+setEnvironment("testnet");
+await fetchTrustedManifest("testnet");
+```
+
+Observed behavior:
+
+```text
+5.2.0: accepted; trusted preflight succeeded
+5.3.0: rejected; rtmr1_allowlist reported missing
+```
+
+The workaround is the exact `5.2.0` pin retained in `package.json` and `package-lock.json`. `unsafe_trust_server` was not used because it disables the attestation check and would invalidate the trust-boundary evidence.
 
 Evidence: `evidence/sdk-5.3.0-state.json`, `evidence/sdk-5.3.0-bug-note.json`, and `evidence/t3n-bootstrap-blocker.json`.
 
-## BUG 2 — `createAgent` no-card / organization-ownership pitfall
+## Finding 2 — `createAgent` / `defaultCard` ownership pitfall
 
-Observed behavior and interpretation:
+Classification: **DOCUMENTATION / API AMBIGUITY**
 
-- The original call explicitly used `createAgent(existingOrganisationDid, name, { defaultCard: false })`.
-- SDK source inspection showed that the explicit false option selects the no-card wire path.
-- The resulting old agent was absent from the organization roster, had no private card, returned `whoami.owner=null`, and could not receive organization egress (`NotAnOrgOwnedAgent`).
-- This is primarily API misuse or documentation ambiguity, not proof of an independent platform defect.
-- The repair used exactly one replacement through the default-card path with no options. The replacement DID is organization-owned, has a readable private card, is funded, and has the exact egress grant.
+The original call was:
+
+```text
+createAgent(existingOrganisationDid, name, { defaultCard: false })
+```
+
+SDK source inspection showed that explicitly passing `defaultCard: false` selects the no-card wire path. The old agent then appeared outside the organization roster, had no private card, returned `whoami.owner = null`, and could not receive organization egress (`NotAnOrgOwnedAgent`).
+
+The canonical replacement path omitted the option:
+
+```text
+createAgent(existingOrganisationDid, "BreakGlass Agent")
+```
+
+That replacement became organization-owned, had a readable private card, was funded, and received the exact `api.github.com` egress grant. The evidence also showed an inconsistency between SDK comments about registry persistence for no-card agents. The record therefore does not call this an independent platform bug: the first call explicitly selected the no-card behavior, and the remaining issue is API/documentation ambiguity.
 
 Evidence: `evidence/phase1-agent-provisioning-mismatch.json`, `evidence/phase1-agent-provisioning.json`, `evidence/phase1-replacement-agent-ownership.json`, and `evidence/phase1-replacement-agent-safe-preflight.json`.
 
-## BUG 3 — New organization-owned agents begin with zero usable credits
+## Finding 3 — New organization-owned agents start with zero usable credits
 
-The initial replacement-agent credit preflight returned `InsufficientCredit` with zero available base units. Terminal 3 funding was required before a metered stateless invoke could proceed. After funding, the same preflight reached HTTP 200 and returned a contract-level denial.
+Classification: **OBSERVED TESTNET LIMITATION**
 
-This is recorded as an observed platform limitation unless Terminal 3 documentation explicitly guarantees initial agent funding.
+The replacement-agent preflight initially returned `InsufficientCredit` with zero available base units. Terminal 3 then funded the replacement agent. The same safe probe subsequently reached the contract and returned a normal contract-level denial.
 
-Evidence: `evidence/phase1-replacement-agent-credit-preflight.json` and the earlier blocked artifact retained in the evidence directory.
+This is an observed testnet provisioning limitation, not a claim about an undocumented platform guarantee. New agents should be funded and checked before a metered invocation.
 
-## Additional observed limitations
+Evidence: `evidence/phase1-replacement-agent-credit-preflight.json` and the preserved earlier blocked credit artifact.
 
-- Current T3N contract log entries do not carry span IDs, although the Phase 1 log messages were sanitized and contained no likely secret pattern.
-- The operator wrapper requires a configured GitHub deploy-key ID for a safe target check; when it is absent, doctor reports a warning instead of guessing.
+## Finding 4 — Log entries lacked useful span IDs
+
+Classification: **OBSERVED DIAGNOSTIC LIMITATION**
+
+The captured contract log entries reported `span_id_present: false`. The evidence supports that observation for the inspected logs; it does not establish a universal platform defect or prove that no other correlation mechanism exists.
+
+Evidence: `evidence/phase1-logs.json`.
+
+## Reporting standard
+
+The evidence package distinguishes platform behavior, SDK compatibility, API ambiguity, and local observations. No finding is upgraded to a platform bug without a reproducible artifact.

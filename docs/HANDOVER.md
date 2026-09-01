@@ -103,3 +103,7 @@ Provision exactly one new organization-owned agent through the documented defaul
 ## Adding a future emergency action
 
 Do not add an action by widening the agent input. Add a separate, explicitly bounded contract action with its own authority schema, target validation, fixed egress policy, one-use/replay semantics, reconciliation behavior, unit tests, live disposable evidence, and threat-model entry. Keep the operator creation surface privileged and the agent request limited to an incident identifier.
+
+## Post-challenge
+
+I’m happy to continue developing BreakGlass after the challenge. The current implementation is deliberately limited to one proven emergency action, and this guide is intended for Terminal 3 or another maintainer if ownership needs to transfer.
