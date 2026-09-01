@@ -233,25 +233,26 @@ admin APIs.
 
 ## 7. R5 — GitHub App JIT provider authority
 
-**BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION.** GitHub's official docs prove
-the intended external mechanism: App private-key JWT -> installation token,
-repository/permission scoping, short expiry, explicit revoke. They do not
-prove this workspace has a usable App installation. No App private key was
-handled and no provider mutation was issued.
+**LIVE-EVIDENCE-PROVEN.** The live runner in `research/c0r-app-jit-live.ts`
+used the configured App private key only in memory, minted an RS256 App JWT,
+validated installation `158227303`, and exchanged it for a repository-selected
+installation token. The token response reported only
+`Ticoworld/t3n-breakglass-sandbox`, `administration: write`, and mandatory
+`metadata: read`, with an expiry one hour later. The exact sanitized artifact
+is `research/C-0R-app-jit-live-result.json`.
 
-The exact external action required is: a repository/org owner must create a
-GitHub App for a disposable private repository, grant only Administration
-read/write needed for deploy-key deletion, generate/download its private key
-outside the repo, install it on that disposable repo, and provide App ID,
-installation ID, repo coordinates, and secret-injected private-key location
-to the experiment runner. The mandatory follow-up is JWT exchange, exact
-repo-scoped token, disposable key GET/DELETE, explicit token revoke, then a
-second authorized request requiring 401/403. The full sanitized procedure is
-in `research/C-0R-app-jit-result.json`.
+The runner generated a fresh read-only deploy key ID `161952517`, proved exact
+GET `200` and list `200` before action, issued exactly one DELETE using the
+installation token, received `204`, then independently proved exact GET `404`
+and list `200` with the target absent. It explicitly revoked the same token
+with `204`; a subsequent repository GET using that same token returned `401`.
+No PAT fallback occurred and no credential material was written to evidence.
 
-The App private key remains a standing trust root. Even after a successful
-experiment, it would be incorrect to call this zero-standing provider
-authority.
+This proves JIT installation-token authority for this disposable repository,
+not zero-standing provider authority. The GitHub App private key remains a
+standing trust root, and this result does not prove provider-side exactly once,
+atomic GitHub/T3N state, outbox availability, or a complete causal/Merkle
+receipt.
 
 ## 8. R6 — Webhook authenticity and delivery dedupe
 
@@ -356,9 +357,9 @@ post-effect ambiguity, and the official reference race. It also records the
 bounded Merkle/public-proof and direct-GitHub-IDK negatives.
 
 Final statuses are limited to the allowed vocabulary. The appended C-0R rows
-contain no `UNKNOWN`; five are `PROVEN`, five are `PROVEN IMPOSSIBLE /
-UNAVAILABLE`, and one is the explicit
-`BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION` with exact owner setup. The
+contain no `UNKNOWN`; six are `PROVEN` and five are `PROVEN IMPOSSIBLE /
+UNAVAILABLE`. There is no remaining
+`BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION` row. The
 pre-existing C-0 rows remain historical evidence and are not silently edited
 to pretend the old conclusion was different.
 
@@ -415,17 +416,17 @@ supported by evidence is only a ceiling characterization:
 The **platform-design ceiling** is higher than C-0 knew because ordinary OCC
 reservation and a typed durable outbox exist as distinct capabilities. The
 **bounty-buildable ceiling** today is lower because outbox execution, tenant
-connector setup, App JIT live proof, and public Merkle proof remain unavailable
-or externally blocked. This statement is not a V2 recommendation.
+connector setup, and public Merkle proof remain unavailable. App JIT is now
+live-proven, but its standing private-key root and provider ambiguity limits
+remain. This statement is not a V2 recommendation.
 
 ## 16. C-0R verdict and authorization gate
 
-**C-0R verdict: INCOMPLETE.** The material threads are no longer parked as
-generic “future testing”: every thread is proven, disproven, bounded
-unavailable, or accompanied by the exact allowed external configuration block.
-However, the GitHub App JIT provider sequence remains
-`BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION`, so the candidate-critical live
-path is not closed.
+**C-0R verdict: COMPLETE.** The missed material threads are now proven,
+disproven, or bounded unavailable by evidence; no material thread remains
+parked behind a generic future-testing placeholder.
+The GitHub App JIT provider sequence is live-proven; its standing private-key
+root is preserved in the conclusion.
 
 **C0 may begin: NO.** No product implementation, V2, public-main mutation, or
 submission work is authorized by this report.

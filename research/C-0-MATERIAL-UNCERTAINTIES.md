@@ -53,7 +53,7 @@ are the C-0R closure state. They do not erase the historical C-0 rows above.
 | OUTBOX-ACK-RECEIPT | PROVEN IMPOSSIBLE / UNAVAILABLE | The WIT defines `status`, committed ack, `at-seq`, upstream reference, and response digest, but current testnet invocation cannot execute outbox and SDK 5.2.0 exposes no public outbox status or Merkle-proof method. |
 | CURRENT-KV-OCC-RESERVATION | PROVEN | `research/C-0R-occ-result.json` used two separate processes at a common barrier against a fresh key. Both initially read null; one committed `contender-b`, the other was retried and returned `LOST`; final and repeated readback matched. No external reservation DB is required for this narrower one-winner property. |
 | AUDIT-ACTIVITY-LIVE-BINDING | PROVEN | `research/C-0R-audit-result.json` retrieved host activity sequence/hash/timestamp/caller/actor/on-behalf-of/org/contract/function/outcome after a live safe call. It is stronger than guest JSON, but does not bind target/provider response and no Merkle proof was retrieved. |
-| GITHUB-APP-JIT-LIVE-PATH | BLOCKED_ON_EXTERNAL_ACCOUNT_CONFIGURATION | A repository/org owner must create and install a least-privilege GitHub App on a disposable private repo, generate its private key outside the repo, and provide App/installation IDs plus secret-injected key location. Then the mandatory JWT -> scoped token -> DELETE -> explicit revoke -> 401/403 retry must run. `research/C-0R-app-jit-result.json` contains the exact setup. The App private key remains standing. |
+| GITHUB-APP-JIT-LIVE-PATH | PROVEN | `research/C-0R-app-jit-live-result.json` proves App JWT minting, installation `158227303` validation, repository-selected installation token with `administration: write` and mandatory `metadata: read`, fresh read-only deploy-key creation, exact before state 200/list 200, one DELETE 204, independent after state exact GET 404/list 200 absent, same-token revoke 204, and same-token retry 401. The GitHub App private key remains a standing trust root. |
 | WEBHOOK-AUTH-DEDUPE | PROVEN | `research/C-0R-webhook-result.json` proves raw-byte HMAC verification, canonical parse after verification, exact replay rejection, invalid-signature rejection, and same-delivery-ID body conflict rejection with accepted count 1. Real GitHub ingress was not configured; the algorithm and local gateway are live-proven. |
 | POST-EFFECT-AMBIGUITY | PROVEN | `research/C-0R-ambiguity-result.json` shows dropped-after-effect and dropped-before-effect cases both appear as client transport errors, while verification separates present/absent. Current BreakGlass avoids blind retry but cannot obtain provider acknowledgement from a dropped response. |
 | OFFICIAL-REFERENCE-RACE-CLASS | PROVEN | Call-centre source at commit `bf08f0ba0fb1ce585696e78b7162a0785afab97f` orders marker read -> external relay POST -> marker write. The synchronized disposable model emitted two relay requests; live T3N OCC evidence proves the host overlap premise. Duplicate Circle payment effect was not attempted or claimed. |
@@ -62,6 +62,6 @@ are the C-0R closure state. They do not erase the historical C-0 rows above.
 
 ### C-0R count
 
-The reopened C-0R rows contain **0 `UNKNOWN`** statuses. The sole external
-block is explicit and includes the exact account action required; it is not a
-placeholder for a research question.
+The reopened C-0R rows contain **0 `UNKNOWN`** statuses and no remaining
+external-configuration block. The live App path is proven with the standing
+private-key qualification preserved.

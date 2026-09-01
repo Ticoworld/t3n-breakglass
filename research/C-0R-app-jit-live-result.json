@@ -1,0 +1,93 @@
+{
+  "experiment": "R5 live GitHub App installation-token JIT authority",
+  "date_utc": "2026-09-01T13:24:13.840Z",
+  "classification": "PASS",
+  "github_api_version": "2022-11-28",
+  "app": {
+    "name": "BreakGlass C0R JIT Probe",
+    "app_id": 4793116,
+    "installation_id": 158227303
+  },
+  "target": {
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "repository_private": true
+  },
+  "credential_safety": {
+    "private_key_in_evidence": false,
+    "jwt_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "pat_used": false
+  },
+  "token": {
+    "requested_repositories": [
+      "t3n-breakglass-sandbox"
+    ],
+    "requested_permissions": {
+      "administration": "write"
+    },
+    "expires_at": "2026-09-01T14:24:16Z",
+    "scope_verified": true,
+    "repository_selection": "selected",
+    "response_permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "response_repositories": [
+      "Ticoworld/t3n-breakglass-sandbox"
+    ]
+  },
+  "deploy_key": {
+    "id": 161952517,
+    "title": "breakglass-c0r-app-jit-1788269058303",
+    "read_only": true
+  },
+  "before": {
+    "exact_get_http_status": 200,
+    "list_http_status": 200,
+    "target_present": true,
+    "exact_get_metadata": {
+      "id": 161952517,
+      "title": "breakglass-c0r-app-jit-1788269058303",
+      "read_only": true
+    },
+    "list_target_metadata": {
+      "id": 161952517,
+      "title": "breakglass-c0r-app-jit-1788269058303",
+      "read_only": true
+    }
+  },
+  "delete": {
+    "attempted": true,
+    "destructive_call_count": 1,
+    "http_status": 204,
+    "provider_acknowledged": true,
+    "transport_error": null
+  },
+  "after": {
+    "exact_get_http_status": 404,
+    "list_http_status": 200,
+    "target_absent": true,
+    "verified_absent": true,
+    "list_target_metadata": null
+  },
+  "revoke": {
+    "attempted": true,
+    "http_status": 204,
+    "success": true
+  },
+  "revoked_token_probe": {
+    "same_token": true,
+    "http_status": 401,
+    "refused": true
+  },
+  "standing_root_note": "GitHub App private key remains a standing trust root.",
+  "installation_validation": {
+    "http_status": 200,
+    "installation_id": 158227303,
+    "account_login": "Ticoworld",
+    "repository_selection": "selected",
+    "matches_expected_owner": true
+  }
+}
