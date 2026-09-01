@@ -1,0 +1,21 @@
+{
+  "phase": "1",
+  "stage": "operator_contract_after_state_verification",
+  "status": "CONSUMED",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "map": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:incidents",
+  "private": true,
+  "incident_id": "INC-PHASE1-VALID-REPLACEMENT-20260901",
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "action": "revoke_github_deploy_key",
+  "github_owner": "Ticoworld",
+  "github_repo": "t3n-breakglass-sandbox",
+  "deploy_key_id": 161682082,
+  "max_uses": 1,
+  "uses": 1,
+  "authority_status": "CONSUMED",
+  "raw_authority_value_emitted": false
+}

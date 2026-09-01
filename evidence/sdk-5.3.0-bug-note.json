@@ -1,0 +1,35 @@
+{
+  "status": "preserved_not_reported",
+  "bug_class": "SDK/server trust-manifest contract mismatch",
+  "sdk_5_3_0": {
+    "version": "5.3.0",
+    "official_flow": "setEnvironment(testnet); fetchTrustedManifest(testnet)",
+    "manifest_http_status": 200,
+    "manifest_fields": [
+      "cluster",
+      "version",
+      "peer_ids",
+      "rtmr3_allowlist",
+      "signed_at",
+      "signature"
+    ],
+    "missing_field": "rtmr1_allowlist",
+    "result": "rejected",
+    "error": "Trust manifest at https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest is malformed."
+  },
+  "sdk_5_2_0": {
+    "version": "5.2.0",
+    "same_manifest_endpoint": true,
+    "same_manifest_shape": true,
+    "result": "accepted; trusted preflight succeeded"
+  },
+  "minimal_reproduction": [
+    "import { fetchTrustedManifest, setEnvironment } from \"@terminal3/t3n-sdk\";",
+    "setEnvironment(\"testnet\");",
+    "await fetchTrustedManifest(\"testnet\");"
+  ],
+  "comparison_conclusion": "The same live HTTP 200 manifest is accepted by exact 5.2.0 and rejected by 5.3.0 because 5.3.0 newly requires rtmr1_allowlist. This is a compatibility regression/mismatch between the current SDK validation contract and the testnet publication.",
+  "security_decision": "unsafe_trust_server was not used because it disables attestation verification and would invalidate the trust-boundary proof.",
+  "external_report_submitted": false,
+  "secrets_in_note": false
+}

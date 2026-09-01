@@ -1,0 +1,51 @@
+{
+  "phase": "1",
+  "stage": "agent_credit_preflight",
+  "status": "SUFFICIENT_FOR_METERED_INVOKE",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "transport": "keyed whoami + documented stateless POST /api/invoke",
+  "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "agent_did": "did:t3n:06cb1776cc1bc4596b4195112813453e95709500",
+  "expected_agent_did": "did:t3n:06cb1776cc1bc4596b4195112813453e95709500",
+  "organisations": [
+    "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912"
+  ],
+  "owner": null,
+  "probe": {
+    "incident_id": "INC-PHASE1-CREDIT-PREFLIGHT-NO-SUCH",
+    "destructive_calls": 0
+  },
+  "http_status": 200,
+  "probe_result": {
+    "destructive_call": {
+      "attempted": false,
+      "count": 0,
+      "http_status": null,
+      "method": "NONE"
+    },
+    "incident_id": "INC-PHASE1-CREDIT-PREFLIGHT-NO-SUCH",
+    "note": "incident authority does not exist",
+    "replay_guard": {
+      "destructive_call_count": 0,
+      "replay_refused": false
+    },
+    "status": "DENIED",
+    "target": {
+      "host": "https://api.github.com",
+      "owner": "",
+      "repository": ""
+    },
+    "verification": {
+      "absent": false,
+      "attempted": false,
+      "authoritative": false,
+      "http_status": null
+    }
+  },
+  "available_base_units": null,
+  "github_destructive_calls": 0,
+  "github_pat_in_process": false,
+  "operator_credential_in_process": false,
+  "agent_key_logged": false
+}

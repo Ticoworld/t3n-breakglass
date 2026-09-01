@@ -1,0 +1,75 @@
+{
+  "phase": "1",
+  "stage": "t3n_log_inspection",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "contract_tail": "breakglass",
+  "entries": [
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass denial recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    },
+    {
+      "level": "info",
+      "message": "BreakGlass Phase 1 result recorded; credential omitted",
+      "span_id_present": false
+    }
+  ],
+  "next_seq": 11,
+  "truncated": false,
+  "likely_secret_pattern_found": false,
+  "github_pat_in_process": false
+}

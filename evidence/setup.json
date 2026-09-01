@@ -1,0 +1,29 @@
+{
+  "phase": "0",
+  "environment": "testnet",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass",
+    "tail": "breakglass",
+    "version": "0.1.0",
+    "contract_id": 794,
+    "function": "delete-deploy-key"
+  },
+  "target": {
+    "host": "api.github.com",
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161677568
+  },
+  "sealed_credential": {
+    "map": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:secrets",
+    "key": "github_pat",
+    "exposed_to_invoke_process": false,
+    "logged": false
+  },
+  "egress_grant": {
+    "host": "api.github.com",
+    "self_grant": true
+  }
+}

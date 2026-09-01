@@ -1,0 +1,29 @@
+/// BreakGlass Phase 1: incident-bound, one-use GitHub deploy-key authority.
+///
+/// The operator writes the complete authority record into a private tenant KV
+/// map. The agent supplies only an incident id; the contract loads action,
+/// target, agent, expiry, and use limit from that record.
+package z:breakglass@0.1.0;
+
+world breakglass {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+    import host:interfaces/http@2.1.0;
+
+    export contracts;
+}
+
+interface contracts {
+    /// Generic envelope required by the current T3N dispatcher. The `input`
+    /// bytes must decode to exactly `{ "incident_id": "..." }`.
+    record generic-input {
+        input:        option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context:      option<list<u8>>,
+    }
+
+    /// Executes an existing operator-created incident authority. No target,
+    /// action, expiry, or max-use fields are accepted at this boundary.
+    execute-incident: func(req: generic-input) -> result<list<u8>, string>;
+}

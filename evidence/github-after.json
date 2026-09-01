@@ -1,0 +1,14 @@
+{
+  "phase": "0",
+  "stage": "independent_github_after_verification",
+  "host": "api.github.com",
+  "owner": "Ticoworld",
+  "repository": "t3n-breakglass-sandbox",
+  "deploy_key_id": 161682082,
+  "exact_key_get_http_status": 404,
+  "deploy_key_list_http_status": 200,
+  "deploy_key_count": 0,
+  "absent": true,
+  "github_pat_logged": false,
+  "github_pat_in_invoke_process": false
+}

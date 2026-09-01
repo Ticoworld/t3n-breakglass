@@ -1,0 +1,31 @@
+{
+  "phase": "1",
+  "stage": "safe_account_authentication_and_balance_check",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "trusted_manifest_flow": "fetchTrustedManifest(testnet)",
+  "mutation_scope": {
+    "contract_registration": 0,
+    "contract_mutations": 0,
+    "github_destructive_calls": 0
+  },
+  "current_operator": {
+    "label": "current_operator",
+    "api_key_env": "T3N_API_KEY",
+    "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+    "balance": {
+      "available_base_units": 15636682117,
+      "reserved_base_units": 0,
+      "last_settled_seq_no": 0,
+      "version": 40,
+      "credit_exhausted": false
+    }
+  },
+  "alternate_account": null,
+  "alternate_key_present": false,
+  "same_did_as_current_operator": null,
+  "fresh_account_tested": false,
+  "github_pat_in_process": false,
+  "t3n_api_key_values_recorded": false
+}

@@ -1,0 +1,43 @@
+{
+  "name": "breakglass-phase1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --import tsx --test tests/product-boundaries.test.ts",
+    "build": "node --import tsx scripts/build-contract.ts",
+    "doctor": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/doctor.ts",
+    "incident:create": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/incident-create.ts",
+    "agent": "node --env-file-if-exists=.env.replacement-agent node_modules/tsx/dist/cli.mjs scripts/agent-mcp.ts",
+    "agent:execute": "node --env-file-if-exists=.env.replacement-agent node_modules/tsx/dist/cli.mjs scripts/agent-execute.ts",
+    "demo": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/demo.ts",
+    "inspect-sdk": "tsx scripts/inspect-sdk.ts",
+    "setup-github": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/setup-github.ts",
+    "verify-phase1-target-current": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/verify-phase1-target-current.ts",
+    "inspect-target": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/inspect-target.ts",
+    "verify-after": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/verify-github-after.ts",
+    "preflight": "tsx scripts/preflight.ts",
+    "preflight-phase1": "tsx scripts/preflight-phase1.ts",
+    "check-account-balances": "tsx scripts/check-account-balances.ts",
+    "agent-credit-preflight": "node --env-file-if-exists=.env.agent node_modules/tsx/dist/cli.mjs scripts/agent-credit-preflight.ts",
+    "inspect-logs": "tsx scripts/inspect-logs.ts",
+    "inspect-phase1-logs": "tsx scripts/inspect-phase1-logs.ts",
+    "bootstrap": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/bootstrap.ts",
+    "authorize-agent": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/authorize-agent.ts",
+    "configure-agent-egress": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/configure-agent-egress.ts",
+    "inspect-agent-membership": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/inspect-agent-membership.ts",
+    "provision-agent": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/provision-agent.ts",
+    "provision-replacement-agent": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/provision-replacement-agent.ts",
+    "verify-replacement-agent-ownership": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/verify-replacement-agent-ownership.ts",
+    "check-replacement-agent-identity": "node --env-file-if-exists=.env.replacement-agent node_modules/tsx/dist/cli.mjs scripts/check-replacement-agent-identity.ts",
+    "replacement-agent-credit-preflight": "node --env-file-if-exists=.env.replacement-agent node_modules/tsx/dist/cli.mjs scripts/replacement-agent-credit-preflight.ts",
+    "create-incident": "node --env-file-if-exists=.env.bootstrap node_modules/tsx/dist/cli.mjs scripts/create-incident.ts",
+    "invoke": "tsx scripts/invoke.ts",
+    "invoke-agent": "node --env-file-if-exists=.env.agent node_modules/tsx/dist/cli.mjs scripts/invoke-agent.ts",
+    "invoke-operator": "tsx scripts/invoke-operator.ts",
+    "evidence": "tsx scripts/render-evidence.ts"
+  },
+  "dependencies": {
+    "@terminal3/t3n-sdk": "5.2.0",
+    "tsx": "4.20.5"
+  }
+}

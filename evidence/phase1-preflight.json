@@ -1,0 +1,15 @@
+{
+  "phase": "1",
+  "stage": "safe_t3n_preflight",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "trust_manifest_verified": true,
+  "handshake_succeeded": true,
+  "authentication_succeeded": true,
+  "harmless_tenant_read_succeeded": true,
+  "harmless_tenant_read_type": "object",
+  "github_pat_in_process": false,
+  "destructive_calls": 0
+}

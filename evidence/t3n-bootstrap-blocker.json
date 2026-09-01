@@ -1,0 +1,23 @@
+{
+  "phase": "0",
+  "status": "BLOCKED",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.3.0",
+  "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "manifest_endpoint": "https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest",
+  "manifest_http_status": 200,
+  "manifest_fields_observed": [
+    "cluster",
+    "version",
+    "peer_ids",
+    "rtmr3_allowlist",
+    "signed_at",
+    "signature"
+  ],
+  "required_current_sdk_field_missing": "rtmr1_allowlist",
+  "sdk_error": "Trust manifest at https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest is malformed.",
+  "t3n_contract_registration_attempted": false,
+  "github_destructive_calls_attempted": 0,
+  "unsafe_trust_server_used": false,
+  "secrets_in_evidence": false
+}

@@ -1,0 +1,16 @@
+{
+  "phase": "0",
+  "status": "target_ready",
+  "host": "api.github.com",
+  "owner": "Ticoworld",
+  "repository": "t3n-breakglass-sandbox",
+  "repository_private": true,
+  "deploy_key_count": 1,
+  "deploy_key": {
+    "id": 161677568,
+    "title": "breakglass-phase0-disposable",
+    "read_only": true,
+    "created_at": "2026-08-29T14:34:03Z"
+  },
+  "github_pat_in_output": false
+}

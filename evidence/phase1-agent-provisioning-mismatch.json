@@ -1,0 +1,36 @@
+{
+  "phase": "1-repair",
+  "stage": "provisioning_mismatch_inspection",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "sdk_package": "node_modules/@terminal3/t3n-sdk/package.json",
+  "sdk_types": "node_modules/@terminal3/t3n-sdk/dist/index.d.ts",
+  "original_call": "createAgent(existingOrganisationDid, name, { defaultCard: false })",
+  "runtime_observation": {
+    "createAgent_accepts_options": true,
+    "default_card_false_branch": "The runtime adds the no-card wire flag only when options.defaultCard is explicitly false.",
+    "no_options_branch": "With no options, the runtime sends only organisation_did and name and does not add the no-card flag.",
+    "createOrganisation": "The runtime dispatches the organization creation contract and returns the newly created DID; this repair does not call it."
+  },
+  "type_observation": {
+    "create_agent_contract": "Atomic provisioning writes the agent registry owner/publish-consent link and, unless defaultCard is false, hosts a private default card.",
+    "agent_uri": "Optional; a T3N-hosted card does not require an external agent URI.",
+    "whoami_owner": "The 5.2.0 type documentation says owner is null for agents created without a hosted card or agent URI because they have no registry record."
+  },
+  "cli_observation": {
+    "command_shape": "agent create --org <did> --name <name> [--uri <uri>] [--card <file>] [--no-card]",
+    "default": "Omitting both --card and --no-card uses the private default-card path.",
+    "no_card": "--no-card explicitly skips private card hosting.",
+    "source": "node_modules/@terminal3/t3n-sdk/dist/cli/index.js"
+  },
+  "live_old_agent_observation": {
+    "agent_did": "did:t3n:06cb1776cc1bc4596b4195112813453e95709500",
+    "org_roster": [],
+    "private_card": "missing",
+    "whoami_owner": null,
+    "set_agent_egress": "NotAnOrgOwnedAgent"
+  },
+  "classification": "The original provisioning call explicitly selected the no-card behavior, so it was the wrong path for an organization-owned agent that must have a private hosted card. The resulting missing registry/ownership visibility is consistent with the SDK 5.2.0 documented no-card behavior. The broader createAgent type comment and the whoami owner comment are internally inconsistent about registry persistence; this is recorded as a documentation inconsistency, not treated as proof of an independent platform bug.",
+  "repair_policy": "Provision exactly one replacement with createAgent(existingOrganisationDid, BreakGlass Agent) and no options.",
+  "mutated_by_this_record": false
+}

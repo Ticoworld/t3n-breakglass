@@ -1,0 +1,29 @@
+{
+  "phase": "0",
+  "sdk_package": "@terminal3/t3n-sdk",
+  "sdk_version": "5.3.0",
+  "package_json_spec": "5.3.0",
+  "package_lock": {
+    "path": "package-lock.json",
+    "lockfile_version": 3,
+    "resolved": "https://registry.npmjs.org/@terminal3/t3n-sdk/-/t3n-sdk-5.3.0.tgz"
+  },
+  "npm_list_version": "5.3.0",
+  "official_flow": "fetchTrustedManifest(testnet) -> T3nClient -> handshake -> authenticate",
+  "manifest_endpoint": "https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest",
+  "manifest_http_status": 200,
+  "manifest_fields_observed": [
+    "cluster",
+    "version",
+    "peer_ids",
+    "rtmr3_allowlist",
+    "signed_at",
+    "signature"
+  ],
+  "missing_required_field": "rtmr1_allowlist",
+  "validation_error": "Trust manifest at https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest is malformed.",
+  "unsafe_trust_server_used": false,
+  "t3n_contract_registration_attempted": false,
+  "github_delete_attempted": false,
+  "secrets_in_evidence": false
+}

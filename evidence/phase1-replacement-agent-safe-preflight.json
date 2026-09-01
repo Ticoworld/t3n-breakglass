@@ -1,0 +1,49 @@
+{
+  "phase": "1-repair",
+  "stage": "replacement_agent_safe_funded_preflight",
+  "status": "PASS",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass",
+  "function": "execute-incident",
+  "version": "1.0.0",
+  "checks": {
+    "metered_stateless_invoke": {
+      "passed": true,
+      "http_status": 200,
+      "probe_incident_id": "INC-PHASE1-REPLACEMENT-NO-SUCH",
+      "result": "DENIED",
+      "destructive_calls": 0
+    },
+    "whoami": {
+      "passed": true,
+      "resolved_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "expected_did_match": true
+    },
+    "organization_ownership": {
+      "passed": true,
+      "organization_admin": true,
+      "roster_contains_replacement": true,
+      "private_agent_card_readable": true,
+      "owner": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912"
+    },
+    "egress": {
+      "passed": true,
+      "lookup_was_read_only": true,
+      "allowed_hosts": ["api.github.com"],
+      "functions": ["execute-incident"],
+      "version_req": "1.0.0"
+    },
+    "agent_process_credentials": {
+      "passed": true,
+      "github_pat_in_process": false,
+      "operator_t3n_api_key_in_process": false,
+      "agent_key_logged": false
+    }
+  },
+  "github_destructive_calls": 0,
+  "secret_values_recorded": false
+}

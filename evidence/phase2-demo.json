@@ -1,0 +1,140 @@
+{
+  "phase": "2",
+  "stage": "live_demo",
+  "status": "PASS",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "target": {
+    "host": "https://api.github.com",
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161914229,
+    "read_only": true,
+    "repository_private": true
+  },
+  "sequence": {
+    "denied": {
+      "incident_id": "INC-PHASE2-DEMO-NO-AUTHORITY-1788244572850",
+      "result": {
+        "incident_id": "INC-PHASE2-DEMO-NO-AUTHORITY-1788244572850",
+        "outcome": "DENIED",
+        "previous_status": null,
+        "current_status": "DENIED",
+        "target": {
+          "host": "https://api.github.com",
+          "owner": "",
+          "repository": "",
+          "deploy_key_id": null
+        },
+        "verification": {
+          "attempted": false,
+          "authoritative": false,
+          "http_status": null,
+          "absent": false
+        },
+        "destructive_call_count": 0,
+        "destructive_call_http_status": null,
+        "audit_reference": {
+          "contract_function": "execute-incident",
+          "contract_version": "1.0.0",
+          "incident_id": "INC-PHASE2-DEMO-NO-AUTHORITY-1788244572850"
+        }
+      }
+    },
+    "authority": {
+      "incident_id": "INC-PHASE2-DEMO-1788244572850",
+      "preview": {
+        "incident_id": "INC-PHASE2-DEMO-1788244572850",
+        "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "action": "revoke_github_deploy_key",
+        "target": {
+          "owner": "Ticoworld",
+          "repository": "t3n-breakglass-sandbox",
+          "deploy_key_id": 161914229,
+          "read_only": true
+        },
+        "created_at": 1788244592,
+        "expires_at": 1788244892,
+        "ttl_seconds": 300,
+        "max_uses": 1,
+        "uses": 0,
+        "status": "ACTIVE"
+      },
+      "persisted": {
+        "incident_id": "INC-PHASE2-DEMO-1788244572850",
+        "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "action": "revoke_github_deploy_key",
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox",
+        "deploy_key_id": 161914229,
+        "created_at": 1788244592,
+        "expires_at": 1788244892,
+        "max_uses": 1,
+        "uses": 0,
+        "status": "ACTIVE"
+      }
+    },
+    "executed": {
+      "incident_id": "INC-PHASE2-DEMO-1788244572850",
+      "outcome": "CONSUMED",
+      "previous_status": "EXECUTING",
+      "current_status": "CONSUMED",
+      "target": {
+        "host": "https://api.github.com",
+        "owner": "Ticoworld",
+        "repository": "t3n-breakglass-sandbox",
+        "deploy_key_id": 161914229
+      },
+      "verification": {
+        "attempted": true,
+        "authoritative": true,
+        "http_status": 404,
+        "absent": true
+      },
+      "destructive_call_count": 1,
+      "destructive_call_http_status": 204,
+      "audit_reference": {
+        "contract_function": "execute-incident",
+        "contract_version": "1.0.0",
+        "incident_id": "INC-PHASE2-DEMO-1788244572850"
+      }
+    },
+    "independent_github_after": {
+      "host": "https://api.github.com",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox",
+      "deployKeyId": 161914229,
+      "exactKeyGetHttpStatus": 404,
+      "keyListHttpStatus": 200,
+      "keyCount": 0,
+      "absent": true
+    },
+    "replay": {
+      "incident_id": "INC-PHASE2-DEMO-1788244572850",
+      "outcome": "REPLAY_REFUSED",
+      "previous_status": "CONSUMED",
+      "current_status": "CONSUMED",
+      "target": {
+        "host": "https://api.github.com",
+        "owner": "Ticoworld",
+        "repository": "t3n-breakglass-sandbox",
+        "deploy_key_id": 161914229
+      },
+      "verification": {
+        "attempted": false,
+        "authoritative": false,
+        "http_status": null,
+        "absent": false
+      },
+      "destructive_call_count": 0,
+      "destructive_call_http_status": null,
+      "audit_reference": {
+        "contract_function": "execute-incident",
+        "contract_version": "1.0.0",
+        "incident_id": "INC-PHASE2-DEMO-1788244572850"
+      }
+    }
+  },
+  "secrets_printed": false,
+  "phase1_evidence_overwritten": false
+}

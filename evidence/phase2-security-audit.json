@@ -1,0 +1,42 @@
+{
+  "phase": "2",
+  "stage": "repository_security_audit",
+  "status": "PASS",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "agent_process": {
+    "github_pat_present": false,
+    "operator_t3n_api_key_present": false,
+    "enforcement": [
+      "agent execution guard",
+      "agent MCP guard",
+      "demo child environment scrub"
+    ]
+  },
+  "capability_separation": {
+    "mcp_tools": ["breakglass_execute_incident"],
+    "operator_creation_tool_exposed": false,
+    "agent_can_create_authority": false,
+    "agent_request_fields": ["incident_id"],
+    "target_from_agent_arguments": false
+  },
+  "trust_boundary": {
+    "target_source": "private Incident Authority",
+    "credential_source": "sealed private T3N map",
+    "egress": "api.github.com only",
+    "destructive_action": "revoke_github_deploy_key only"
+  },
+  "evidence_checks": {
+    "non_env_exact_secret_value_hits": 0,
+    "structured_outputs_secret_free": true,
+    "live_demo_secret_free": true,
+    "disposable_ssh_keys_under_ignored_evidence_raw": true,
+    "phase1_evidence_overwritten": false,
+    "malformed_phase1_agent_evidence_preserved": true,
+    "sdk_5_3_trust_manifest_evidence_preserved": true
+  },
+  "doctor": {
+    "overall": "PASS",
+    "destructive_actions": 0,
+    "secrets_printed": false
+  }
+}

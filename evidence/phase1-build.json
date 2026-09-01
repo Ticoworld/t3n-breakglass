@@ -1,0 +1,23 @@
+{
+  "phase": "1",
+  "status": "built_and_wasm_inspected",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "contract_package": "z:breakglass@0.1.0",
+  "registered_version": "1.0.0",
+  "wasm_target": "wasm32-wasip2",
+  "wasm_sha256": "0f022a347a9e95c6cebc4ad450cf9cc2148855087e2ba93fe9f936486536277e",
+  "wasm_size_bytes": 190784,
+  "host_imports_verified": [
+    "host:tenant/tenant-context@1.0.0",
+    "host:interfaces/logging@2.1.0",
+    "host:interfaces/kv-store@2.1.0",
+    "host:interfaces/http@2.1.0"
+  ],
+  "identity_and_time_imports_verified": [
+    "calling-user-did",
+    "cluster-timestamp-secs"
+  ],
+  "export_verified": "execute-incident",
+  "compile_time_github_target": false,
+  "compile_time_github_credential": false
+}

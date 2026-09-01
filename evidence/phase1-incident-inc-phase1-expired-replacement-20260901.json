@@ -1,0 +1,37 @@
+{
+  "phase": "1",
+  "status": "authority_created",
+  "environment": "testnet",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "storage": {
+    "map": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:incidents",
+    "key": "INC-PHASE1-EXPIRED-REPLACEMENT-20260901",
+    "private": true
+  },
+  "authority": {
+    "incident_id": "INC-PHASE1-EXPIRED-REPLACEMENT-20260901",
+    "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 161682082,
+    "created_at": 1788230412,
+    "expires_at": 1788230472,
+    "max_uses": 1,
+    "uses": 0,
+    "status": "ACTIVE"
+  },
+  "agent_request_boundary": {
+    "accepted_fields": [
+      "incident_id"
+    ],
+    "target_fields": "not accepted"
+  },
+  "github_credential": {
+    "read": false,
+    "included": false,
+    "logged": false
+  },
+  "stored_record_round_trip": true
+}

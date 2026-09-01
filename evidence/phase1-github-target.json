@@ -1,0 +1,21 @@
+{
+  "phase": "1",
+  "status": "target_ready",
+  "host": "api.github.com",
+  "owner": "Ticoworld",
+  "repository": "t3n-breakglass-sandbox",
+  "repository_private": true,
+  "deploy_key_count": 1,
+  "deploy_key": {
+    "id": 161682082,
+    "title": "breakglass-phase1-disposable",
+    "read_only": true,
+    "created_at": "2026-08-29T15:44:01Z"
+  },
+  "keypair": {
+    "private_path": "evidence/raw/t3n-breakglass-phase1-deploy (ignored; not included)",
+    "public_path": "evidence/raw/t3n-breakglass-phase1-deploy.pub"
+  },
+  "github_pat_logged": false,
+  "github_pat_in_invoke_process": false
+}

@@ -1,0 +1,35 @@
+{
+  "phase": "0",
+  "comparison": {
+    "previous": {
+      "package": "@terminal3/t3n-sdk",
+      "version": "5.3.0",
+      "package_json_spec": "5.3.0",
+      "package_lock_resolved": "https://registry.npmjs.org/@terminal3/t3n-sdk/-/t3n-sdk-5.3.0.tgz",
+      "result": "trust manifest rejected as malformed"
+    },
+    "current": {
+      "package": "@terminal3/t3n-sdk",
+      "version": "5.2.0",
+      "package_json_spec": "5.2.0",
+      "package_lock_resolved": "https://registry.npmjs.org/@terminal3/t3n-sdk/-/t3n-sdk-5.2.0.tgz",
+      "npm_list_version": "5.2.0",
+      "result": "trusted preflight succeeded"
+    }
+  },
+  "used_api_surface_compatibility": {
+    "fetchTrustedManifest": "present in both",
+    "T3nClient": "present in both",
+    "TenantClient": "present in both",
+    "TenantClient.contracts.register": "present in both",
+    "TenantClient.contracts.execute": "present in both",
+    "TenantClient.maps.create": "present in both",
+    "TenantClient.executeControl": "present in both",
+    "T3nClient.execute": "present in both",
+    "getContractVersion": "present in both"
+  },
+  "minimum_compatibility_change": "exact dependency pin from 5.3.0 to 5.2.0; no bootstrap/invoke API changes",
+  "trust_anchor_difference": "5.3.0 requires rtmr1_allowlist; 5.2.0 does not",
+  "unsafe_trust_server_used": false,
+  "secrets_in_evidence": false
+}

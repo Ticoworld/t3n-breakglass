@@ -1,0 +1,37 @@
+{
+  "phase": "1-repair",
+  "stage": "replacement_agent_security_audit",
+  "status": "PASS",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "agent_process": {
+    "github_pat_present": false,
+    "operator_t3n_api_key_present": false,
+    "agent_key_logged": false,
+    "stateless_invoke_client_only": true,
+    "map_write_client_present": false,
+    "organization_admin_client_present": false
+  },
+  "request_boundary": {
+    "accepted_fields": ["incident_id"],
+    "unknown_fields_rejected": true,
+    "target_loaded_from_private_authority": true,
+    "agent_can_set_repository_key_action_expiry_or_max_uses": false
+  },
+  "egress": {
+    "allowed_hosts": ["api.github.com"],
+    "functions": ["execute-incident"],
+    "version_req": "1.0.0"
+  },
+  "credential_sealing": {
+    "operator_secrets_map_private": true,
+    "github_pat_record_present": true,
+    "github_pat_value_emitted": false,
+    "exact_credential_value_hits_in_json_evidence": 0,
+    "t3n_log_likely_secret_pattern_found": false
+  },
+  "preserved_regression_evidence": {
+    "malformed_first_agent": "evidence/phase1-agent-provisioning-mismatch.json",
+    "sdk_5_3_0_trust_manifest": "evidence/sdk-5.3.0-state.json"
+  }
+}

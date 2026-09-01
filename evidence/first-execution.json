@@ -1,0 +1,43 @@
+{
+  "phase": "0",
+  "execution": "live",
+  "tenant_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass",
+  "version": "0.1.0",
+  "function": "delete-deploy-key",
+  "result": {
+    "before": {
+      "exists": true,
+      "http_status": 200
+    },
+    "destructive_call": {
+      "attempted": true,
+      "count": 1,
+      "http_status": 204,
+      "method": "DELETE"
+    },
+    "note": "authoritative GET proved the key absent after the attempted DELETE",
+    "replay_guard": {
+      "destructive_call_count": 1,
+      "replay_refused": false
+    },
+    "state": {
+      "after": "CONSUMED",
+      "before": "READY"
+    },
+    "status": "CONSUMED",
+    "target": {
+      "deploy_key_id": 161677568,
+      "host": "https://api.github.com",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox"
+    },
+    "verification": {
+      "absent": true,
+      "attempted": true,
+      "authoritative": true,
+      "http_status": 404
+    }
+  },
+  "github_credential_in_process": false
+}
