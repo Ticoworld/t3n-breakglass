@@ -9,6 +9,7 @@ import {
 } from "../scripts/product.js";
 import { buildIncidentPreview, renderIncidentPreview } from "../scripts/incident-create.js";
 import { breakglassAgentToolDefinition } from "../scripts/agent-tool.js";
+import { assertGithubPathSegment } from "../scripts/github.js";
 
 test("agent interface accepts only incident_id", () => {
   assert.deepEqual(parseAgentInput({ incident_id: "INC-1043" }), { incident_id: "INC-1043" });
@@ -39,6 +40,15 @@ test("invalid TTL and malformed incident IDs are rejected", () => {
   assert.throws(() => validateTtlSeconds("not-a-number"), /positive integer/);
   assert.throws(() => validateIncidentId("INC 1043"), /incident_id/);
   assert.throws(() => validateIncidentId(""), /incident_id/);
+});
+
+test("fresh GitHub bootstrap accepts safe segments and rejects path injection", () => {
+  assert.equal(assertGithubPathSegment("Ticoworld", "owner"), "Ticoworld");
+  assert.equal(assertGithubPathSegment("private-breakglass-repo", "repository"), "private-breakglass-repo");
+  assert.throws(() => assertGithubPathSegment("../attacker", "owner"), /unsafe characters/);
+  assert.throws(() => assertGithubPathSegment("owner/name", "owner"), /unsafe characters/);
+  assert.throws(() => assertGithubPathSegment("-repo", "repository"), /unsafe characters/);
+  assert.throws(() => assertGithubPathSegment("repo\\name", "repository"), /unsafe characters/);
 });
 
 test("duplicate incident IDs are rejected before authority write", () => {

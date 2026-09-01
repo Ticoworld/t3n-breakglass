@@ -81,4 +81,4 @@ ACTIVE --expired--> EXPIRED
 CONSUMED --any retry--> REPLAY_REFUSED
 ```
 
-The authoritative Phase 1 evidence remains under `evidence/`. Phase 2 demo evidence is written separately to `evidence/phase2-demo.json`.
+The authoritative current live proof is [`evidence/phase2e/phase2e-live-proof.json`](../evidence/phase2e/phase2e-live-proof.json), indexed by [`docs/EVIDENCE.md`](EVIDENCE.md). The earlier `evidence/phase2-demo.json` remains preserved as historical Phase 2 evidence.

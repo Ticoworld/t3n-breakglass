@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { redactError, required } from "./lib.js";
+import { assertGithubPathSegment } from "./github.js";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(import.meta.dirname, "..");
@@ -36,12 +37,8 @@ async function exists(filePath: string): Promise<boolean> {
 
 async function main() {
   const pat = required("GITHUB_PAT");
-  const owner = required("GITHUB_OWNER");
-  const repository = required("GITHUB_REPO");
-  if (owner !== "Ticoworld") throw new Error("GITHUB_OWNER must be Ticoworld");
-  if (repository !== "t3n-breakglass-sandbox") {
-    throw new Error("GITHUB_REPO must be t3n-breakglass-sandbox");
-  }
+  const owner = assertGithubPathSegment(required("GITHUB_OWNER"), "owner");
+  const repository = assertGithubPathSegment(required("GITHUB_REPO"), "repository");
 
   const headers = {
     Authorization: `Bearer ${pat}`,
@@ -49,7 +46,7 @@ async function main() {
     "X-GitHub-Api-Version": "2026-03-10",
     "User-Agent": "breakglass-phase1-bootstrap",
   };
-  const repoPath = `/repos/${owner}/${repository}`;
+  const repoPath = `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`;
 
   async function request(pathname: string, init?: RequestInit): Promise<unknown> {
     const response = await fetch(`${apiBase}${pathname}`, {
@@ -135,6 +132,7 @@ async function main() {
   const evidence = {
     phase: "1",
     status: "target_ready",
+    generated_by: "scripts/setup-github.ts",
     host: "api.github.com",
     owner,
     repository,
@@ -145,6 +143,13 @@ async function main() {
       title: intended.title,
       read_only: intended.read_only,
       created_at: intended.created_at,
+    },
+    target_binding: {
+      owner,
+      repository,
+      deploy_key_id: intended.id,
+      repository_private: true,
+      read_only: true,
     },
     keypair: {
       private_path: "evidence/raw/t3n-breakglass-phase1-deploy (ignored; not included)",

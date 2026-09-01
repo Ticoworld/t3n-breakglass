@@ -9,34 +9,53 @@ import {
   redactError,
   required,
 } from "./lib.js";
+import { assertGithubPathSegment } from "./github.js";
 
 const root = path.resolve(import.meta.dirname, "..");
 const wasmPath = path.join(root, "contract", "target", "wasm32-wasip2", "release", "breakglass_contract.wasm");
 const evidenceDir = path.join(root, "evidence");
 
 type TargetEvidence = {
+  generated_by?: string;
   owner?: string;
   repository?: string;
   deploy_key?: { id?: number; read_only?: boolean };
   repository_private?: boolean;
   deploy_key_count?: number;
+  target_binding?: {
+    owner?: string;
+    repository?: string;
+    deploy_key_id?: number;
+    repository_private?: boolean;
+    read_only?: boolean;
+  };
 };
 
-async function phase1Target(): Promise<Required<Pick<TargetEvidence, "owner" | "repository">> & { keyId: number }> {
+async function phase1Target(expectedOwnerInput: string, expectedRepositoryInput: string): Promise<Required<Pick<TargetEvidence, "owner" | "repository">> & { keyId: number }> {
+  const expectedOwner = assertGithubPathSegment(expectedOwnerInput, "owner");
+  const expectedRepository = assertGithubPathSegment(expectedRepositoryInput, "repository");
   const target = JSON.parse(await readFile(path.join(evidenceDir, "phase1-github-target.json"), "utf8")) as TargetEvidence;
   const owner = target.owner;
   const repository = target.repository;
   const keyId = Number(target.deploy_key?.id);
   if (
-    owner !== "Ticoworld" ||
-    repository !== "t3n-breakglass-sandbox" ||
+    target.generated_by !== "scripts/setup-github.ts" ||
+    typeof owner !== "string" ||
+    typeof repository !== "string" ||
+    owner !== expectedOwner ||
+    repository !== expectedRepository ||
     target.repository_private !== true ||
     target.deploy_key_count !== 1 ||
     target.deploy_key?.read_only !== true ||
     !Number.isSafeInteger(keyId) ||
-    keyId <= 0
+    keyId <= 0 ||
+    target.target_binding?.owner !== expectedOwner ||
+    target.target_binding?.repository !== expectedRepository ||
+    target.target_binding?.deploy_key_id !== keyId ||
+    target.target_binding?.repository_private !== true ||
+    target.target_binding?.read_only !== true
   ) {
-    throw new Error("phase1 GitHub target evidence is not the expected private one-key target");
+    throw new Error("setup-github target evidence is not the expected private one-key target for GITHUB_OWNER/GITHUB_REPO");
   }
   return { owner, repository, keyId };
 }
@@ -62,7 +81,9 @@ async function ensurePrivateContractMap(tenant: Awaited<ReturnType<typeof connec
 
 async function main() {
   const githubPat = required("GITHUB_PAT");
-  const target = await phase1Target();
+  const owner = assertGithubPathSegment(required("GITHUB_OWNER"), "owner");
+  const repository = assertGithubPathSegment(required("GITHUB_REPO"), "repository");
+  const target = await phase1Target(owner, repository);
   const { t3n, tenant, tenantDid, nodeUrl } = await connectTenant();
   const wasm = new Uint8Array(await readFile(wasmPath));
   const registered = await tenant.contracts.register({

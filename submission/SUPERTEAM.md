@@ -16,7 +16,7 @@ The live proof revoked one disposable read-only deploy key: GitHub GET `200` bef
 
 ## Public links
 
-- GitHub: `[PUBLIC_GITHUB_REPO_URL]`
+- GitHub: https://github.com/Ticoworld/t3n-breakglass
 - Google Doc: `[PUBLIC_GOOGLE_DOC_URL]`
 
 ## Post-challenge maintenance answer

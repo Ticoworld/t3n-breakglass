@@ -31,8 +31,11 @@ type GithubKey = {
   created_at?: string;
 };
 
-function assertPathSegment(value: string, label: string): string {
-  if (!/^[A-Za-z0-9_.-]{1,100}$/.test(value)) throw new Error(`${label} contains unsafe characters`);
+export function assertGithubPathSegment(value: string, label: "owner" | "repository"): string {
+  const pattern = label === "owner"
+    ? /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/
+    : /^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,99})$/;
+  if (!pattern.test(value) || value === "." || value === "..") throw new Error(`${label} contains unsafe characters`);
   return value;
 }
 
@@ -75,8 +78,8 @@ async function request<T>(
 }
 
 export async function inspectGithubTarget(ownerInput: string, repositoryInput: string, deployKeyId: number): Promise<GithubTarget> {
-  const owner = assertPathSegment(ownerInput, "owner");
-  const repository = assertPathSegment(repositoryInput, "repository");
+  const owner = assertGithubPathSegment(ownerInput, "owner");
+  const repository = assertGithubPathSegment(repositoryInput, "repository");
   if (!Number.isSafeInteger(deployKeyId) || deployKeyId <= 0) throw new Error("deploy-key ID must be a positive integer");
   const pat = required("GITHUB_PAT");
   const userAgent = "breakglass-phase2-operator";
@@ -115,8 +118,8 @@ export async function verifyGithubAbsent(ownerInput: string, repositoryInput: st
   keyCount: number;
   absent: boolean;
 }> {
-  const owner = assertPathSegment(ownerInput, "owner");
-  const repository = assertPathSegment(repositoryInput, "repository");
+  const owner = assertGithubPathSegment(ownerInput, "owner");
+  const repository = assertGithubPathSegment(repositoryInput, "repository");
   if (!Number.isSafeInteger(deployKeyId) || deployKeyId <= 0) throw new Error("deploy-key ID must be a positive integer");
   const pat = required("GITHUB_PAT");
   const base = `/repos/${owner}/${repository}`;
@@ -140,8 +143,8 @@ export async function verifyGithubAbsent(ownerInput: string, repositoryInput: st
 }
 
 export async function ensurePhase2DisposableTarget(ownerInput: string, repositoryInput: string): Promise<GithubTarget> {
-  const owner = assertPathSegment(ownerInput, "owner");
-  const repository = assertPathSegment(repositoryInput, "repository");
+  const owner = assertGithubPathSegment(ownerInput, "owner");
+  const repository = assertGithubPathSegment(repositoryInput, "repository");
   const pat = required("GITHUB_PAT");
   const userAgent = "breakglass-phase2-bootstrap";
   const repoPath = `/repos/${owner}/${repository}`;

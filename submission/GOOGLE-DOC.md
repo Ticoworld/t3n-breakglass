@@ -91,7 +91,7 @@ A future action should have a separate schema, fixed least-privileged egress, se
 
 ## Public links
 
-- Public GitHub repository: `[PUBLIC_GITHUB_REPO_URL]`
+- Public GitHub repository: https://github.com/Ticoworld/t3n-breakglass
 - Public Google Doc: `[PUBLIC_GOOGLE_DOC_URL]`
 - Contact/social: `[CONTACT_OR_SOCIAL_LINK]`
 
