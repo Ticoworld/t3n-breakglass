@@ -15,9 +15,9 @@ raw environment or HTTP dump is included.
 | Real GitHub ingress is a manual setup prerequisite, not silently claimed live | R6 in main report -> GitHub webhook docs -> `C-0R-webhook-result.json` explicitly says local fixture and no real ingress -> setup requirement in report |
 | Provider outcome ambiguity is real and no blind retry is safe | `c0r-ambiguity-live.ts` -> `C-0R-ambiguity-result.json` dropped-after-effect and dropped-before-effect cases -> `contract/src/lib.rs` error/success branches show current no-blind-retry |
 | Official call-centre reference has same outbound read-before-effect race class | call-centre `pay.rs:107-133`, `ledger.rs:127-139`, `relay_client.rs:47-84` at `bf08f0ba0fb1ce585696e78b7162a0785afab97f` -> `C-0R-reference-race-result.json` local synchronized model -> live OCC artifact proves the host overlap premise; no provider duplicate effect claimed |
-| GitHub App JIT path is not closed because account setup is absent | GitHub official App/JWT/token/revoke docs -> `C-0R-app-jit-result.json` exact owner/setup prerequisite -> report R5; standing private key caveat |
+| GitHub App JIT path is live-proven | `C-0R-app-jit-live-result.json` -> `c0r-app-jit-live.ts` -> report R5; standing private key caveat |
 | AgentGate is an elite benchmark even without formal challenge-status confirmation | `C-0R-MISSED-THREADS.md` R9 -> AgentGate URL/HEAD `d76f3570fb9bd41247dc1b8b63df74e3d183c4ec` -> README claims separated from source-proven contract/MCP/KV audit -> comparison table |
-| No material uncertainty remains parked as UNKNOWN except the allowed external setup block | appended `C-0-MATERIAL-UNCERTAINTIES.md` C-0R register -> `C-0R-MISSED-THREADS.md` R10 -> count command in final audit |
+| Material UNKNOWN count is 0 and no external account configuration block remains | appended `C-0-MATERIAL-UNCERTAINTIES.md` C-0R register -> `C-0R-MISSED-THREADS.md` R10 -> count command in final audit |
 
 ## Required headline map
 
