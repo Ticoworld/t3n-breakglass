@@ -3,6 +3,14 @@
   "date_utc": "2026-09-01T12:23:54.632Z",
   "sdk_version": "@terminal3/t3n-sdk 5.2.0",
   "node_environment": "testnet",
+  "world_wit": "research/C-0R-outbox-probe/wit/world.wit",
+  "wit_import": "host:outbox/outbox@1.0.0",
+  "compile": {
+    "outcome": "success",
+    "target": "wasm32-wasip2",
+    "toolchain": "WSL Ubuntu Rust 1.97.1",
+    "command_shape": "cargo build --manifest-path research/C-0R-outbox-probe/Cargo.toml --target wasm32-wasip2 --release"
+  },
   "contract_tail": "c0r-outbox-link-probe",
   "contract_version": "0.1.2",
   "credentials_in_probe": false,
@@ -17,6 +25,8 @@
   "invocation": {
     "outcome": "error",
     "function_called": "link-probe",
+    "failure_stage": "invocation",
+    "import_present_in_world": true,
     "outbox_call_made": false,
     "error": {
       "message": "RPC Error: Internal error [e0bcd4b5-8184-4a4b-be35-9ac32cca8e0a]",
