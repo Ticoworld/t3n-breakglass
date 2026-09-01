@@ -66,6 +66,7 @@ SHA-256 values were calculated from the working tree at the audit checkpoint. Le
 | Valid live DELETE returned HTTP 204 | Rust contract execution result | `phase2-demo.json` executed result | LIVE | VERIFIED as contract-reported; no independent raw HTTP request trace is preserved |
 | Authoritative GET returned HTTP 404 | contract verification plus `verifyGithubAbsent` | `phase2-demo.json` executed verification and independent GitHub section | LIVE | VERIFIED; both contract-reported and independently queried evidence exist |
 | Authority became `CONSUMED` | contract state machine | phase2 demo; read-only authority lookup | LIVE + STATIC | VERIFIED |
+| Post-use uses are `1/1` | contract state mutation; read-only map lookup | `raw/incident-after-read.txt` | LIVE | PARTIAL — the separate live lookup proves `1/1`, but the original `phase2-demo.json` does not contain the post-use count |
 | Replay caused zero destructive calls | Rust consumed-state gate | phase2 demo replay; Rust replay test | LIVE + UNIT | VERIFIED |
 | Product tests are 6/6 | `tests/product-boundaries.test.ts` | `raw/npm-test.txt` | UNIT | VERIFIED |
 | Rust tests are 11/11 | `contract/src/authority.rs` tests and `lib.rs` test | `raw/rust-test.txt` | UNIT | VERIFIED |
