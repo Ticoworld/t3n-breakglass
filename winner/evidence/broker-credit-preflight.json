@@ -1,0 +1,33 @@
+{
+  "experiment": "C1 dedicated effect broker credit preflight",
+  "status": "BLOCKED_ON_BROKER_AGENT_FUNDING",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "probe": {
+    "incident_id": "C1-CREDIT-PREFLIGHT-1788275050683",
+    "function": "claim-effect",
+    "provider_mutations": 0
+  },
+  "result": {
+    "error": "InsufficientCredit (account=71612737505d7fbbd39e03b4d7a89e31d6346a57, required=10000000000, available=0)",
+    "code": "forbidden",
+    "request_id": "940d5488-be33-46fe-bf9c-12ed52dbca50"
+  },
+  "error": {
+    "message": "server returned HTTP 403",
+    "http_status": 403,
+    "body": {
+      "error": "InsufficientCredit (account=71612737505d7fbbd39e03b4d7a89e31d6346a57, required=10000000000, available=0)",
+      "code": "forbidden",
+      "request_id": "940d5488-be33-46fe-bf9c-12ed52dbca50"
+    }
+  },
+  "insufficient_credit": true,
+  "operator_credential_in_process": false,
+  "github_pat_in_process": false,
+  "credentials_logged": false,
+  "funding_action_if_blocked": "Fund the effect broker DID from the Terminal 3 testnet token/credit control plane, then rerun this preflight and C1 configuration."
+}

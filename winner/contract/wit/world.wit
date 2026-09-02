@@ -1,0 +1,28 @@
+/// BreakGlass C1: state-only authority, OCC reservation, and effect claim.
+///
+/// This component never performs provider HTTP.  A remediation agent can
+/// reserve an operator-created incident; a separate effect broker can claim
+/// exactly one committed provider effect and later record its bounded result.
+package z:breakglass-winner@0.1.0;
+
+world breakglass-winner {
+    import host:tenant/tenant-context@1.0.0;
+    import host:interfaces/logging@2.1.0;
+    import host:interfaces/kv-store@2.1.0;
+
+    export contracts;
+}
+
+interface contracts {
+    record generic-input {
+        input:        option<list<u8>>,
+        user-profile: option<list<u8>>,
+        context:      option<list<u8>>,
+    }
+
+    reserve-incident: func(req: generic-input) -> result<list<u8>, string>;
+    claim-effect: func(req: generic-input) -> result<list<u8>, string>;
+    release-not-attempted: func(req: generic-input) -> result<list<u8>, string>;
+    finalize-effect: func(req: generic-input) -> result<list<u8>, string>;
+    reconcile-effect: func(req: generic-input) -> result<list<u8>, string>;
+}

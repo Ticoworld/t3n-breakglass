@@ -1,0 +1,28 @@
+{
+  "experiment": "C1 state-only contract registration",
+  "status": "REGISTERED",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "tail": "breakglass-winner-c1",
+    "version": "2.0.0",
+    "contract_id": 842,
+    "functions": [
+      "reserve-incident",
+      "claim-effect",
+      "release-not-attempted",
+      "finalize-effect",
+      "reconcile-effect"
+    ]
+  },
+  "map": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:winner-incidents",
+    "tail": "winner-incidents",
+    "private": true,
+    "acl_contract_id": 842
+  },
+  "provider_mutations": 0
+}
