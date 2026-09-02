@@ -4,8 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { invokeC1, connectC1Principal, redact, requireValue } from "../scripts/t3n.js";
 import { CONTRACT_TAIL, CONTRACT_VERSION, contractName } from "../scripts/constants.js";
-import { classifyProviderOutcome, parseClaim, processMustRefusePat, type ProviderClassification } from "./logic.js";
-import { appConfigFromEnvironment, appJwt, exactKey, listInstallationRepositories, listKeys, deleteKey, mintInstallationToken, repositoryContains, repositoryRead, revokeInstallationToken } from "./github-app.js";
+import { claimTargetMatchesConfiguredRepository, classifyProviderOutcome, parseClaim, processMustRefusePat, type ProviderClassification } from "./logic.js";
+import { appConfigFromEnvironment, appJwt, exactKey, listInstallationRepositories, listKeys, deleteKey, mintInstallationToken, repositoryContains, repositoryListIsWellFormed, repositoryRead, revokeInstallationToken } from "./github-app.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -40,9 +40,24 @@ async function main() {
   const claim = parsed.claim!;
   evidence.authority_loaded_target = { action: claim.action, github_owner: claim.github_owner, github_repo: claim.github_repo, deploy_key_id: claim.deploy_key_id, claim_id: claim.claim_id, claim_version: claim.claim_version };
   const config = appConfigFromEnvironment(process.env);
+  if (!claimTargetMatchesConfiguredRepository(claim, config.owner, config.repository)) {
+    throw new Error("CLAIM_TARGET_MISMATCH: committed incident target differs from broker fixed repository configuration");
+  }
   let token: string | null = null;
   let revoked = false;
   let classificationToFinalize: ProviderClassification | undefined;
+  let deleteMayHaveBeenInitiated = false;
+  let releaseAttempted = false;
+  const releaseClaim = async () => {
+    if (releaseAttempted || deleteMayHaveBeenInitiated) return;
+    releaseAttempted = true;
+    try {
+      evidence.release_not_attempted = await invokeC1(broker.apiKey, broker.nodeUrl, contractId, "release-not-attempted", { incident_id: incidentId, claim_id: claim.claim_id });
+    } catch (error) {
+      evidence.release_error = safeError(error, [broker.apiKey]);
+      throw error;
+    }
+  };
   try {
     const jwt = await appJwt(config);
     const installation = await (await import("./github-app.js")).validateInstallation(config, jwt);
@@ -72,11 +87,11 @@ async function main() {
     if (precheckFailed || process.env.C1_INJECT_PRECHECK_FAILURE === "1") {
       evidence.precheck_failure = true;
       evidence.precheck_injected_failure = process.env.C1_INJECT_PRECHECK_FAILURE === "1";
-      const released = await invokeC1(broker.apiKey, broker.nodeUrl, contractId, "release-not-attempted", { incident_id: incidentId, claim_id: claim.claim_id });
-      evidence.release_not_attempted = released;
+      await releaseClaim();
       evidence.classification = "NOT_ATTEMPTED";
     } else {
       let deleted: { status: number | null; body?: unknown };
+      deleteMayHaveBeenInitiated = true;
       try { const response = await deleteKey(token, config.owner, config.repository, keyId); deleted = { status: response.status, body: response.body }; } catch (error) { deleted = { status: null, body: safeError(error, [token]) }; }
       evidence.delete_attempted = true;
       evidence.destructive_call_count = 1;
@@ -84,14 +99,19 @@ async function main() {
       const afterGet = await exactKey(token, config.owner, config.repository, keyId);
       const afterList = await listKeys(token, config.owner, config.repository);
       const containsAfter = repositoryContains(afterList.body, keyId);
-      evidence.after = { exact_get_http_status: afterGet.status, list_http_status: afterList.status, target_absent: afterGet.status === 404 && !containsAfter, list_contains_target: containsAfter };
-      const classification = classifyProviderOutcome(deleted.status, deleted.status === null, afterGet.status, containsAfter);
+      const listBodyValid = repositoryListIsWellFormed(afterList.body);
+      evidence.after = { exact_get_http_status: afterGet.status, list_http_status: afterList.status, target_absent: afterGet.status === 404 && afterList.status === 200 && listBodyValid && !containsAfter, list_contains_target: containsAfter, list_body_valid: listBodyValid };
+      const classification = classifyProviderOutcome(deleted.status, deleted.status === null, afterGet.status, containsAfter, afterList.status, listBodyValid);
       evidence.classification = classification;
       evidence.provider_observation = { delete_contract_action: "broker-issued-one-DELETE", delete_count: 1, after_observation_is_independent_provider_read: true };
       classificationToFinalize = classification;
     }
   } catch (error) {
     evidence.effect_error = safeError(error, [broker.apiKey]);
+    if (!deleteMayHaveBeenInitiated && !releaseAttempted) {
+      try { await releaseClaim(); evidence.classification = "NOT_ATTEMPTED"; }
+      catch { /* the release error is recorded; the claim remains manual-recovery state */ }
+    }
   } finally {
     if (token) {
       try { const revoke = await revokeInstallationToken(token); revoked = revoke.status === 204; evidence.revoke = { attempted: true, http_status: revoke.status, success: revoked }; } catch (error) { evidence.revoke = { attempted: true, http_status: null, success: false, error: safeError(error, [token]) }; }

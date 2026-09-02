@@ -1,0 +1,57 @@
+{
+  "verdict": "PRELIVE_REPAIR_PASS_WAITING_ONLY_ON_CREDIT",
+  "base_commit": "07b6e890bed4951bc40591f32ba346a74c6fc9aa",
+  "final_commit_if_any": null,
+  "live_t3n_calls": 0,
+  "github_api_calls": 0,
+  "provider_mutations": 0,
+  "t3n_credit_consumed_by_phase": 0,
+  "kill_conditions_found": [
+    "malformed terminal state accepted",
+    "reconciliation could mutate CLOSED",
+    "release could reopen after incident expiry",
+    "reserve expiry could corrupt an EFFECT_CLAIMED record",
+    "provider list failure/body ambiguity could look like verified absence",
+    "committed target was not checked against broker fixed target",
+    "seed target environment could widen authority",
+    "delegation environment could redirect principal grants",
+    "pre-DELETE broker failures could strand a zero-attempt claim",
+    "live replay was not enforced before writing live proof",
+    "App config accepted a repository-local private-key path",
+    "live runner created provider target before identity/configuration validation",
+    "error redaction omitted JWT/GitHub bearer-shaped values"
+  ],
+  "bugs_found": 13,
+  "bugs_repaired": 13,
+  "remaining_blockers": [
+    "effect broker has InsufficientCredit: required=10000000000 available=0",
+    "funded live T3N OCC race and live GitHub proof remain unperformed",
+    "delegation-configuration.json is not checked in; live principal/delegation setup remains unverified"
+  ],
+  "tests": {
+    "root_product": { "passed": 7, "failed": 0 },
+    "broker_and_prelive": { "passed": 15, "failed": 0 },
+    "local_race_iterations": { "passed": 32, "failed": 0 },
+    "rust_unit": { "passed": 16, "failed": 0 },
+    "rust_doc": { "passed": 1, "failed": 0 },
+    "wasm_build": { "status": "passed", "toolchain": "wasm32-wasip2 via supported WSL fallback", "artifact": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm" },
+    "secret_audit": { "status": "passed", "secret_hit_files": [], "staged_files": [], "ignored_credentials_tracked": false }
+  },
+  "property_test_sequences": 4000,
+  "property_test_operations": 320000,
+  "race_iterations": 32,
+  "claims_allowed": [
+    "LOCAL_MODEL",
+    "CODE_PROVEN",
+    "INDEPENDENT_PROVIDER_READ in fake adapter tests",
+    "HOST_ACTIVITY only for local child process metadata"
+  ],
+  "claims_forbidden": [
+    "C1_PASS",
+    "LIVE_T3N",
+    "LIVE_GITHUB",
+    "provider mutation success",
+    "exactly-once external DELETE",
+    "C2 or submission completion"
+  ]
+}

@@ -7,15 +7,19 @@ export function requireValue(name: string): string {
   return value;
 }
 
-export function refuseProviderOrOperatorCredentials(): void {
-  if (process.env.GITHUB_PAT) throw new Error("C1 refuses to run with GITHUB_PAT present");
-  if (process.env.T3N_API_KEY) throw new Error("C1 principal process refuses the operator T3N credential");
+export function refuseProviderOrOperatorCredentials(environment: NodeJS.ProcessEnv = process.env): void {
+  if (environment.GITHUB_PAT) throw new Error("C1 refuses to run with GITHUB_PAT present");
+  if (environment.T3N_API_KEY) throw new Error("C1 principal process refuses the operator T3N credential");
 }
 
 export function redact(error: unknown, secrets: string[] = []): string {
   let message = error instanceof Error ? error.message : String(error);
   for (const secret of secrets) if (secret) message = message.split(secret).join("[REDACTED]");
-  return message.replace(/t3n_key_[A-Za-z0-9_-]+/g, "[REDACTED_T3N_KEY]");
+  return message
+    .replace(/(Authorization\s*:\s*Bearer\s+)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED_AUTH]")
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED_AUTH]")
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[REDACTED_JWT]")
+    .replace(/(gh[pousr]_|github_pat_|t3n_key_)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED_TOKEN]");
 }
 
 export async function connectC1Principal(apiKeyEnv: string, expectedDidEnv: string) {

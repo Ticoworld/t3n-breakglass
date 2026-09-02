@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { connectTenant, redactError } from "../../scripts/lib.js";
-import { ACTION, CONTRACT_VERSION, INCIDENT_MAP_TAIL } from "./constants.js";
+import { ACTION, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, INCIDENT_MAP_TAIL } from "./constants.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -15,9 +15,10 @@ async function main() {
   if (!registration.operator_did || !registration.contract?.name || !configured.remediation_agent_did || !configured.effect_broker_did) throw new Error("C1 registration/configuration evidence is incomplete");
   const incidentId = required("C1_INCIDENT_ID");
   if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(incidentId)) throw new Error("C1_INCIDENT_ID has an invalid format");
-  const owner = required("C1_GITHUB_OWNER");
-  const repo = required("C1_GITHUB_REPO");
-  if (!/^[A-Za-z0-9_.-]+$/.test(owner) || !/^[A-Za-z0-9_.-]+$/.test(repo)) throw new Error("GitHub target path is invalid");
+  const owner = GITHUB_OWNER;
+  const repo = GITHUB_REPOSITORY;
+  if (process.env.C1_GITHUB_OWNER && process.env.C1_GITHUB_OWNER !== owner) throw new Error("C1_GITHUB_OWNER cannot override the committed broker target");
+  if (process.env.C1_GITHUB_REPO && process.env.C1_GITHUB_REPO !== repo) throw new Error("C1_GITHUB_REPO cannot override the committed broker target");
   const createdAt = positive("C1_CREATED_AT");
   const expiresAt = positive("C1_EXPIRES_AT");
   if (expiresAt <= createdAt) throw new Error("expiry must be after creation");

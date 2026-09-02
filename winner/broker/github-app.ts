@@ -5,6 +5,7 @@ import path from "node:path";
 
 const API = "https://api.github.com";
 const API_VERSION = "2022-11-28";
+const REPOSITORY_ROOT = path.resolve(import.meta.dirname, "../..");
 
 type GithubResponse = { status: number; body: unknown; responseHeaders: Record<string, string> };
 
@@ -14,7 +15,11 @@ function b64url(value: string | Uint8Array): string {
 
 function safeBody(body: unknown): unknown {
   if (typeof body !== "string") return body;
-  return body.replace(/(Bearer\s+|gh[pousr]_|github_pat_|t3n_key_)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED]");
+  return body
+    .replace(/(Authorization\s*:\s*Bearer\s+)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED]")
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED]")
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[REDACTED_JWT]")
+    .replace(/(gh[pousr]_|github_pat_|t3n_key_)[A-Za-z0-9._~+\/-]+/gi, "$1[REDACTED_TOKEN]");
 }
 
 async function request(method: string, route: string, token: string, body?: unknown): Promise<GithubResponse> {
@@ -49,6 +54,8 @@ export function appConfigFromEnvironment(env: NodeJS.ProcessEnv): AppConfig {
   if (!appId || !installationId || !privateKeyPath || !owner || !repository) throw new Error("GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY_PATH, GITHUB_OWNER, and GITHUB_REPO are required");
   if (owner !== "Ticoworld" || repository !== "t3n-breakglass-sandbox") throw new Error("C1 refuses an unexpected GitHub target");
   if (!/^\d+$/.test(appId) || !/^\d+$/.test(installationId)) throw new Error("GitHub App identifiers are invalid");
+  const relativeKeyPath = path.relative(REPOSITORY_ROOT, path.resolve(privateKeyPath));
+  if (relativeKeyPath === "" || (!relativeKeyPath.startsWith(`..${path.sep}`) && relativeKeyPath !== ".." && !path.isAbsolute(relativeKeyPath))) throw new Error("C1 GitHub App private key must be outside the repository");
   return { appId, installationId, privateKeyPath, owner, repository };
 }
 
@@ -111,4 +118,8 @@ export async function createDisposableDeployKey(token: string, config: AppConfig
 
 export function repositoryContains(body: unknown, keyId: number): boolean {
   return Array.isArray(body) && body.some((entry) => entry && typeof entry === "object" && Number((entry as Record<string, unknown>).id) === keyId);
+}
+
+export function repositoryListIsWellFormed(body: unknown): boolean {
+  return Array.isArray(body) && body.every((entry) => entry && typeof entry === "object" && Number.isSafeInteger(Number((entry as Record<string, unknown>).id)) && Number((entry as Record<string, unknown>).id) > 0);
 }

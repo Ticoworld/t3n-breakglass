@@ -15,11 +15,16 @@ async function main() {
   if (process.env.GITHUB_PAT) throw new Error("C1 delegation configuration refuses a GitHub PAT");
   const registration = JSON.parse(await readFile(registrationPath, "utf8")) as { operator_did?: string; contract?: { name?: string; version?: string; contract_id?: number } };
   const provisioning = JSON.parse(await readFile(provisioningPath, "utf8")) as { effect_broker_did?: string };
-  const remediationDid = process.env.REMEDIATION_AGENT_DID ?? await requiredEnvFile("REPLACEMENT_AGENT_DID");
-  const brokerDid = process.env.EFFECT_BROKER_DID ?? provisioning.effect_broker_did;
+  const recordedRemediationDid = await requiredEnvFile("REPLACEMENT_AGENT_DID");
+  const recordedBrokerDid = provisioning.effect_broker_did;
+  if (process.env.REMEDIATION_AGENT_DID && process.env.REMEDIATION_AGENT_DID !== recordedRemediationDid) throw new Error("REMEDIATION_AGENT_DID override differs from recorded C1 principal");
+  if (process.env.EFFECT_BROKER_DID && process.env.EFFECT_BROKER_DID !== recordedBrokerDid) throw new Error("EFFECT_BROKER_DID override differs from recorded C1 principal");
+  const remediationDid = recordedRemediationDid;
+  const brokerDid = recordedBrokerDid;
   if (!brokerDid || !/^did:t3n:[0-9a-f]{40}$/.test(brokerDid)) throw new Error("effect broker DID is missing or invalid");
   if (!/^did:t3n:[0-9a-f]{40}$/.test(remediationDid)) throw new Error("remediation agent DID is missing or invalid");
   if (!registration.operator_did || registration.contract?.version !== CONTRACT_VERSION || !registration.contract.name) throw new Error("registration evidence is incomplete");
+  if (new Set([registration.operator_did, remediationDid, brokerDid]).size !== 3) throw new Error("C1 principals must be three distinct DIDs");
   const { t3n, tenantDid, nodeUrl } = await connectTenant();
   if (tenantDid !== registration.operator_did) throw new Error("authenticated operator DID differs from registration evidence");
   const contractId = contractName(tenantDid);

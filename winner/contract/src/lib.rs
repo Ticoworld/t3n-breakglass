@@ -66,7 +66,7 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         "claim-effect" => model::claim(&mut authority, caller.as_deref(), now),
         "release-not-attempted" => {
             let request: model::ClaimIdentityRequest = parse_json(raw)?;
-            model::release_not_attempted(&mut authority, caller.as_deref(), &request.claim_id)
+            model::release_not_attempted(&mut authority, caller.as_deref(), &request.claim_id, now)
         }
         "finalize-effect" => {
             let request: model::FinalizeRequest = parse_json(raw)?;

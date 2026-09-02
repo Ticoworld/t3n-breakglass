@@ -16,9 +16,9 @@ export function parseClaim(raw: unknown): { won: boolean; claim?: NonNullable<Cl
   return { won: true, claim: detail, result };
 }
 
-export function classifyProviderOutcome(deleteStatus: number | null, deleteTransportFailed: boolean, exactGetStatus: number | null, listContainsTarget: boolean): ProviderClassification {
+export function classifyProviderOutcome(deleteStatus: number | null, deleteTransportFailed: boolean, exactGetStatus: number | null, listContainsTarget: boolean, listGetStatus: number | null, listBodyValid: boolean): ProviderClassification {
   if (deleteStatus === null && !deleteTransportFailed) return "NOT_ATTEMPTED";
-  if (exactGetStatus === 404 && !listContainsTarget) return "VERIFIED_ABSENT";
+  if (exactGetStatus === 404 && listGetStatus === 200 && listBodyValid && !listContainsTarget) return "VERIFIED_ABSENT";
   if (deleteTransportFailed) return "ATTEMPTED_OUTCOME_UNKNOWN";
   if (deleteStatus === 204) return "PROVIDER_ACKNOWLEDGED";
   return "VERIFIED_PRESENT";
@@ -28,6 +28,10 @@ export function destructiveRetryAllowed(_classification: ProviderClassification)
 
 export function targetMustComeFromClaim(input: unknown, claim: NonNullable<ClaimResult["detail"]>): boolean {
   return input === undefined && claim.action === "revoke_github_deploy_key" && Boolean(claim.github_owner && claim.github_repo && claim.deploy_key_id);
+}
+
+export function claimTargetMatchesConfiguredRepository(claim: NonNullable<ClaimResult["detail"]>, owner: string, repository: string): boolean {
+  return claim.github_owner === owner && claim.github_repo === repository;
 }
 
 export function processMustRefusePat(environment: NodeJS.ProcessEnv): boolean { return Boolean(environment.GITHUB_PAT); }
