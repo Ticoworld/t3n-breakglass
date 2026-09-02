@@ -1,0 +1,66 @@
+{
+  "experiment": "C1 disposable agent self-serve credit admission probe",
+  "status": "OTHER_BOUNDED_FAILURE",
+  "bounded_failure": "operator control plane has no usable credit; disposable agent creation did not return a DID or credential",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "source_reference": {
+    "basis": "Terminal 3 SDK public reference README and typed submitUserInput documentation",
+    "exact_call": "t3n.submitUserInput({ profile: {}, becomeDevTenant: true })",
+    "rationale": "testnet self-admit is documented as potentially minting configured welcome credits; effect for an org-owned agent is unverified"
+  },
+  "operator_control_plane_preflight": {
+    "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "balance": {
+      "available_base_units": 0,
+      "reserved_base_units": 0,
+      "last_settled_seq_no": 0,
+      "version": 289,
+      "credit_exhausted": true
+    },
+    "required_for_metered_control_plane_call": 10000000000,
+    "observed_error": "InsufficientCredit (required=10000000000, available=0)"
+  },
+  "disposable_agent": {
+    "name": "BreakGlass Credit Probe",
+    "did": null,
+    "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+    "key_id": null,
+    "credential_in_evidence": false,
+    "credential_stored_in": null,
+    "creation_completed": false,
+    "creation_confirmation": "no DID or credential was returned; roster confirmation is also credit-gated"
+  },
+  "initial_credit_preflight": null,
+  "self_admit_attempted": false,
+  "self_admit": null,
+  "post_admit_credit_preflight": null,
+  "identity": {
+    "before": null,
+    "after": null,
+    "tenant_before": null,
+    "tenant_after": null
+  },
+  "organization_ownership": {
+    "before": null,
+    "after": null,
+    "observation": "unavailable because the operator roster call is credit-gated"
+  },
+  "observed_identity_role_changes": null,
+  "privileges": {
+    "contract_count_before": null,
+    "c1_egress_before": null,
+    "github_egress_before": false,
+    "sensitive_map_acl_observed": false
+  },
+  "safe_for_real_c1_broker": false,
+  "real_broker_did_touched": false,
+  "credential_in_evidence": false,
+  "github_mutation_count": 0,
+  "provider_mutation_count": 0,
+  "t3n_control_plane_mutations": {
+    "create_agent_completed": 0,
+    "self_admit": 0
+  }
+}
