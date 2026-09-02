@@ -1,0 +1,217 @@
+{
+  "status": "NEEDS_TESTNET_CREDIT",
+  "branch": "winner-v2-core",
+  "head": "32c15d3ff812c0d29622745ad386f6b76f1706f7",
+  "main": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "read_completed_utc": "2026-09-02T12:47:09.517Z",
+  "identity_resolution": {
+    "operator_source": "winner/evidence/contract-registration.json and .env.bootstrap DID",
+    "remediation_source": ".env.replacement-agent and keyed whoami",
+    "effect_broker_source": ".env.effect-broker and keyed whoami",
+    "all_three_distinct": true,
+    "same_organization": true,
+    "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912"
+  },
+  "principals": {
+    "operator": {
+      "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+      "credential_boundary": "operator .env.bootstrap T3N_API_KEY only",
+      "whoami_or_authentication": {
+        "success": true,
+        "expected_did_match": true,
+        "timestamp_utc": "2026-09-02T12:45:38.382Z"
+      },
+      "balance": {
+        "available_base_units": 0,
+        "reserved_base_units": 0,
+        "credit_exhausted": true,
+        "last_settled_seq_no": 0,
+        "version": 289,
+        "balance_read_success": true,
+        "timestamp_utc": "2026-09-02T12:45:38.382Z",
+        "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+        "environment": "testnet",
+        "sdk": "@terminal3/t3n-sdk 5.2.0",
+        "transport": "normal SDK authentication followed by T3nClient.getBalance"
+      }
+    },
+    "remediation_agent": {
+      "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+      "credential_boundary": "replacement-agent opaque key only",
+      "whoami_or_authentication": {
+        "success": true,
+        "expected_did_match": true,
+        "organizations": ["did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912"],
+        "owner": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "timestamp_utc": "2026-09-02T12:47:09.517Z"
+      },
+      "balance": {
+        "available_base_units": null,
+        "reserved_base_units": null,
+        "credit_exhausted": null,
+        "balance_read_success": false,
+        "timestamp_utc": "2026-09-02T12:45:38.386Z",
+        "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+        "environment": "testnet",
+        "sdk": "@terminal3/t3n-sdk 5.2.0",
+        "transport": "attempted normal SDK session balance read",
+        "failure_reason": "opaque agent credential cannot establish the full session required by T3nClient.getBalance; keyed whoami succeeds; no C1 invocation was attempted",
+        "current_numeric_balance_observed": false
+      },
+      "prior_safe_evidence": {
+        "artifact": "evidence/phase1-replacement-agent-credit-preflight.json",
+        "result": "stateless denied probe returned HTTP 200 without a balance amount",
+        "not_current_balance_proof": true
+      }
+    },
+    "effect_broker": {
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+      "credential_boundary": "effect-broker opaque key only",
+      "whoami_or_authentication": {
+        "success": true,
+        "expected_did_match": true,
+        "organizations": ["did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912"],
+        "owner": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "timestamp_utc": "2026-09-02T12:47:09.517Z"
+      },
+      "balance": {
+        "available_base_units": null,
+        "reserved_base_units": null,
+        "credit_exhausted": null,
+        "balance_read_success": false,
+        "timestamp_utc": "2026-09-02T12:45:38.387Z",
+        "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+        "environment": "testnet",
+        "sdk": "@terminal3/t3n-sdk 5.2.0",
+        "transport": "attempted normal SDK session balance read",
+        "failure_reason": "opaque agent credential cannot establish the full session required by T3nClient.getBalance; keyed whoami succeeds; no C1 invocation was attempted",
+        "current_numeric_balance_observed": false
+      },
+      "known_prior_insufficient_credit": {
+        "artifact": "winner/evidence/broker-credit-preflight.json",
+        "operation": "claim-effect",
+        "required_base_units": 10000000000,
+        "available_base_units": 0,
+        "factual_observation": true,
+        "current_get_balance_read": false
+      }
+    }
+  },
+  "known_metering": {
+    "observed_required_base_units": 10000000000,
+    "observed_available_base_units": 0,
+    "observed_on": "claim-effect",
+    "observed_artifact": "winner/evidence/broker-credit-preflight.json",
+    "do_not_generalize_to_unmeasured_calls": true,
+    "unmeasured_calls": ["reserve-incident", "finalize-effect", "release-not-attempted", "reconcile-effect", "updateMemberDelegation", "incident map entrySet"]
+  },
+  "pass_path_call_budget": {
+    "remediation_agent": {
+      "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reserve-incident": 1,
+      "total_c1_contract_invocations": 1,
+      "pricing": "UNKNOWN for reserve-incident"
+    },
+    "effect_broker": {
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "claim-effect contender A": 1,
+      "claim-effect contender B": 1,
+      "finalize-effect committed winner": 1,
+      "replay claim-effect": 1,
+      "total_c1_contract_invocations": 4,
+      "claim-effect_calls_with_observed_rate": 3,
+      "observed_rate_planning_envelope_base_units": 30000000000,
+      "pricing_note": "30,000,000,000 is only three times the observed claim-effect requirement; finalize-effect pricing is unmeasured and the complete broker request needs headroom"
+    },
+    "operator": {
+      "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "normal_c1_contract_invocations": 0,
+      "pending_control_plane_mutations": 3,
+      "pricing": "UNKNOWN for control-plane operations"
+    },
+    "additional_normal_pass_metered_c1_invocations": 0,
+    "contingency_demand_not_in_clean_pass": [
+      "release-not-attempted may be one broker call only after a proven pre-DELETE failure",
+      "reconcile-effect is recovery-only and must be read-only at the provider layer",
+      "finalize-effect is already counted once for the clean winner path"
+    ]
+  },
+  "remaining_control_plane_operations": [
+    {
+      "operation": "updateMemberDelegation",
+      "count": 1,
+      "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "grantee": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "functions": ["reserve-incident"],
+      "executed": false,
+      "pricing": "UNKNOWN"
+    },
+    {
+      "operation": "updateMemberDelegation",
+      "count": 1,
+      "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "grantee": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "functions": ["claim-effect", "release-not-attempted", "finalize-effect", "reconcile-effect"],
+      "executed": false,
+      "pricing": "UNKNOWN"
+    },
+    {
+      "operation": "winner-incidents entrySet plus readback entryGet",
+      "count": 1,
+      "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "map": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:winner-incidents",
+      "executed": false,
+      "pricing": "UNKNOWN",
+      "note": "c1-live.ts seeds the committed incident authority immediately before reserve"
+    }
+  ],
+  "already_evidenced_control_plane": {
+    "v2_contract_registration": true,
+    "contract_id": 842,
+    "v2_map_acl": true,
+    "artifact": "winner/evidence/contract-registration.json",
+    "new_registration_or_acl_call_in_this_triage": 0
+  },
+  "funding_required": true,
+  "funding_required_for": [
+    {
+      "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+      "role": "operator",
+      "reason": "current available balance is 0 and two delegation writes plus live incident map seeding remain"
+    },
+    {
+      "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "role": "remediation agent",
+      "reason": "one reserve-incident invocation is required and current numeric balance/headroom is not observable through its permitted opaque-key read path"
+    },
+    {
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "role": "effect broker",
+      "reason": "four broker C1 invocations are required and prior claim-effect evidence recorded available 0"
+    }
+  ],
+  "conservative_funding_request": {
+    "effect_broker": "Fund the dedicated broker for four C1 invocations with substantial headroom; 4 x 10,000,000,000 = 40,000,000,000 base units is only an observed-rate planning envelope, not a proven total.",
+    "remediation_agent": "Fund the remediation agent for one reserve-incident invocation with substantial headroom; reserve pricing is unmeasured.",
+    "operator": "Fund the operator for the two delegation updates and incident-authority map write; exact control-plane pricing is unmeasured.",
+    "not_an_exact_total": true
+  },
+  "provider_mutations": 0,
+  "t3n_mutations": 0,
+  "github_api_calls": 0,
+  "credentials_in_evidence": false,
+  "credential_fallback_used": false,
+  "notes": [
+    "The valid user-created DID was not used as a broker substitute.",
+    "No metered C1 invocation was made during this triage.",
+    "No balance value was inferred from submitUserInput or from a denied C1 probe."
+  ]
+}
