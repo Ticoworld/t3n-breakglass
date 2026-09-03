@@ -1,0 +1,86 @@
+{
+  "phase": "C1-R6B live state-only effect-start and generation-fence proof",
+  "status": "C1_R6B_STATE_PROTOCOL_FAILURE",
+  "starting_sha": "e6c6bc0155d06c5dff94d0bba36cd698b89dc4ae",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "active_contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "numeric_contract_id": 877
+  },
+  "failure": {
+    "classification": "OTHER_BOUNDED_FAILURE",
+    "stage": "post-create operator absence verification",
+    "message": "RPC Error: quota exceeded (fuel_per_minute): tenant on contract C1; request ID retained in process output only",
+    "request_id": "76ed8e56-2502-40f1-8e73-8ab9ef90d3f3",
+    "automatic_retry": false
+  },
+  "forensic_reconstruction": {
+    "route_probes_completed_before_failure": true,
+    "valid_incident_creation_activity": {
+      "classification": "PROVEN_BY_HOST_ACTIVITY",
+      "seq_no": 184469,
+      "hash": "2a25f064d57a541391f1aaab09024d771c1de632ee62239f949cbd5b56e6046c",
+      "timestamp_ms": 1788469915586,
+      "function": "create-incident",
+      "outcome": "success"
+    },
+    "created_incident_id": "NOT_RECONSTRUCTIBLE_FROM_HOST_ACTIVITY",
+    "initial_operator_get": {
+      "classification": "PROVEN_BY_HOST_ACTIVITY",
+      "seq_no": 184472,
+      "hash": "aa162a543334af087a7db45fbfde05bfc4323596e72237f75566af3600d13f24",
+      "function": "get-incident",
+      "outcome": "success"
+    },
+    "subsequent_operator_absence_reads": {
+      "classification": "PROVEN_BY_HOST_ACTIVITY",
+      "successful_seq_nos": [184475, 184478, 184482, 184485, 184489, 184491, 184494],
+      "final_quota_error_seq_no": 184496,
+      "function": "get-incident"
+    },
+    "state_mutations_after_create": "NOT_RECONSTRUCTIBLE; no state-mutating call was reached by the script after the successful create before the quota failure",
+    "provider_work": "none"
+  },
+  "host_activity": {
+    "classification": "HOST_ACTIVITY",
+    "relevant_entries": [
+      { "seq_no": 184435, "function": "reserve-incident", "outcome": "success", "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019" },
+      { "seq_no": 184439, "function": "claim-effect", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184443, "function": "release-not-attempted", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184447, "function": "begin-effect", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184451, "function": "finalize-effect", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184455, "function": "reconcile-effect", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184459, "function": "reserve-incident", "outcome": "success", "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57" },
+      { "seq_no": 184463, "function": "claim-effect", "outcome": "success", "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019" },
+      { "seq_no": 184469, "function": "create-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184472, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184475, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184478, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184482, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184485, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184489, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184491, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184494, "function": "get-incident", "outcome": "success", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" },
+      { "seq_no": 184496, "function": "get-incident", "outcome": "error", "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f" }
+    ],
+    "limitations": ["Host activity does not bind request bodies or incident IDs; the successful create is the only create in this run, but its generated ID was not persisted by the pre-repair runner.", "Activity metadata is not a Merkle proof, body commitment, or complete causal receipt."]
+  },
+  "counters": {
+    "new_incidents": 1,
+    "reservations_for_created_incident": "NOT_RECONSTRUCTIBLE; the script had not reached its state reservation before quota failure",
+    "claims_for_created_incident": "NOT_RECONSTRUCTIBLE; the script had not reached its state race before quota failure",
+    "provider_mutations": 0,
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "automatic_retries": 0
+  },
+  "runner_repair": {
+    "context_persistence_added_after_failure": true,
+    "future_failure_will_retain_incident_id": true
+  },
+  "credentials_in_evidence": false,
+  "next_gate": "Do not retry R6B or mutate the unidentified incident automatically; review Terminal 3 quota and recover the incident only through a separately authorized, identity-bound read/reconciliation plan."
+}

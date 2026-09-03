@@ -1,0 +1,368 @@
+{
+  "phase": "C1-R6B registered surface probe",
+  "status": "R6B_REGISTERED_SURFACE_FAILURE",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "version": "2.0.3",
+  "numeric_contract_id": 877,
+  "reason": "surface functions failed: create-incident",
+  "probes": [
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "create-incident",
+      "incident_id": "C1-R6B-SURFACE-create_incident-1788469281265-cde3acb6",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": false,
+      "error": {
+        "class": "RpcError",
+        "name": "RpcError",
+        "message": "RPC Error: contract error: request contains invalid or unsupported fields [40a7f1f1-365f-4b3d-9324-5cb28c3b7b7b]"
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "get-incident",
+      "incident_id": "C1-R6B-SURFACE-get_incident-1788469282016-ae4ee968",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "get-incident",
+        "incident_id": "C1-R6B-SURFACE-get_incident-1788469282016-ae4ee968",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "reserve-incident",
+      "incident_id": "C1-R6B-SURFACE-reserve_incident-1788469283093-05e4f1a8",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "reserve-incident",
+        "incident_id": "C1-R6B-SURFACE-reserve_incident-1788469283093-05e4f1a8",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "claim-effect",
+      "incident_id": "C1-R6B-SURFACE-claim_effect-1788469284676-dd4006ac",
+      "request_fields": [
+        "expected_claim_version",
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "claim-effect",
+        "incident_id": "C1-R6B-SURFACE-claim_effect-1788469284676-dd4006ac",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "release-not-attempted",
+      "incident_id": "C1-R6B-SURFACE-release_not_attempted-1788469285364-1b77099f",
+      "request_fields": [
+        "claim_id",
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "release-not-attempted",
+        "incident_id": "C1-R6B-SURFACE-release_not_attempted-1788469285364-1b77099f",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "begin-effect",
+      "incident_id": "C1-R6B-SURFACE-begin_effect-1788469286060-c12701d2",
+      "request_fields": [
+        "claim_id",
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "begin-effect",
+        "incident_id": "C1-R6B-SURFACE-begin_effect-1788469286060-c12701d2",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "finalize-effect",
+      "incident_id": "C1-R6B-SURFACE-finalize_effect-1788469286673-3449611c",
+      "request_fields": [
+        "claim_id",
+        "classification",
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "finalize-effect",
+        "incident_id": "C1-R6B-SURFACE-finalize_effect-1788469286673-3449611c",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "registered_surface_nonexistent",
+      "function": "reconcile-effect",
+      "incident_id": "C1-R6B-SURFACE-reconcile_effect-1788469287288-a363783b",
+      "request_fields": [
+        "claim_id",
+        "classification",
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "reconcile-effect",
+        "incident_id": "C1-R6B-SURFACE-reconcile_effect-1788469287288-a363783b",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "invalid_ttl_create",
+      "function": "create-incident",
+      "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+      "request_fields": [
+        "deploy_key_id",
+        "effect_broker_did",
+        "incident_id",
+        "remediation_agent_did",
+        "ttl_secs"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "ttl_secs is outside the bounded C1 window",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "create-incident",
+        "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+        "note": "ttl_secs is outside the bounded C1 window",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    },
+    {
+      "purpose": "invalid_create_post_read",
+      "function": "get-incident",
+      "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "authenticated T3nClient.executeAndDecode",
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "routing_recognized": true,
+      "guest_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "get-incident",
+        "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      }
+    }
+  ],
+  "invalid_create_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+  "invalid_create_probe": {
+    "purpose": "invalid_ttl_create",
+    "function": "create-incident",
+    "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+    "request_fields": [
+      "deploy_key_id",
+      "effect_broker_did",
+      "incident_id",
+      "remediation_agent_did",
+      "ttl_secs"
+    ],
+    "transport": "authenticated T3nClient.executeAndDecode",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "provider_operations": 0,
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "DENIED",
+    "application_note": "ttl_secs is outside the bounded C1 window",
+    "response": {
+      "detail": {},
+      "effect_attempts": null,
+      "function": "create-incident",
+      "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+      "note": "ttl_secs is outside the bounded C1 window",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "DENIED",
+      "state": null
+    }
+  },
+  "post_probe_nonexistence": {
+    "purpose": "invalid_create_post_read",
+    "function": "get-incident",
+    "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+    "request_fields": [
+      "incident_id"
+    ],
+    "transport": "authenticated T3nClient.executeAndDecode",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "provider_operations": 0,
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "DENIED",
+    "application_note": "incident authority does not exist",
+    "response": {
+      "detail": {},
+      "effect_attempts": null,
+      "function": "get-incident",
+      "incident_id": "C1-R6B-SURFACE-invalid_ttl_create-1788469287955-ac4c6352",
+      "note": "incident authority does not exist",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "DENIED",
+      "state": null
+    }
+  },
+  "successful_incident_creations": 0,
+  "map_entry_writes": 0,
+  "provider_operations": 0,
+  "credentials_in_evidence": false
+}
