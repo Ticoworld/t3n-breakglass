@@ -5,7 +5,7 @@ extern crate alloc;
 
 mod model;
 
-pub const CONTRACT_VERSION: &str = "2.0.1";
+pub const CONTRACT_VERSION: &str = "2.0.2";
 
 wit_bindgen::generate!({
     world: "breakglass-winner",
@@ -193,5 +193,5 @@ fn json_result_with_detail(incident_id: &str, function_name: &str, result: &str,
 #[cfg(test)]
 mod tests {
     use super::CONTRACT_VERSION;
-    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.1"); }
+    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.2"); }
 }

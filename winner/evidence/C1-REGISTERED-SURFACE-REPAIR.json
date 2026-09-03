@@ -1,0 +1,887 @@
+{
+  "phase": "C1-R4 registered contract surface repair",
+  "status": "REGISTERED_SURFACE_REPAIR_PASS",
+  "created_at_utc": "2026-09-03T11:55:08.639Z",
+  "starting_sha": "0cfd520a0151ada5f33a79af08abd9dcab3d7dde",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "branch": "winner-v2-core",
+  "environment": "testnet",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.2",
+    "numeric_contract_id": 876
+  },
+  "local_component": {
+    "wasm_path": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm",
+    "pre_rebuild_sha256": "0668b97eaf3eac086ef7a37bfba36eabde2e01ef1e64814e1749f94fac62aebc",
+    "pre_rebuild_exports": [
+      "reserve-incident",
+      "claim-effect",
+      "release-not-attempted",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "rebuild_performed": true,
+    "post_rebuild_sha256": "7b4cd5e5d0b8b0f158da95ce0fd64fc44d2d5961020768d60dfc9c69b43ade22",
+    "post_rebuild_bytes": 203820,
+    "post_rebuild_exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "release-not-attempted",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "all_seven_exports_verified": true,
+    "inspection_tool": "wasm-tools component wit"
+  },
+  "root_cause": {
+    "prior_classification": "CONTRACT_EXECUTION_NOT_REACHED",
+    "final_classification": "REGISTERED_SURFACE_REPAIR_PASS",
+    "stale_wasm_confirmed": true,
+    "explanation": "The pre-rebuild release component contained only the five lifecycle exports. A supported wasm32-wasip2 rebuild exposed create-incident and get-incident; the repaired 2.0.2 registration then routed through the authenticated operator session.",
+    "evidence_boundary": {
+      "source_declared": true,
+      "local_wasm_verified": true,
+      "testnet_routing_verified": true,
+      "guest_execution_verified": true
+    }
+  },
+  "registration": {
+    "attempt_count": 1,
+    "version": "2.0.2",
+    "contract_name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "numeric_contract_id": 876,
+    "map_acl_updated": true,
+    "map_private": true,
+    "map_acl_contract_id": 876
+  },
+  "principals": {
+    "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "operator_transport": {
+    "authenticated_session": true,
+    "api": "T3nClient.executeAndDecode",
+    "canonical_request_fields": [
+      "contract_id",
+      "contract_version",
+      "function_name",
+      "input"
+    ],
+    "stateless_opaque_invoke_used_for_operator": false
+  },
+  "surface_probes": [
+    {
+      "function": "get-incident",
+      "incident_id": "C1-R4-SURFACE-get_incident-1788436480900-ccdbf5fd",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "get-incident",
+        "incident_id": "C1-R4-SURFACE-get_incident-1788436480900-ccdbf5fd",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            }
+          ],
+          "next_seq": 171654
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183288,
+              "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+              "timestamp_ms": 1788436482015,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "success"
+            },
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            }
+          ],
+          "next_seq": 171658
+        },
+        "new_entries": [
+          {
+            "seq_no": 183288,
+            "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+            "timestamp_ms": 1788436482015,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "get-incident",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "function": "reserve-incident",
+      "incident_id": "C1-R4-SURFACE-reserve_incident-1788436483043-9ae2e994",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "reserve-incident",
+        "incident_id": "C1-R4-SURFACE-reserve_incident-1788436483043-9ae2e994",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171658
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183292,
+              "hash": "95419366c3ee2d06dfb198e68b96f046bf19fc050cb9d3c08bc4a9afca3ad28f",
+              "timestamp_ms": 1788436484438,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "reserve-incident",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171662
+        },
+        "new_entries": [
+          {
+            "seq_no": 183292,
+            "hash": "95419366c3ee2d06dfb198e68b96f046bf19fc050cb9d3c08bc4a9afca3ad28f",
+            "timestamp_ms": 1788436484438,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "reserve-incident",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "function": "claim-effect",
+      "incident_id": "C1-R4-SURFACE-claim_effect-1788436487092-5e8e205b",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "claim-effect",
+        "incident_id": "C1-R4-SURFACE-claim_effect-1788436487092-5e8e205b",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171662
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183296,
+              "hash": "a9d99ed3af368c1d50a6597578712e58414e4048829beae9120467f52c832037",
+              "timestamp_ms": 1788436492192,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "claim-effect",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171666
+        },
+        "new_entries": [
+          {
+            "seq_no": 183296,
+            "hash": "a9d99ed3af368c1d50a6597578712e58414e4048829beae9120467f52c832037",
+            "timestamp_ms": 1788436492192,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "claim-effect",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "function": "release-not-attempted",
+      "incident_id": "C1-R4-SURFACE-release_not_attempted-1788436493840-567a7c21",
+      "request_fields": [
+        "claim_id",
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "release-not-attempted",
+        "incident_id": "C1-R4-SURFACE-release_not_attempted-1788436493840-567a7c21",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171666
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183300,
+              "hash": "a3ba5ded4c3aa3bbce9af14d4456b9d3bb456558c0fc26c60c86afa77ee28a1e",
+              "timestamp_ms": 1788436494671,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "release-not-attempted",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171670
+        },
+        "new_entries": [
+          {
+            "seq_no": 183300,
+            "hash": "a3ba5ded4c3aa3bbce9af14d4456b9d3bb456558c0fc26c60c86afa77ee28a1e",
+            "timestamp_ms": 1788436494671,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "release-not-attempted",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "function": "finalize-effect",
+      "incident_id": "C1-R4-SURFACE-finalize_effect-1788436496144-4cf65cb5",
+      "request_fields": [
+        "claim_id",
+        "classification",
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "finalize-effect",
+        "incident_id": "C1-R4-SURFACE-finalize_effect-1788436496144-4cf65cb5",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171670
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183304,
+              "hash": "fb0ec73ebd3cb5feadf600f6d79774b789cc4ea5c63265c293cfa9966468fec8",
+              "timestamp_ms": 1788436496970,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "finalize-effect",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171674
+        },
+        "new_entries": [
+          {
+            "seq_no": 183304,
+            "hash": "fb0ec73ebd3cb5feadf600f6d79774b789cc4ea5c63265c293cfa9966468fec8",
+            "timestamp_ms": 1788436496970,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "finalize-effect",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    {
+      "function": "reconcile-effect",
+      "incident_id": "C1-R4-SURFACE-reconcile_effect-1788436498512-ada681c2",
+      "request_fields": [
+        "claim_id",
+        "classification",
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "reconcile-effect",
+        "incident_id": "C1-R4-SURFACE-reconcile_effect-1788436498512-ada681c2",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171674
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183308,
+              "hash": "0c3996d26960a04647c064260a787322e7e58f5c8bcb7507e2adc72cf0692fe2",
+              "timestamp_ms": 1788436499311,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "reconcile-effect",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171678
+        },
+        "new_entries": [
+          {
+            "seq_no": 183308,
+            "hash": "0c3996d26960a04647c064260a787322e7e58f5c8bcb7507e2adc72cf0692fe2",
+            "timestamp_ms": 1788436499311,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "reconcile-effect",
+            "outcome": "success"
+          }
+        ]
+      }
+    }
+  ],
+  "create_invalid_ttl_probe": {
+    "attempted": true,
+    "input_fields": [
+      "incident_id",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "deploy_key_id",
+      "ttl_secs"
+    ],
+    "ttl_secs": 1,
+    "result": {
+      "function": "create-incident",
+      "incident_id": "C1-R4-SURFACE-create_ttl_denied-1788436500757-7043322e",
+      "request_fields": [
+        "deploy_key_id",
+        "effect_broker_did",
+        "incident_id",
+        "remediation_agent_did",
+        "ttl_secs"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "ttl_secs is outside the bounded C1 window",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "create-incident",
+        "incident_id": "C1-R4-SURFACE-create_ttl_denied-1788436500757-7043322e",
+        "note": "ttl_secs is outside the bounded C1 window",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": false,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [],
+          "next_seq": 171678
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183312,
+              "hash": "7f337fd4d4304109e6dbdb7b4c0bbd86424a7076b8ea978853c2fcf653950444",
+              "timestamp_ms": 1788436501578,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "create-incident",
+              "outcome": "success"
+            }
+          ],
+          "next_seq": 171682
+        },
+        "new_entries": [
+          {
+            "seq_no": 183312,
+            "hash": "7f337fd4d4304109e6dbdb7b4c0bbd86424a7076b8ea978853c2fcf653950444",
+            "timestamp_ms": 1788436501578,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "create-incident",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    "guest_ttl_denied": true,
+    "successful_incident_creation": false
+  },
+  "post_probe_nonexistence": {
+    "attempted": true,
+    "result": {
+      "function": "get-incident",
+      "incident_id": "C1-R4-SURFACE-create_ttl_denied-1788436500757-7043322e",
+      "request_fields": [
+        "incident_id"
+      ],
+      "transport": "T3nClient.executeAndDecode authenticated session action.execute",
+      "routing_recognized": true,
+      "guest_execution_reached": true,
+      "application_result": "DENIED",
+      "application_note": "incident authority does not exist",
+      "guest_response": {
+        "detail": {},
+        "effect_attempts": null,
+        "function": "get-incident",
+        "incident_id": "C1-R4-SURFACE-create_ttl_denied-1788436500757-7043322e",
+        "note": "incident authority does not exist",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "DENIED",
+        "state": null
+      },
+      "authority_missing_denial": true,
+      "observed_state_mutation": false,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183288,
+              "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+              "timestamp_ms": 1788436482015,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "success"
+            },
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            }
+          ],
+          "next_seq": 171682
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183316,
+              "hash": "fc7fb781df84bc24d5955dac7a4b3fb0727715ba60664663cb19292d181c9b05",
+              "timestamp_ms": 1788436504291,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "success"
+            },
+            {
+              "seq_no": 183288,
+              "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+              "timestamp_ms": 1788436482015,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "success"
+            },
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error"
+            }
+          ],
+          "next_seq": 171686
+        },
+        "new_entries": [
+          {
+            "seq_no": 183316,
+            "hash": "fc7fb781df84bc24d5955dac7a4b3fb0727715ba60664663cb19292d181c9b05",
+            "timestamp_ms": 1788436504291,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "get-incident",
+            "outcome": "success"
+          }
+        ]
+      }
+    },
+    "authority_absent": true
+  },
+  "activity": {
+    "classification": "HOST_ACTIVITY",
+    "source": "T3nClient.getActivityLog",
+    "limitations": [
+      "Host-stamped activity metadata only; not a Merkle proof or complete causal receipt."
+    ],
+    "relevant_entries": [
+      {
+        "seq_no": 183288,
+        "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+        "timestamp_ms": 1788436482015,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183292,
+        "hash": "95419366c3ee2d06dfb198e68b96f046bf19fc050cb9d3c08bc4a9afca3ad28f",
+        "timestamp_ms": 1788436484438,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183296,
+        "hash": "a9d99ed3af368c1d50a6597578712e58414e4048829beae9120467f52c832037",
+        "timestamp_ms": 1788436492192,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183300,
+        "hash": "a3ba5ded4c3aa3bbce9af14d4456b9d3bb456558c0fc26c60c86afa77ee28a1e",
+        "timestamp_ms": 1788436494671,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "release-not-attempted",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183304,
+        "hash": "fb0ec73ebd3cb5feadf600f6d79774b789cc4ea5c63265c293cfa9966468fec8",
+        "timestamp_ms": 1788436496970,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "finalize-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183308,
+        "hash": "0c3996d26960a04647c064260a787322e7e58f5c8bcb7507e2adc72cf0692fe2",
+        "timestamp_ms": 1788436499311,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reconcile-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183312,
+        "hash": "7f337fd4d4304109e6dbdb7b4c0bbd86424a7076b8ea978853c2fcf653950444",
+        "timestamp_ms": 1788436501578,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "create-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183316,
+        "hash": "fc7fb781df84bc24d5955dac7a4b3fb0727715ba60664663cb19292d181c9b05",
+        "timestamp_ms": 1788436504291,
+        "caller_type": "human",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      }
+    ]
+  },
+  "mutations": {
+    "contract_registrations": 1,
+    "map_acl_updates": 1,
+    "map_entry_writes": 0,
+    "successful_incident_creations": 0,
+    "delegation_updates": 0,
+    "provider_mutations": 0
+  },
+  "provider_counters": {
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0
+  },
+  "credential_safety": {
+    "pat_in_evidence": false,
+    "github_app_credential_in_evidence": false,
+    "t3n_api_key_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "jwt_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false
+  },
+  "next_gate": "C1-R5 — 2.0.2 delegation rebind + final pre-destructive live gate"
+}

@@ -41,6 +41,25 @@ export async function invokeC1(apiKey: string, nodeUrl: string, contractId: stri
   });
 }
 
+/**
+ * Operator-only C1 execution.  The operator has a session/signing credential,
+ * not an opaque agent `t3n_key`; keep this transport explicit so callers cannot
+ * silently fall back between principal classes.
+ */
+export async function invokeC1OperatorSession(
+  t3n: { executeAndDecode: (payload: unknown) => Promise<unknown> },
+  contractId: string,
+  functionName: string,
+  input: unknown,
+) {
+  return t3n.executeAndDecode({
+    contract_id: contractId,
+    contract_version: CONTRACT_VERSION,
+    function_name: functionName,
+    input,
+  });
+}
+
 export function canonicalContractId(operatorDid: string): string {
   return contractName(operatorDid);
 }

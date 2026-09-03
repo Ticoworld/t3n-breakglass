@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { connectTenant, redactError } from "../../scripts/lib.js";
 import { CONTRACT_VERSION, contractName } from "./constants.js";
-import { invokeC1, redact, requireValue } from "./t3n.js";
+import { invokeC1OperatorSession, redact, requireValue } from "./t3n.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const registrationPath = path.join(root, "winner", "evidence", "contract-registration.json");
@@ -39,13 +39,12 @@ async function main() {
   const configuration = JSON.parse(await readFile(configurationPath, "utf8")) as { status?: string; operator_did?: string; contract?: string; contract_version?: string; contract_id?: number; remediation_agent_did?: string; effect_broker_did?: string };
   const contractId = contractName(operatorDid);
   if (registration.operator_did !== operatorDid || registration.contract?.name !== contractId || registration.contract.version !== CONTRACT_VERSION || !Number.isSafeInteger(registration.contract.contract_id) || configuration.status !== "CONFIGURED_VERIFIED" || configuration.operator_did !== operatorDid || configuration.contract !== contractId || configuration.contract_version !== CONTRACT_VERSION || configuration.contract_id !== registration.contract.contract_id || !configuration.remediation_agent_did || !configuration.effect_broker_did) throw new Error("C1 registration/configuration evidence is incomplete or stale");
-  const { tenantDid, nodeUrl } = await connectTenant();
+  const { tenantDid, nodeUrl, t3n } = await connectTenant();
   if (tenantDid !== operatorDid) throw new Error("authenticated operator DID differs from configured C1 operator");
-  const operatorKey = requireValue("T3N_API_KEY");
   const input = { incident_id: incidentId, remediation_agent_did: configuration.remediation_agent_did, effect_broker_did: configuration.effect_broker_did, deploy_key_id: deployKeyId, ttl_secs: ttlSecs };
-  const createResponse = await invokeC1(operatorKey, nodeUrl, contractId, "create-incident", input);
+  const createResponse = await invokeC1OperatorSession(t3n, contractId, "create-incident", input);
   const authority = authorityFrom(createResponse, "WON", "create-incident", incidentId);
-  const readbackResponse = await invokeC1(operatorKey, nodeUrl, contractId, "get-incident", { incident_id: incidentId });
+  const readbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
   const readback = authorityFrom(readbackResponse, "FOUND", "get-incident", incidentId);
   if (JSON.stringify(authority) !== JSON.stringify(readback)) throw new Error("C1 contract authority readback differs from create result");
   const evidence = { experiment: "C1 contract-mediated incident authority creation", status: "SEEDED", environment: "testnet", sdk: "@terminal3/t3n-sdk 5.2.0", t3n_node: nodeUrl, operator_did: tenantDid, contract: contractId, request_fields: ["incident_id", "remediation_agent_did", "effect_broker_did", "deploy_key_id", "ttl_secs"], authority: readback, provider_mutations: 0, operator_direct_map_access: false, credentials_in_evidence: false };

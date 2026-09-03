@@ -8,9 +8,11 @@
   "contract": {
     "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
     "tail": "breakglass-winner-c1",
-    "version": "2.0.1",
-    "contract_id": 875,
-    "functions": [
+    "version": "2.0.2",
+    "contract_id": 876,
+    "wasm_bytes": 203820,
+    "wasm_sha256": "7b4cd5e5d0b8b0f158da95ce0fd64fc44d2d5961020768d60dfc9c69b43ade22",
+    "expected_functions_from_local_component": [
       "create-incident",
       "get-incident",
       "reserve-incident",
@@ -18,13 +20,31 @@
       "release-not-attempted",
       "finalize-effect",
       "reconcile-effect"
-    ]
+    ],
+    "locally_verified_component_exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "release-not-attempted",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+      "node_routing_verified_functions": [
+        "create-incident",
+        "get-incident",
+        "reserve-incident",
+        "claim-effect",
+        "release-not-attempted",
+        "finalize-effect",
+        "reconcile-effect"
+      ]
   },
   "map": {
     "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:winner-incidents",
     "tail": "winner-incidents",
     "private": true,
-    "acl_contract_id": 875
+    "acl_contract_id": 876
   },
   "provider_mutations": 0
 }

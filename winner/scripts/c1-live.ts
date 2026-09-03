@@ -7,7 +7,7 @@ import { connectTenant, redactError } from "../../scripts/lib.js";
 import { trustedNodeTimeSeconds } from "../../scripts/product.js";
 import { ACTION, BROKER_FUNCTIONS, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, RESERVATION_FUNCTION, contractName } from "./constants.js";
 import { parseChildJson } from "./child-protocol.js";
-import { invokeC1, requireValue, redact } from "./t3n.js";
+import { invokeC1OperatorSession, requireValue, redact } from "./t3n.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -52,14 +52,13 @@ async function main() {
   const barrier = path.join(actualBarrierDir, "release");
   const { tenantDid, nodeUrl, t3n } = await connectTenant();
   if (tenantDid !== operatorDid) throw new Error("live runner authenticated as unexpected operator");
-  const operatorKey = requireValue("T3N_API_KEY");
   const incidentId = `C1-${Date.now()}`;
-  const registration = JSON.parse(await readFile(path.join(root, "winner", "evidence", "contract-registration.json"), "utf8")) as { operator_did?: string; contract?: { name?: string; version?: string; contract_id?: number; functions?: string[] }; map?: { private?: boolean; acl_contract_id?: number } };
+  const registration = JSON.parse(await readFile(path.join(root, "winner", "evidence", "contract-registration.json"), "utf8")) as { operator_did?: string; contract?: { name?: string; version?: string; contract_id?: number; expected_functions_from_local_component?: string[]; locally_verified_component_exports?: string[]; node_routing_verified_functions?: string[] }; map?: { private?: boolean; acl_contract_id?: number } };
   const config = JSON.parse(await readFile(path.join(root, "winner", "evidence", "delegation-configuration.json"), "utf8")) as { status?: string; operator_did?: string; contract?: string; contract_version?: string; contract_id?: number; remediation_agent_did?: string; effect_broker_did?: string; exact_authority?: { remediation?: unknown; broker?: unknown } };
   const contractId = contractName(operatorDid);
   const requiredFunctions = ["create-incident", "get-incident", RESERVATION_FUNCTION, ...BROKER_FUNCTIONS];
   if (registration.operator_did !== operatorDid || registration.contract?.name !== contractId || registration.contract.version !== CONTRACT_VERSION || !Number.isSafeInteger(registration.contract.contract_id) || registration.contract.contract_id <= 0 || registration.map?.private !== true || registration.map.acl_contract_id !== registration.contract.contract_id) throw new Error("live registration evidence does not match the repaired C1 contract");
-  if (config.status !== "CONFIGURED_VERIFIED" || config.operator_did !== operatorDid || config.contract !== contractId || config.contract_version !== CONTRACT_VERSION || config.contract_id !== registration.contract.contract_id || config.remediation_agent_did !== remediationDid || config.effect_broker_did !== brokerDid || new Set([operatorDid, remediationDid, brokerDid]).size !== 3 || !Array.isArray(registration.contract.functions) || registration.contract.functions.length !== requiredFunctions.length || !requiredFunctions.every((name) => registration.contract?.functions?.includes(name)) || !exactGrantEvidence(config.exact_authority?.remediation, [RESERVATION_FUNCTION]) || !exactGrantEvidence(config.exact_authority?.broker, BROKER_FUNCTIONS)) throw new Error("live identity/configuration does not match the registered C1 contract");
+  if (config.status !== "CONFIGURED_VERIFIED" || config.operator_did !== operatorDid || config.contract !== contractId || config.contract_version !== CONTRACT_VERSION || config.contract_id !== registration.contract.contract_id || config.remediation_agent_did !== remediationDid || config.effect_broker_did !== brokerDid || new Set([operatorDid, remediationDid, brokerDid]).size !== 3 || !Array.isArray(registration.contract.node_routing_verified_functions) || registration.contract.node_routing_verified_functions.length !== requiredFunctions.length || !requiredFunctions.every((name) => registration.contract?.node_routing_verified_functions?.includes(name)) || !exactGrantEvidence(config.exact_authority?.remediation, [RESERVATION_FUNCTION]) || !exactGrantEvidence(config.exact_authority?.broker, BROKER_FUNCTIONS)) throw new Error("live identity/configuration does not match the registered C1 contract");
   const trustedTimeBeforeCreate = await trustedNodeTimeSeconds(nodeUrl);
   const targetChildEnv = childEnv(process.env, {}, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "EFFECT_BROKER_T3N_API_KEY", "GITHUB_PAT"]);
   const targetRun = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "prepare-target.ts")], targetChildEnv);
@@ -67,11 +66,11 @@ async function main() {
   const targetSetup = parseChildJson(targetRun.stdout);
   const target = targetSetup.target as { id: number; title: string; read_only: boolean; repository?: string };
   if (!Number.isSafeInteger(target.id) || target.id <= 0 || target.read_only !== true || target.repository !== `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`) throw new Error("target setup did not prove the exact private read-only repository target");
-  const createResponse = await invokeC1(operatorKey, nodeUrl, contractId, "create-incident", { incident_id: incidentId, remediation_agent_did: remediationDid, effect_broker_did: brokerDid, deploy_key_id: target.id, ttl_secs: 900 });
+  const createResponse = await invokeC1OperatorSession(t3n, contractId, "create-incident", { incident_id: incidentId, remediation_agent_did: remediationDid, effect_broker_did: brokerDid, deploy_key_id: target.id, ttl_secs: 900 });
   const createdAuthority = authorityFromResult(createResponse, "WON", "create-incident", incidentId);
   requireActiveAuthority(createdAuthority);
   if (createdAuthority.remediation_agent_did !== remediationDid || createdAuthority.effect_broker_did !== brokerDid || createdAuthority.deploy_key_id !== target.id) throw new Error("create-incident returned unexpected effect principals or target");
-  const initialReadbackResponse = await invokeC1(operatorKey, nodeUrl, contractId, "get-incident", { incident_id: incidentId });
+  const initialReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
   const initialAuthority = authorityFromResult(initialReadbackResponse, "FOUND", "get-incident", incidentId);
   requireActiveAuthority(initialAuthority);
   if (JSON.stringify(initialAuthority) !== JSON.stringify(createdAuthority)) throw new Error("contract-mediated authority readback mismatch");
@@ -107,7 +106,7 @@ async function main() {
   const replay = await replayPromise;
   if (replay.code !== 0) throw new Error(`replay broker failed: ${redact(replay.stderr, [brokerKey])}`);
   const replayObservation = parseChildJson(replay.stdout);
-  const finalReadbackResponse = await invokeC1(operatorKey, nodeUrl, contractId, "get-incident", { incident_id: incidentId });
+  const finalReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
   const finalAuthority = authorityFromResult(finalReadbackResponse, "FOUND", "get-incident", incidentId);
   const totalDelete = brokers.reduce((sum, item) => sum + Number(item.destructive_call_count ?? 0), 0);
   const totalTokens = brokers.filter((item) => item.token_minted === true).length;
