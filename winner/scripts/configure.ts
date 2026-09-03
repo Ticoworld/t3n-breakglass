@@ -105,7 +105,13 @@ async function main() {
 
   const registration = JSON.parse(await readFile(registrationPath, "utf8")) as {
     operator_did?: string;
-    contract?: { name?: string; version?: string; contract_id?: number; functions?: string[] };
+    contract?: {
+      name?: string;
+      version?: string;
+      contract_id?: number;
+      node_routing_verified_functions?: string[];
+      locally_verified_component_exports?: string[];
+    };
     map?: { private?: boolean; acl_contract_id?: number };
   };
   const provisioning = JSON.parse(await readFile(provisioningPath, "utf8")) as {
@@ -130,7 +136,7 @@ async function main() {
   if (!registeredContract || registeredContract.name !== EXPECTED_CONTRACT_NAME || registeredContract.version !== CONTRACT_VERSION || !Number.isSafeInteger(registeredContract.contract_id) || registeredContract.contract_id <= 0 || registration.map?.private !== true || registration.map.acl_contract_id !== registeredContract.contract_id) throw new Error("registration evidence does not match the registered repaired C1 contract");
   const registeredContractId = registeredContract.name;
   const requiredRegisteredFunctions = ["create-incident", "get-incident", RESERVATION_FUNCTION, ...BROKER_FUNCTIONS];
-  if (!Array.isArray(registeredContract.functions) || registeredContract.functions.length !== requiredRegisteredFunctions.length || !requiredRegisteredFunctions.every((name) => registeredContract.functions?.includes(name))) throw new Error("registration evidence does not list the complete repaired C1 interface");
+  if (!Array.isArray(registeredContract.node_routing_verified_functions) || registeredContract.node_routing_verified_functions.length !== requiredRegisteredFunctions.length || !requiredRegisteredFunctions.every((name) => registeredContract.node_routing_verified_functions?.includes(name))) throw new Error("registration evidence does not list the complete repaired C1 interface");
   if (provisioning.organisation_did !== ORGANISATION_DID || replacementEvidence.organisation_did !== ORGANISATION_DID || recordedRemediationOrg !== ORGANISATION_DID || recordedBrokerOrg !== ORGANISATION_DID) throw new Error("agent organization evidence does not match the fixed organization");
   if (replacementEvidence.replacement_agent_did !== EXPECTED_REMEDIATION_DID || recordedRemediationDid !== EXPECTED_REMEDIATION_DID) throw new Error("remediation evidence does not match fixed C1 principal");
   if (provisioning.effect_broker_did !== EXPECTED_BROKER_DID || recordedBrokerDid !== EXPECTED_BROKER_DID) throw new Error("broker evidence does not match fixed C1 principal");
