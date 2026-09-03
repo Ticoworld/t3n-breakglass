@@ -32,7 +32,7 @@ function requireActiveAuthority(authority: Record<string, unknown>): void {
 }
 function isPlatformRefusal(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
-  return /\b(401|403)\b|forbidden|unauthori[sz]ed|delegat|permission|capabilit|not allowed|function not found/i.test(message);
+  return /\b(401|403)\b|forbidden|unauthori[sz]ed|delegat|permission|capabilit|not allowed/i.test(message);
 }
 async function wrongRoleProbe(apiKey: string, nodeUrl: string, contractId: string, functionName: string, input: Record<string, unknown>, expectedNote: string): Promise<Record<string, unknown>> {
   try {
