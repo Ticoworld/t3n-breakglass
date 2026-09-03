@@ -81,8 +81,12 @@ test("strict claim parsing rejects target injection and incomplete authority", (
 });
 
 test("principal configuration rejects DID overrides and keeps operator, agent, broker distinct", () => {
-  assert.match(configureSource, /override differs from recorded C1 principal/);
+  assert.match(configureSource, /override differs from fixed C1 principal/);
   assert.match(configureSource, /C1 principals must be three distinct DIDs/);
+  assert.match(configureSource, /getMemberDelegation/);
+  assert.match(configureSource, /getAgentEgress/);
+  assert.match(configureSource, /delegation post-write readback is not exact/);
+  assert.match(configureSource, /status !== "CONFIGURED_VERIFIED"/);
   assert.match(t3nSource, /connectC1Principal/);
   assert.match(runSource, /EFFECT_BROKER_T3N_API_KEY/);
   assert.equal(runSource.includes("process.env.T3N_API_KEY"), false, "broker source must not use operator T3N_API_KEY");
