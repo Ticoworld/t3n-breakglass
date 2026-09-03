@@ -1,0 +1,54 @@
+{
+  "experiment": "C1 interrupted-retry disposable target cleanup",
+  "status": "CLEANED",
+  "environment": "testnet",
+  "repository": {
+    "owner": "Ticoworld",
+    "name": "t3n-breakglass-sandbox",
+    "private": true
+  },
+  "target": {
+    "deploy_key_id": 162162770,
+    "title": "breakglass-c1-1788428231608-8270f59f",
+    "read_only": true,
+    "metadata_matched_target_setup": true
+  },
+  "before": {
+    "exact_get_http_status": 200,
+    "list_http_status": 200,
+    "target_present": true,
+    "list_body_valid": true
+  },
+  "delete": {
+    "http_status": 204,
+    "deleted_only_exact_record": true
+  },
+  "after": {
+    "exact_get_http_status": 404,
+    "list_http_status": 200,
+    "target_absent": true,
+    "list_body_valid": true
+  },
+  "installation_token": {
+    "repository_selection": "Ticoworld/t3n-breakglass-sandbox",
+    "permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "revoked_http_status": 204
+  },
+  "provider_mutations": {
+    "deploy_key_delete_count": 1,
+    "other_deploy_keys_touched": 0
+  },
+  "github_api_calls": 8,
+  "pat_used": false,
+  "credential_safety": {
+    "installation_token_in_evidence": false,
+    "jwt_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false,
+    "pat_in_evidence": false
+  }
+}

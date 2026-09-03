@@ -1,0 +1,94 @@
+{
+  "experiment": "C1 contract-mediated authority seed retry",
+  "status": "C1_FAIL",
+  "failure_stage": "create-incident contract invocation",
+  "failure_reason": "Terminal 3 returned HTTP 400 from the first create-incident invocation; no successful contract result or authority readback was returned",
+  "tested_branch": "winner-v2-core",
+  "tested_git_head_before_commit": "62b61e61123246609135064edd5cf8969d17c455",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "t3n": {
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.1",
+    "contract_id": 875,
+    "map_private": true,
+    "map_acl_contract_id": 875
+  },
+  "principals": {
+    "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "incident": {
+    "incident_id": null,
+    "authority_created": false,
+    "create_invocation_attempted": 1,
+    "successful_c1_contract_result": false,
+    "operator_readback_attempted": false,
+    "reservation": "NOT_STARTED",
+    "broker_race": "NOT_STARTED",
+    "replay": "NOT_STARTED"
+  },
+  "activity_read": {
+    "read_only": true,
+    "new_create_incident_entry_observed": false,
+    "interpretation": "No new create-incident audit entry was present in the post-failure filtered report; the runner had no successful create result. This artifact does not claim a complete causal receipt."
+  },
+  "target_cleanup": {
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "deploy_key_id": 162168386,
+    "title": "breakglass-c1-1788432199275-30c4ce4a",
+    "read_only": true,
+    "private": true,
+    "metadata_matched_target_setup": true,
+    "before_exact_get_http_status": 200,
+    "before_list_http_status": 200,
+    "before_present": true,
+    "delete_http_status": 204,
+    "delete_count": 1,
+    "after_exact_get_http_status": 404,
+    "after_list_http_status": 200,
+    "after_list_body_valid": true,
+    "after_absent": true,
+    "cleanup_token_revoked_http_status": 204,
+    "other_deploy_keys_touched": 0
+  },
+  "provider_effect": {
+    "c1_effect_delete_attempts": 0,
+    "provider_mutations_from_c1_effect": 0,
+    "setup_create_count": 1,
+    "cleanup_delete_count": 1,
+    "net_disposable_target_state": "absent"
+  },
+  "t3n_phase_mutations": {
+    "repaired_contract_registration": 1,
+    "private_map_acl_update": 1,
+    "delegation_updates": 2,
+    "c1_incident_state_mutations": 0
+  },
+  "github_api_calls": {
+    "c1_effect_calls": 0,
+    "setup_and_cleanup_calls": 14,
+    "pat_used": false
+  },
+  "credential_safety": {
+    "t3n_api_key_in_evidence": false,
+    "pat_in_evidence": false,
+    "jwt_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false
+  },
+  "previous_failure_artifacts_preserved": [
+    "winner/evidence/C1-live-failure.json",
+    "winner/evidence/C1-live-retry-failure.json"
+  ],
+  "limitations": [
+    "The SDK exposed only HTTP 400 for the create-incident attempt; the server-side diagnostic body was not returned.",
+    "No automatic live retry was performed.",
+    "No provider-side exactly-once claim is made."
+  ]
+}

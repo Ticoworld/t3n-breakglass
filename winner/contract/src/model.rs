@@ -3,11 +3,31 @@ use alloc::string::{String, ToString};
 use serde::{Deserialize, Serialize};
 
 pub const ACTION_REVOKE_GITHUB_DEPLOY_KEY: &str = "revoke_github_deploy_key";
+pub const GITHUB_OWNER: &str = "Ticoworld";
+pub const GITHUB_REPOSITORY: &str = "t3n-breakglass-sandbox";
 pub const MAP_TAIL: &str = "winner-incidents";
+pub const MIN_INCIDENT_TTL_SECS: u64 = 60;
+pub const MAX_INCIDENT_TTL_SECS: u64 = 900;
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct IncidentRequest {
+    pub incident_id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct CreateIncidentRequest {
+    pub incident_id: String,
+    pub remediation_agent_did: String,
+    pub effect_broker_did: String,
+    pub deploy_key_id: u64,
+    pub ttl_secs: u64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct GetIncidentRequest {
     pub incident_id: String,
 }
 
@@ -145,6 +165,69 @@ pub fn caller_matches(expected: &str, caller: Option<&[u8]>) -> bool {
         && hex::encode(caller).eq_ignore_ascii_case(&expected[8..])
 }
 
+pub fn operator_matches_tenant(calling_user_did: Option<&[u8]>, tenant_did: &[u8]) -> bool {
+    matches!(calling_user_did, Some(caller) if caller.len() == 20 && tenant_did.len() == 20 && caller == tenant_did)
+}
+
+pub fn valid_incident_id(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 128
+        && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b':' | b'-' | b'_'))
+}
+
+pub fn build_incident_authority(
+    request: &CreateIncidentRequest,
+    calling_user_did: Option<&[u8]>,
+    tenant_did: &[u8],
+    now: u64,
+) -> Result<IncidentAuthority, &'static str> {
+    if !operator_matches_tenant(calling_user_did, tenant_did) {
+        return Err("caller is not the current tenant operator")
+    }
+    if !valid_incident_id(&request.incident_id) {
+        return Err("incident_id is invalid")
+    }
+    if !valid_did(&request.remediation_agent_did) || !valid_did(&request.effect_broker_did) {
+        return Err("agent DIDs are invalid")
+    }
+    if request.remediation_agent_did == request.effect_broker_did {
+        return Err("remediation and broker DIDs must differ")
+    }
+    if caller_matches(&request.remediation_agent_did, Some(tenant_did)) || caller_matches(&request.effect_broker_did, Some(tenant_did)) {
+        return Err("operator cannot be an effect principal")
+    }
+    if request.deploy_key_id == 0 {
+        return Err("deploy_key_id must be positive")
+    }
+    if request.ttl_secs < MIN_INCIDENT_TTL_SECS || request.ttl_secs > MAX_INCIDENT_TTL_SECS {
+        return Err("ttl_secs is outside the bounded C1 window")
+    }
+    let expires_at = now.checked_add(request.ttl_secs).ok_or("ttl_secs overflows cluster time")?;
+    let authority = IncidentAuthority {
+        incident_id: request.incident_id.clone(),
+        remediation_agent_did: request.remediation_agent_did.clone(),
+        effect_broker_did: request.effect_broker_did.clone(),
+        action: ACTION_REVOKE_GITHUB_DEPLOY_KEY.into(),
+        github_owner: GITHUB_OWNER.into(),
+        github_repo: GITHUB_REPOSITORY.into(),
+        deploy_key_id: request.deploy_key_id,
+        created_at: now,
+        expires_at,
+        max_effects: 1,
+        effect_attempts: 0,
+        status: Status::Active,
+        reservation_id: None,
+        reservation_version: 0,
+        effect_claim_id: None,
+        effect_claim_version: 0,
+        final_result_classification: None,
+    };
+    if !valid_shape(&authority) {
+        return Err("constructed incident authority is invalid")
+    }
+    Ok(authority)
+}
+
 pub fn valid_time(authority: &IncidentAuthority, now: u64) -> bool {
     now >= authority.created_at && now < authority.expires_at
 }
@@ -261,6 +344,7 @@ mod tests {
 
     const AGENT: &str = "did:t3n:00112233445566778899aabbccddeeff00112233";
     const BROKER: &str = "did:t3n:ffeeddccbbaa99887766554433221100ffeeddcc";
+    const OPERATOR_BYTES: [u8; 20] = [0xaa; 20];
     const AGENT_BYTES: [u8; 20] = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33];
     const BROKER_BYTES: [u8; 20] = [0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xff, 0xee, 0xdd, 0xcc];
 
@@ -271,6 +355,72 @@ mod tests {
             created_at: 100, expires_at: 200, max_effects: 1, effect_attempts: 0, status: Status::Active,
             reservation_id: None, reservation_version: 0, effect_claim_id: None, effect_claim_version: 0, final_result_classification: None,
         }
+    }
+
+    fn create_request() -> CreateIncidentRequest {
+        CreateIncidentRequest {
+            incident_id: "INC-CREATE-1".into(),
+            remediation_agent_did: AGENT.into(),
+            effect_broker_did: BROKER.into(),
+            deploy_key_id: 7,
+            ttl_secs: 900,
+        }
+    }
+
+    #[test]
+    fn create_builds_contract_owned_authority_from_cluster_time() {
+        let request = create_request();
+        let authority = build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000).unwrap();
+        assert_eq!(authority.created_at, 1_000);
+        assert_eq!(authority.expires_at, 1_900);
+        assert_eq!(authority.action, ACTION_REVOKE_GITHUB_DEPLOY_KEY);
+        assert_eq!(authority.github_owner, GITHUB_OWNER);
+        assert_eq!(authority.github_repo, GITHUB_REPOSITORY);
+        assert_eq!(authority.max_effects, 1);
+        assert_eq!(authority.effect_attempts, 0);
+        assert_eq!(authority.status, Status::Active);
+        assert!(valid_shape(&authority));
+    }
+
+    #[test]
+    fn create_requires_exact_runtime_operator_identity() {
+        let request = create_request();
+        assert_eq!(build_incident_authority(&request, None, &OPERATOR_BYTES, 1_000), Err("caller is not the current tenant operator"));
+        assert_eq!(build_incident_authority(&request, Some(&AGENT_BYTES), &OPERATOR_BYTES, 1_000), Err("caller is not the current tenant operator"));
+        assert!(operator_matches_tenant(Some(&OPERATOR_BYTES), &OPERATOR_BYTES));
+        assert!(!operator_matches_tenant(None, &OPERATOR_BYTES));
+        assert!(!operator_matches_tenant(Some(&[0xaau8; 19]), &OPERATOR_BYTES));
+    }
+
+    #[test]
+    fn create_rejects_unbounded_or_overflowing_ttl() {
+        let mut request = create_request();
+        request.ttl_secs = 0;
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000), Err("ttl_secs is outside the bounded C1 window"));
+        request.ttl_secs = MIN_INCIDENT_TTL_SECS - 1;
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000), Err("ttl_secs is outside the bounded C1 window"));
+        request.ttl_secs = MAX_INCIDENT_TTL_SECS + 1;
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000), Err("ttl_secs is outside the bounded C1 window"));
+        request.ttl_secs = MIN_INCIDENT_TTL_SECS;
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, u64::MAX), Err("ttl_secs overflows cluster time"));
+    }
+
+    #[test]
+    fn create_rejects_duplicate_effect_principals_and_operator_reuse() {
+        let mut request = create_request();
+        request.effect_broker_did = request.remediation_agent_did.clone();
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000), Err("remediation and broker DIDs must differ"));
+        request.effect_broker_did = "did:t3n:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into();
+        assert_eq!(build_incident_authority(&request, Some(&OPERATOR_BYTES), &OPERATOR_BYTES, 1_000), Err("operator cannot be an effect principal"));
+    }
+
+    #[test]
+    fn create_and_get_requests_reject_unknown_fields() {
+        assert!(serde_json::from_str::<CreateIncidentRequest>(r#"{"incident_id":"x","remediation_agent_did":"did:t3n:00112233445566778899aabbccddeeff00112233","effect_broker_did":"did:t3n:ffeeddccbbaa99887766554433221100ffeeddcc","deploy_key_id":7,"ttl_secs":900,"github_repo":"evil"}"#).is_err());
+        assert!(serde_json::from_str::<GetIncidentRequest>(r#"{"incident_id":"x","deploy_key_id":7}"#).is_err());
+        assert!(!valid_incident_id("INC with spaces"));
+        assert!(!valid_incident_id(""));
+        assert!(valid_incident_id("INC-CREATE-1"));
     }
 
     #[test] fn wrong_remediation_did_is_denied() { let mut a = authority(); assert_eq!(reserve(&mut a, Some(&BROKER_BYTES), 120), Decision::Denied("caller is not the remediation agent")); }

@@ -22,9 +22,11 @@ test("stderr diagnostics do not corrupt the stdout machine document", () => {
 
 test("malformed child output fails before the incident authority write", () => {
   assert.throws(() => parseChildJson('{"status":"READY"'), /one complete JSON document/);
-  const parsedTarget = liveSource.indexOf("const targetSetup = parseChildJson(targetRun.stdout)");
-  const authorityWrite = liveSource.indexOf("await tenant.maps.entrySet(INCIDENT_MAP_TAIL, incidentId, encoded)");
-  assert.ok(parsedTarget >= 0 && authorityWrite > parsedTarget);
+  const parsedTarget = liveSource.indexOf("targetSetup");
+  const authorityCreate = liveSource.indexOf('invokeC1(operatorKey, nodeUrl, contractId, "create-incident"');
+  assert.ok(parsedTarget >= 0 && authorityCreate > parsedTarget);
+  assert.equal(liveSource.includes("tenant.maps.entrySet"), false);
+  assert.equal(liveSource.includes("tenant.maps.entryGet"), false);
 });
 
 test("all machine-consumed C1 child outputs use the complete-document parser", () => {

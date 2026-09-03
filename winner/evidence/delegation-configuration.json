@@ -7,8 +7,8 @@
   "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
   "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
   "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
-  "contract_version": "2.0.0",
-  "contract_id": 842,
+  "contract_version": "2.0.1",
+  "contract_id": 875,
   "operator_admin_read": {
     "exact_call": "SessionOrgDataClient.amIAdmin({ orgDid })",
     "success": true,
@@ -36,42 +36,13 @@
           }
         }
       ],
-      "current_grant_classification": "EXACT_TARGET",
-      "member_grant_exact": true,
-      "agent_egress": null,
-      "agent_egress_read_success": true,
-      "separate_agent_egress_exact": true,
-      "exact": true
-    },
-    "effect_broker": {
-      "target_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
-      "member_grants_for_exact_pair": [],
-      "current_grant_classification": "ABSENT",
+      "current_grant_classification": "BROADER_OR_DIFFERENT",
       "member_grant_exact": false,
       "agent_egress": null,
       "agent_egress_read_success": true,
       "separate_agent_egress_exact": true,
       "exact": false
-    }
-  },
-  "mutation_count": {
-    "remediation_agent": 1,
-    "effect_broker": 1,
-    "total_updateMemberDelegation": 2
-  },
-  "mutation_history": {
-    "remediation_agent": {
-      "updates": 1,
-      "first_attempt_post_readback": "rejected before representation hardening; grant was subsequently confirmed exact"
     },
-    "effect_broker": {
-      "updates": 1,
-      "completion_attempt_post_readback": "exact"
-    },
-    "total_updateMemberDelegation": 2,
-    "within_maximum_two": true
-  },
-  "after_each_update_readback": {
     "effect_broker": {
       "target_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
       "member_grants_for_exact_pair": [
@@ -91,6 +62,68 @@
           "window": {
             "valid_from_secs": 1788411511,
             "valid_until_secs": 1796187511
+          }
+        }
+      ],
+      "current_grant_classification": "BROADER_OR_DIFFERENT",
+      "member_grant_exact": false,
+      "agent_egress": null,
+      "agent_egress_read_success": true,
+      "separate_agent_egress_exact": true,
+      "exact": false
+    }
+  },
+  "mutation_count": {
+    "remediation_agent": 1,
+    "effect_broker": 1,
+    "total_updateMemberDelegation": 2
+  },
+  "after_each_update_readback": {
+    "remediation_agent": {
+      "target_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "member_grants_for_exact_pair": [
+        {
+          "grantee": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+          "contract_id": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+          "functions": [
+            "reserve-incident"
+          ],
+          "scopes": [],
+          "read_scopes": null,
+          "allowed_hosts": null,
+          "version_req": "2.0.1",
+          "window": {
+            "valid_from_secs": 1788432021,
+            "valid_until_secs": 1796208021
+          }
+        }
+      ],
+      "current_grant_classification": "EXACT_TARGET",
+      "member_grant_exact": true,
+      "agent_egress": null,
+      "agent_egress_read_success": true,
+      "separate_agent_egress_exact": true,
+      "exact": true
+    },
+    "effect_broker": {
+      "target_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "member_grants_for_exact_pair": [
+        {
+          "grantee": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+          "contract_id": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+          "functions": [
+            "claim-effect",
+            "release-not-attempted",
+            "finalize-effect",
+            "reconcile-effect"
+          ],
+          "scopes": [],
+          "read_scopes": null,
+          "allowed_hosts": null,
+          "version_req": "2.0.1",
+          "window": {
+            "valid_from_secs": 1788432024,
+            "valid_until_secs": 1796208024
           }
         }
       ],
@@ -115,10 +148,10 @@
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.0",
+          "version_req": "2.0.1",
           "window": {
-            "valid_from_secs": 1788411418,
-            "valid_until_secs": 1796187418
+            "valid_from_secs": 1788432021,
+            "valid_until_secs": 1796208021
           }
         }
       ],
@@ -144,10 +177,10 @@
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.0",
+          "version_req": "2.0.1",
           "window": {
-            "valid_from_secs": 1788411511,
-            "valid_until_secs": 1796187511
+            "valid_from_secs": 1788432024,
+            "valid_until_secs": 1796208024
           }
         }
       ],
@@ -166,7 +199,7 @@
       ],
       "scopes": [],
       "allowed_hosts": [],
-      "version_req": "2.0.0",
+      "version_req": "2.0.1",
       "provider_http": false
     },
     "broker": {
@@ -178,18 +211,18 @@
       ],
       "scopes": [],
       "allowed_hosts": [],
-      "version_req": "2.0.0",
+      "version_req": "2.0.1",
       "provider_http": false
     },
     "function_order_comparison": "order-insensitive; readback values are preserved"
   },
   "operator_can_claim": false,
   "post_configuration_operator_balance": {
-    "available_base_units": 198636569704,
+    "available_base_units": 196133293908,
     "reserved_base_units": 0,
     "credit_exhausted": false,
     "last_settled_seq_no": 0,
-    "version": 321,
+    "version": 345,
     "read_success": true
   },
   "github_api_calls": 0,

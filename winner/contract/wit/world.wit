@@ -20,6 +20,8 @@ interface contracts {
         context:      option<list<u8>>,
     }
 
+    create-incident: func(req: generic-input) -> result<list<u8>, string>;
+    get-incident: func(req: generic-input) -> result<list<u8>, string>;
     reserve-incident: func(req: generic-input) -> result<list<u8>, string>;
     claim-effect: func(req: generic-input) -> result<list<u8>, string>;
     release-not-attempted: func(req: generic-input) -> result<list<u8>, string>;

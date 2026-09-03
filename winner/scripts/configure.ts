@@ -12,7 +12,7 @@ const evidencePath = path.join(root, "winner", "evidence", "delegation-configura
 const EXPECTED_OPERATOR_DID = "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f";
 const EXPECTED_REMEDIATION_DID = "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019";
 const EXPECTED_BROKER_DID = "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57";
-const EXPECTED_CONTRACT_ID = `z:${EXPECTED_OPERATOR_DID.slice("did:t3n:".length)}:breakglass-winner-c1`;
+const EXPECTED_CONTRACT_NAME = `z:${EXPECTED_OPERATOR_DID.slice("did:t3n:".length)}:breakglass-winner-c1`;
 
 type Target = { role: "remediation_agent" | "effect_broker"; did: string; functions: string[] };
 
@@ -70,10 +70,10 @@ function documentedDefaultWindow(window: BoundGrant["window"]): boolean {
   return Object.keys(window).every((key) => key === "valid_from_secs" || key === "valid_until_secs");
 }
 
-function exactGrant(grant: BoundGrant | undefined, target: Target): boolean {
+function exactGrant(grant: BoundGrant | undefined, target: Target, contractNameValue: string): boolean {
   if (!grant) return false;
   return grant.grantee === target.did
-    && grant.contract_id === EXPECTED_CONTRACT_ID
+    && grant.contract_id === contractNameValue
     && sameUnorderedStrings(grant.functions, target.functions)
     && Array.isArray(grant.scopes) && grant.scopes.length === 0
     && emptyOrAbsentStrings(grant.allowed_hosts)
@@ -82,11 +82,11 @@ function exactGrant(grant: BoundGrant | undefined, target: Target): boolean {
     && documentedDefaultWindow(grant.window);
 }
 
-async function readTargetGrant(t3n: Awaited<ReturnType<typeof connectTenant>>["t3n"], orgData: SessionOrgDataClient, target: Target) {
+async function readTargetGrant(t3n: Awaited<ReturnType<typeof connectTenant>>["t3n"], orgData: SessionOrgDataClient, target: Target, contractNameValue: string) {
   const document = await t3n.getMemberDelegation();
-  const matches = document.grants.filter((grant) => grant.grantee === target.did && grant.contract_id === EXPECTED_CONTRACT_ID);
-  const egressResponse = await orgData.getAgentEgress({ orgDid: ORGANISATION_DID, agentDid: target.did, contractId: EXPECTED_CONTRACT_ID });
-  const memberExact = matches.length === 1 && exactGrant(matches[0], target);
+  const matches = document.grants.filter((grant) => grant.grantee === target.did && grant.contract_id === contractNameValue);
+  const egressResponse = await orgData.getAgentEgress({ orgDid: ORGANISATION_DID, agentDid: target.did, contractId: contractNameValue });
+  const memberExact = matches.length === 1 && exactGrant(matches[0], target, contractNameValue);
   const egress = safeEgress(egressResponse);
   return {
     target_did: target.did,
@@ -105,7 +105,8 @@ async function main() {
 
   const registration = JSON.parse(await readFile(registrationPath, "utf8")) as {
     operator_did?: string;
-    contract?: { name?: string; version?: string; contract_id?: number };
+    contract?: { name?: string; version?: string; contract_id?: number; functions?: string[] };
+    map?: { private?: boolean; acl_contract_id?: number };
   };
   const provisioning = JSON.parse(await readFile(provisioningPath, "utf8")) as {
     operator_did?: string;
@@ -125,7 +126,11 @@ async function main() {
   if (process.env.REMEDIATION_AGENT_DID && process.env.REMEDIATION_AGENT_DID !== EXPECTED_REMEDIATION_DID) throw new Error("REMEDIATION_AGENT_DID override differs from fixed C1 principal");
   if (process.env.EFFECT_BROKER_DID && process.env.EFFECT_BROKER_DID !== EXPECTED_BROKER_DID) throw new Error("EFFECT_BROKER_DID override differs from fixed C1 principal");
   if (registration.operator_did !== EXPECTED_OPERATOR_DID || provisioning.operator_did !== EXPECTED_OPERATOR_DID) throw new Error("operator evidence does not match fixed operator DID");
-  if (registration.contract?.name !== EXPECTED_CONTRACT_ID || registration.contract.version !== CONTRACT_VERSION || registration.contract.contract_id !== 842) throw new Error("registration evidence does not match C1 v2 contract 842");
+  const registeredContract = registration.contract;
+  if (!registeredContract || registeredContract.name !== EXPECTED_CONTRACT_NAME || registeredContract.version !== CONTRACT_VERSION || !Number.isSafeInteger(registeredContract.contract_id) || registeredContract.contract_id <= 0 || registration.map?.private !== true || registration.map.acl_contract_id !== registeredContract.contract_id) throw new Error("registration evidence does not match the registered repaired C1 contract");
+  const registeredContractId = registeredContract.name;
+  const requiredRegisteredFunctions = ["create-incident", "get-incident", RESERVATION_FUNCTION, ...BROKER_FUNCTIONS];
+  if (!Array.isArray(registeredContract.functions) || registeredContract.functions.length !== requiredRegisteredFunctions.length || !requiredRegisteredFunctions.every((name) => registeredContract.functions?.includes(name))) throw new Error("registration evidence does not list the complete repaired C1 interface");
   if (provisioning.organisation_did !== ORGANISATION_DID || replacementEvidence.organisation_did !== ORGANISATION_DID || recordedRemediationOrg !== ORGANISATION_DID || recordedBrokerOrg !== ORGANISATION_DID) throw new Error("agent organization evidence does not match the fixed organization");
   if (replacementEvidence.replacement_agent_did !== EXPECTED_REMEDIATION_DID || recordedRemediationDid !== EXPECTED_REMEDIATION_DID) throw new Error("remediation evidence does not match fixed C1 principal");
   if (provisioning.effect_broker_did !== EXPECTED_BROKER_DID || recordedBrokerDid !== EXPECTED_BROKER_DID) throw new Error("broker evidence does not match fixed C1 principal");
@@ -142,22 +147,22 @@ async function main() {
   if (!admin) throw new Error("operator is not admin of the expected organization");
 
   const preWrite: Record<string, Awaited<ReturnType<typeof readTargetGrant>>> = {};
-  for (const target of targets) preWrite[target.role] = await readTargetGrant(t3n, orgData, target);
+  for (const target of targets) preWrite[target.role] = await readTargetGrant(t3n, orgData, target, registeredContractId);
 
   const mutationCounts: Record<string, number> = { remediation_agent: 0, effect_broker: 0 };
   const afterEachUpdate: Record<string, unknown> = {};
   for (const target of targets) {
     if (preWrite[target.role].exact) continue;
-    await t3n.updateMemberDelegation({ grantee: target.did, contract_id: EXPECTED_CONTRACT_ID, functions: target.functions, scopes: [], version_req: CONTRACT_VERSION, allowed_hosts: [] });
+    await t3n.updateMemberDelegation({ grantee: target.did, contract_id: registeredContractId, functions: target.functions, scopes: [], version_req: CONTRACT_VERSION, allowed_hosts: [] });
     mutationCounts[target.role] += 1;
-    const afterUpdate = await readTargetGrant(t3n, orgData, target);
+    const afterUpdate = await readTargetGrant(t3n, orgData, target, registeredContractId);
     if (!afterUpdate.exact) throw new Error(`${target.role} delegation post-write readback is not exact`);
     afterEachUpdate[target.role] = afterUpdate;
   }
 
   const postWrite: Record<string, Awaited<ReturnType<typeof readTargetGrant>>> = {};
   for (const target of targets) {
-    postWrite[target.role] = await readTargetGrant(t3n, orgData, target);
+    postWrite[target.role] = await readTargetGrant(t3n, orgData, target, registeredContractId);
     if (!postWrite[target.role].exact) throw new Error(`${target.role} final delegation readback is not exact`);
   }
   const operatorBalance = await t3n.getBalance();
@@ -170,9 +175,9 @@ async function main() {
     t3n_node: nodeUrl,
     operator_did: tenantDid,
     organisation_did: ORGANISATION_DID,
-    contract: EXPECTED_CONTRACT_ID,
+    contract: registeredContractId,
     contract_version: CONTRACT_VERSION,
-    contract_id: 842,
+    contract_id: registeredContract.contract_id,
     operator_admin_read: { exact_call: "SessionOrgDataClient.amIAdmin({ orgDid })", success: true, is_admin: true },
     remediation_agent_did: EXPECTED_REMEDIATION_DID,
     effect_broker_did: EXPECTED_BROKER_DID,

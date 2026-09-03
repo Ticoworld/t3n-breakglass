@@ -8,9 +8,11 @@
   "contract": {
     "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
     "tail": "breakglass-winner-c1",
-    "version": "2.0.0",
-    "contract_id": 842,
+    "version": "2.0.1",
+    "contract_id": 875,
     "functions": [
+      "create-incident",
+      "get-incident",
       "reserve-incident",
       "claim-effect",
       "release-not-attempted",
@@ -22,7 +24,7 @@
     "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:winner-incidents",
     "tail": "winner-incidents",
     "private": true,
-    "acl_contract_id": 842
+    "acl_contract_id": 875
   },
   "provider_mutations": 0
 }

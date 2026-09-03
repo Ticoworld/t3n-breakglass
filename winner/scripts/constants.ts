@@ -1,5 +1,5 @@
 export const CONTRACT_TAIL = "breakglass-winner-c1";
-export const CONTRACT_VERSION = "2.0.0";
+export const CONTRACT_VERSION = "2.0.1";
 export const INCIDENT_MAP_TAIL = "winner-incidents";
 export const ACTION = "revoke_github_deploy_key";
 export const GITHUB_HOST = "api.github.com";

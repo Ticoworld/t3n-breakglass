@@ -31,7 +31,7 @@ async function main() {
     sdk: "@terminal3/t3n-sdk 5.2.0",
     t3n_node: nodeUrl,
     operator_did: tenantDid,
-    contract: { name: registered.name, tail: CONTRACT_TAIL, version: CONTRACT_VERSION, contract_id: registered.contract_id, functions: ["reserve-incident", "claim-effect", "release-not-attempted", "finalize-effect", "reconcile-effect"] },
+    contract: { name: registered.name, tail: CONTRACT_TAIL, version: CONTRACT_VERSION, contract_id: registered.contract_id, functions: ["create-incident", "get-incident", "reserve-incident", "claim-effect", "release-not-attempted", "finalize-effect", "reconcile-effect"] },
     map: { name: tenant.canonicalName(INCIDENT_MAP_TAIL), tail: INCIDENT_MAP_TAIL, private: true, acl_contract_id: registered.contract_id },
     provider_mutations: 0,
   };

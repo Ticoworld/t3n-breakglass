@@ -33,8 +33,9 @@ test("claim target cannot widen beyond fixed repository configuration", () => {
   assert.equal(claimTargetMatchesConfiguredRepository(claim, "Ticoworld", "t3n-breakglass-sandbox"), true);
   assert.equal(claimTargetMatchesConfiguredRepository({ ...claim, github_repo: "other-repo" }, "Ticoworld", "t3n-breakglass-sandbox"), false);
   assert.match(runSource, /CLAIM_TARGET_MISMATCH/);
-  assert.match(seedSource, /GITHUB_OWNER/);
-  assert.match(seedSource, /C1_GITHUB_REPO cannot override/);
+  assert.match(seedSource, /create-incident/);
+  assert.equal(seedSource.includes("C1_GITHUB_REPO"), false);
+  assert.equal(seedSource.includes("tenant.maps.entrySet"), false);
 });
 
 test("provider ambiguity never authorizes blind retry or inconsistent closure", () => {
@@ -131,7 +132,7 @@ test("GitHub App authority uses repository-selected administration write only", 
 test("live proof cannot be written before replay and pass criteria", () => {
   const replay = liveSource.indexOf("replayObservation.claim_outcome");
   const writeProof = liveSource.indexOf('C1-live-proof.json');
-  const pass = liveSource.indexOf('status: "C1_PASS"');
+  const pass = liveSource.lastIndexOf('status: "C1_PASS"');
   assert.ok(replay >= 0 && writeProof > replay && pass > writeProof);
   assert.match(liveSource, /replay broker did not reach the common barrier/);
   assert.match(liveSource, /replayObservation\.token_minted !== false/);
