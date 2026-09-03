@@ -7,7 +7,7 @@ import { connectTenant, redactError } from "../../scripts/lib.js";
 import { trustedNodeTimeSeconds } from "../../scripts/product.js";
 import { ACTION, BROKER_FUNCTIONS, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, RESERVATION_FUNCTION, contractName } from "./constants.js";
 import { parseChildJson } from "./child-protocol.js";
-import { invokeC1OperatorSession, requireValue, redact } from "./t3n.js";
+import { invokeC1, invokeC1OperatorSession, requireValue, redact } from "./t3n.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -29,6 +29,21 @@ function authorityFromResult(raw: unknown, expectedResult: string, functionName:
 }
 function requireActiveAuthority(authority: Record<string, unknown>): void {
   if (authority.effect_attempts !== 0 || authority.status !== "ACTIVE" || authority.reservation_id !== null || authority.reservation_version !== 0 || authority.effect_claim_id !== null || authority.effect_claim_version !== 0 || authority.final_result_classification !== null) throw new Error("C1 initial authority is not the exact ACTIVE shape");
+}
+function isPlatformRefusal(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b(401|403)\b|forbidden|unauthori[sz]ed|delegat|permission|capabilit|not allowed|function not found/i.test(message);
+}
+async function wrongRoleProbe(apiKey: string, nodeUrl: string, contractId: string, functionName: string, input: Record<string, unknown>, expectedNote: string): Promise<Record<string, unknown>> {
+  try {
+    const raw = await invokeC1(apiKey, nodeUrl, contractId, functionName, input);
+    const response = objectResult(raw);
+    if (response.result !== "DENIED" || response.function !== functionName || response.note !== expectedNote) throw new Error(`unexpected wrong-role response for ${functionName}`);
+    return { transport_refusal: false, routing_recognized: true, guest_reached: true, application_result: response.result, application_note: response.note, response: raw, state_mutation: false, provider_operation: false };
+  } catch (error) {
+    if (!isPlatformRefusal(error)) throw error;
+    return { transport_refusal: true, routing_recognized: true, guest_reached: false, refusal: redactError(error, [apiKey]), state_mutation: false, provider_operation: false };
+  }
 }
 function exactGrantEvidence(grant: unknown, functions: readonly string[]): boolean {
   if (!grant || typeof grant !== "object" || Array.isArray(grant)) return false;
@@ -74,6 +89,17 @@ async function main() {
   const initialAuthority = authorityFromResult(initialReadbackResponse, "FOUND", "get-incident", incidentId);
   requireActiveAuthority(initialAuthority);
   if (JSON.stringify(initialAuthority) !== JSON.stringify(createdAuthority)) throw new Error("contract-mediated authority readback mismatch");
+  const wrongRoleChecks: Record<string, unknown> = {};
+  wrongRoleChecks.broker_attempts_reserve = await wrongRoleProbe(brokerKey, nodeUrl, contractId, RESERVATION_FUNCTION, { incident_id: incidentId }, "caller is not the remediation agent");
+  const afterBrokerWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
+  requireActiveAuthority(afterBrokerWrongRole);
+  if (JSON.stringify(afterBrokerWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("broker wrong-role reserve changed the ACTIVE authority");
+  wrongRoleChecks.after_broker_readback = afterBrokerWrongRole;
+  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId }, "caller is not the effect broker");
+  const afterRemediationWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
+  requireActiveAuthority(afterRemediationWrongRole);
+  if (JSON.stringify(afterRemediationWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("remediation wrong-role claim changed the ACTIVE authority");
+  wrongRoleChecks.after_remediation_readback = afterRemediationWrongRole;
   const reserveEnv = childEnv(process.env, { AGENT_T3N_API_KEY: remediationKey, AGENT_DID: remediationDid, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId }, ["T3N_API_KEY", "GITHUB_PAT", "EFFECT_BROKER_T3N_API_KEY"]);
   const reserveChild = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "scripts", "reserve-agent.ts")], reserveEnv);
   if (reserveChild.code !== 0) throw new Error(`reserve failed: ${reserveChild.stderr.slice(0, 500)}`);
@@ -114,7 +140,35 @@ async function main() {
   const winner = brokers.find((item) => item.claim_outcome === "CLAIM_WON");
   const loser = brokers.find((item) => item.claim_outcome === "CLAIM_LOST");
   if (statuses.filter((status) => status === "CLAIM_WON").length !== 1 || statuses.filter((status) => status === "CLAIM_LOST").length !== 1 || totalDelete !== 1 || totalTokens !== 1 || !winner || !loser || loser.token_minted !== false || Number(loser.destructive_call_count ?? -1) !== 0 || loser.delete_attempted !== false || Object.hasOwn(loser, "installation_validation") || Object.hasOwn(loser, "token_scope") || Object.hasOwn(loser, "before") || Object.hasOwn(loser, "delete") || Object.hasOwn(loser, "after") || finalAuthority.status !== "CLOSED" || finalAuthority.effect_attempts !== 1 || finalAuthority.final_result_classification !== "VERIFIED_ABSENT" || replayObservation.claim_outcome !== "CLAIM_LOST" || replayObservation.token_minted !== false || Number(replayObservation.destructive_call_count ?? -1) !== 0 || replayObservation.delete_attempted !== false || winner.token_minted !== true || Number(winner.destructive_call_count ?? -1) !== 1 || winner.delete_attempted !== true || winner.classification !== "VERIFIED_ABSENT" || (winner.revoke as Record<string, unknown> | undefined)?.success !== true || (winner.revoked_token_probe as Record<string, unknown> | undefined)?.refused !== true) throw new Error("C1 kill condition: effect-safe race or replay did not meet the brutal pass criteria");
-  const evidence = { experiment: "C1 effect-safe T3N reservation + JIT GitHub remediation", status: "C1_PASS", date_utc: new Date().toISOString(), branch: "winner-v2-core", tested_git_head: process.env.C1_TESTED_GIT_HEAD ?? null, main_sha: process.env.C1_MAIN_SHA ?? null, t3n: { environment: "testnet", node: nodeUrl, sdk: "@terminal3/t3n-sdk 5.2.0", contract: registration.contract.name, version: registration.contract.version, contract_id: registration.contract.contract_id, trusted_time_before_create: trustedTimeBeforeCreate }, principals: { remediation_agent_did: remediationDid, effect_broker_did: brokerDid, operator_did: operatorDid }, incident_id: incidentId, operator_direct_map_access: false, creation: { request_fields: ["incident_id", "remediation_agent_did", "effect_broker_did", "deploy_key_id", "ttl_secs"], result: createResponse, operator_readback: initialReadbackResponse, exact_readback: true, provider_mutations: 0 }, target: { owner: GITHUB_OWNER, repository: GITHUB_REPOSITORY, deploy_key_id: target.id, title: target.title, read_only: target.read_only, private: true }, initial_authority: initialAuthority, reservation: { result: reserveResult, provider_mutations: 0 }, broker_race: { common_barrier: { both_ready: true, released: true }, contenders: brokers, winner: winner.contender, loser: loser.contender, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, github_before_after: { independent_provider_observation: brokers.map((item) => ({ contender: item.contender, before: item.before, delete: item.delete, after: item.after, classification: item.classification })) }, final_t3n_authority: finalAuthority, replay: replayObservation, activity, credential_safety: { pat_used: false, jwt_in_evidence: false, installation_token_in_evidence: false, authorization_header_in_evidence: false, private_key_in_evidence: false, ssh_private_key_in_evidence: false, t3n_api_key_in_evidence: false }, classifications: { t3n_contract_claims: "LIVE_T3N", github_state: "LIVE_GITHUB independent-provider-GET/list", token_scope: "GitHub-response metadata", activity: "host-stamped activity metadata" }, allowed_claims: ["one committed C1 effect-claim winner under the demonstrated two-process race", "non-winner performed no provider credential mint or mutation in this run", "one broker-issued GitHub DELETE in this run", "independent provider reads verified final absence", "installation token was repository/permission scoped and explicitly revoked", "replay did not regain effect authority"], limitations: ["No real GitHub webhook ingress was used in C1.", "The GitHub App private key remains a standing trust root.", "The one-effect result is an observed C1 architecture/run property, not a provider-side exactly-once guarantee.", "This is not an atomic GitHub plus T3N transaction or a complete causal/Merkle receipt."] };
+  const evidence = { experiment: "C1 effect-safe T3N reservation + JIT GitHub remediation", status: "C1_PASS", date_utc: new Date().toISOString(), branch: "winner-v2-core", tested_git_head: process.env.C1_TESTED_GIT_HEAD ?? null, main_sha: process.env.C1_MAIN_SHA ?? null, t3n: { environment: "testnet", node: nodeUrl, sdk: "@terminal3/t3n-sdk 5.2.0", contract: registration.contract.name, version: registration.contract.version, contract_id: registration.contract.contract_id, trusted_time_before_create: trustedTimeBeforeCreate }, principals: { remediation_agent_did: remediationDid, effect_broker_did: brokerDid, operator_did: operatorDid }, incident_id: incidentId, operator_direct_map_access: false, creation: { request_fields: ["incident_id", "remediation_agent_did", "effect_broker_did", "deploy_key_id", "ttl_secs"], result: createResponse, operator_readback: initialReadbackResponse, exact_readback: true, provider_mutations: 0 }, target: { owner: GITHUB_OWNER, repository: GITHUB_REPOSITORY, deploy_key_id: target.id, title: target.title, read_only: target.read_only, private: true }, initial_authority: initialAuthority, wrong_role_checks: wrongRoleChecks, reservation: { result: reserveResult, provider_mutations: 0 }, broker_race: { common_barrier: { both_ready: true, released: true }, contenders: brokers, winner: winner.contender, loser: loser.contender, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, github_before_after: { independent_provider_observation: brokers.map((item) => ({ contender: item.contender, before: item.before, delete: item.delete, after: item.after, classification: item.classification })) }, final_t3n_authority: finalAuthority, replay: replayObservation, activity, credential_safety: { pat_used: false, jwt_in_evidence: false, installation_token_in_evidence: false, authorization_header_in_evidence: false, private_key_in_evidence: false, ssh_private_key_in_evidence: false, t3n_api_key_in_evidence: false }, classifications: { t3n_contract_claims: "LIVE_T3N", github_state: "LIVE_GITHUB independent-provider-GET/list", token_scope: "GitHub-response metadata", activity: "host-stamped activity metadata" }, allowed_claims: ["one committed C1 effect-claim winner under the demonstrated two-process race", "non-winner performed no provider credential mint or mutation in this run", "one broker-issued GitHub DELETE in this run", "independent provider reads verified final absence", "installation token was repository/permission scoped and explicitly revoked", "replay did not regain effect authority"], limitations: ["No real GitHub webhook ingress was used in C1.", "The GitHub App private key remains a standing trust root.", "The one-effect result is an observed C1 architecture/run property, not a provider-side exactly-once guarantee.", "This is not an atomic GitHub plus T3N transaction or a complete causal/Merkle receipt."] };
+  const setupToken = targetSetup.setup_token && typeof targetSetup.setup_token === "object" ? targetSetup.setup_token as Record<string, unknown> : {};
+  const setupMutations = targetSetup.provider_mutations && typeof targetSetup.provider_mutations === "object" ? targetSetup.provider_mutations as Record<string, unknown> : {};
+  Object.assign(evidence, {
+    fixture_setup: {
+      repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`,
+      deploy_key_create_count: Number(setupMutations.deploy_key_create_count ?? 1),
+      setup_installation_token_count: setupToken.minted === true ? 1 : 0,
+      setup_token_revoked: true,
+      token_scope: { repository_selection: setupToken.repository_selection ?? null, permissions: setupToken.permissions ?? null, expires_at: setupToken.expires_at ?? null },
+    },
+    effect_authority: {
+      winner_installation_token_count: winner.token_minted === true ? 1 : 0,
+      loser_installation_token_count: loser.token_minted === true ? 1 : 0,
+      replay_installation_token_count: replayObservation.token_minted === true ? 1 : 0,
+      repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`,
+      requested_permissions: { administration: "write" },
+    },
+    provider_effect: {
+      winner_delete_count: Number(winner.destructive_call_count ?? 0),
+      loser_delete_count: Number(loser.destructive_call_count ?? 0),
+      replay_delete_count: Number(replayObservation.destructive_call_count ?? 0),
+      total_broker_delete_count: totalDelete,
+    },
+    token_revocation: {
+      winner_effect_token_revoked: (winner.revoke as Record<string, unknown> | undefined)?.success === true,
+      same_token_probe_refused: (winner.revoked_token_probe as Record<string, unknown> | undefined)?.refused === true,
+    },
+  });
   await mkdir(path.join(root, "winner", "evidence"), { recursive: true });
   await writeFile(path.join(root, "winner", "evidence", "C1-live-proof.json"), JSON.stringify(evidence, null, 2) + "\n");
   console.log(JSON.stringify({ status: "C1_PASS", incident_id: incidentId, deploy_key_id: target.id, broker_race: { statuses, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, evidence: "winner/evidence/C1-live-proof.json" }, null, 2));

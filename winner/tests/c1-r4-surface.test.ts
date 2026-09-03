@@ -19,7 +19,7 @@ test("C1 R4 version and local source surface agree", () => {
 });
 
 test("operator create/get use session execution while agents retain opaque invoke", () => {
-  assert.equal((live.match(/invokeC1OperatorSession\(t3n/g) ?? []).length, 3);
+  assert.equal((live.match(/invokeC1OperatorSession\(t3n/g) ?? []).length, 5);
   assert.equal(live.includes("invokeC1(operatorKey"), false);
   assert.equal(seed.includes("invokeC1(operatorKey"), false);
   assert.match(seed, /invokeC1OperatorSession\(t3n/);
@@ -40,5 +40,7 @@ test("registration re-points only the existing private map and labels function e
 test("C1 transport boundary has no operator stateless fallback", () => {
   assert.match(live, /const \{ tenantDid, nodeUrl, t3n \} = await connectTenant\(\)/);
   assert.equal(live.includes("const operatorKey"), false);
-  assert.equal(live.includes("invokeC1("), false);
+  assert.equal(live.includes("invokeC1(operatorKey"), false);
+  assert.match(live, /wrongRoleProbe\(brokerKey/);
+  assert.match(live, /wrongRoleProbe\(remediationKey/);
 });

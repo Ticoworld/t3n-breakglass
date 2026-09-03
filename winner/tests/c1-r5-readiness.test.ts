@@ -23,7 +23,9 @@ test("R5 active C1 version and delegation surfaces are exact", () => {
 test("operator/session and opaque principal transports cannot silently cross", () => {
   assert.match(live, /invokeC1OperatorSession\(t3n, contractId, "create-incident"/);
   assert.match(live, /invokeC1OperatorSession\(t3n, contractId, "get-incident"/);
-  assert.equal(live.includes("invokeC1("), false);
+  assert.equal(live.includes("invokeC1(operatorKey"), false);
+  assert.match(live, /wrongRoleProbe\(brokerKey/);
+  assert.match(live, /wrongRoleProbe\(remediationKey/);
   assert.match(reserve, /connectC1Principal\("AGENT_T3N_API_KEY"/);
   assert.match(reserve, /invokeC1\(agent\.apiKey/);
   assert.match(broker, /connectC1Principal\("EFFECT_BROKER_T3N_API_KEY"/);
