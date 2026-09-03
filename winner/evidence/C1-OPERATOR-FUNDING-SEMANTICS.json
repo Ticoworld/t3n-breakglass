@@ -1,0 +1,92 @@
+{
+  "classification": "READY_FOR_C1_CONFIGURATION",
+  "branch": "winner-v2-core",
+  "head": "59814c704465db1ed26d1e76ebc2e8d52f24969c",
+  "main": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "completed_utc": "2026-09-03T04:37:17.534Z",
+  "operator": {
+    "did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+    "credential_boundary": "operator .env.bootstrap T3N_API_KEY only",
+    "authenticated_did_match": true,
+    "balance": {
+      "available_base_units": 200000000000,
+      "reserved_base_units": 0,
+      "credit_exhausted": true,
+      "last_settled_seq_no": 0,
+      "version": 290,
+      "balance_read_success": true,
+      "timestamp_utc": "2026-09-03T04:37:16.455Z",
+      "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+      "environment": "testnet",
+      "sdk": "@terminal3/t3n-sdk 5.2.0",
+      "transport": "normal SDK authentication followed by T3nClient.getBalance"
+    },
+    "control_plane_probe": {
+      "exact_call": "SessionOrgDataClient.amIAdmin({ orgDid })",
+      "organization_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+      "success": true,
+      "result_is_admin": true,
+      "result_type": "boolean",
+      "started_utc": "2026-09-03T04:37:16.456Z",
+      "completed_utc": "2026-09-03T04:37:17.534Z",
+      "insufficient_credit_observed": false,
+      "probe_count": 1,
+      "t3n_mutations": 0
+    }
+  },
+  "source_semantics": {
+    "source_type": "vendored Terminal 3 host-interface WIT",
+    "source_file": "winner/contract/wit/deps/host-interfaces-2.1.0/package.wit",
+    "evidence": [
+      {
+        "lines": "628-632",
+        "meaning": "BalanceRow omits last_settled_seq_no, version, and credit_exhausted because they are bookkeeping for projection, OCC, and the fast-skip gate, not guest balance consumption."
+      },
+      {
+        "lines": "652-663",
+        "meaning": "get-balance reads the calling DID balance; outside metered execution it returns the available snapshot directly."
+      }
+    ],
+    "interpretation_applied": "credit_exhausted=true was not used as a standalone readiness veto because the funded available balance was nonzero and the required operator control-plane read succeeded"
+  },
+  "prior_local_gate_behavior": {
+    "source_file": "winner/scripts/credit-self-admit-probe.ts",
+    "lines": "317-324",
+    "historical_operator_stop_condition": "operatorBalance.available === 0",
+    "used_credit_exhausted_as_stop_condition": false,
+    "previous_false_negative": {
+      "artifact": "winner/evidence/C1-POST-FUNDING-READINESS.json",
+      "condition": "available_base_units=200000000000 and credit_exhausted=true",
+      "classification": "STILL_NEEDS_TESTNET_CREDIT",
+      "reason_corrected": "credit_exhausted is bookkeeping and behavioral control-plane evidence is stronger"
+    }
+  },
+  "read_only_scope": {
+    "get_balance_reads": 1,
+    "control_plane_probe_reads": 1,
+    "updateMemberDelegation_calls": 0,
+    "map_entrySet_calls": 0,
+    "create_agent_calls": 0,
+    "submitUserInput_calls": 0,
+    "c1_invocations": 0,
+    "real_c1_incidents_created": 0,
+    "t3n_mutations": 0,
+    "github_api_calls": 0,
+    "provider_mutations": 0
+  },
+  "credential_safety": {
+    "fallback_credential_used": false,
+    "credentials_in_evidence": false,
+    "credentials_logged": false,
+    "github_credentials_loaded": false,
+    "authorization_headers_in_evidence": false
+  },
+  "next_state": "READY_FOR_C1_CONFIGURATION",
+  "limitations": [
+    "This clears the operator funding gate only; delegation configuration and the funded live C1 proof remain unperformed."
+  ]
+}
