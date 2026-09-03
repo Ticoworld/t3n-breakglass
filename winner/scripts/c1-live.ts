@@ -8,11 +8,19 @@ import { trustedNodeTimeSeconds } from "../../scripts/product.js";
 import { ACTION, BROKER_FUNCTIONS, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, RESERVATION_FUNCTION, contractName } from "./constants.js";
 import { parseChildJson } from "./child-protocol.js";
 import { invokeC1, invokeC1OperatorSession, requireValue, redact } from "./t3n.js";
+import { readChildResultBundle, readJsonFile, writeAtomicJson } from "./result-file.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
+let liveRunContext: { runDir: string; incidentId: string } | undefined;
 
 function envValue(contents: string, name: string): string { const value = contents.split(/\r?\n/).find((line) => line.startsWith(`${name}=`))?.slice(name.length + 1).trim(); if (!value) throw new Error(`${name} missing from environment file`); return value; }
 async function readEnvFile(file: string, name: string): Promise<string> { return envValue(await readFile(path.join(root, file), "utf8"), name); }
+async function persistParentFailure(error: unknown): Promise<void> {
+  if (!liveRunContext) return;
+  const runDir = liveRunContext.runDir;
+  const childResults = await readChildResultBundle(runDir);
+  await writeAtomicJson(path.join(root, "winner", "evidence", "C1-live-run-failure.json"), { status: "C1_FAIL", incident_id: liveRunContext.incidentId, failure: redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""]), persisted_child_results: childResults, child_result_directory: runDir, credentials_in_evidence: false, provider_mutations: "not_inferred_from_missing_parent_state" });
+}
 function objectResult(raw: unknown): Record<string, unknown> {
   const value = typeof raw === "string" ? JSON.parse(raw) : raw;
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("C1 contract result was not a JSON object");
@@ -29,6 +37,9 @@ function authorityFromResult(raw: unknown, expectedResult: string, functionName:
 }
 function requireActiveAuthority(authority: Record<string, unknown>): void {
   if (authority.effect_attempts !== 0 || authority.status !== "ACTIVE" || authority.reservation_id !== null || authority.reservation_version !== 0 || authority.effect_claim_id !== null || authority.effect_claim_version !== 0 || authority.final_result_classification !== null) throw new Error("C1 initial authority is not the exact ACTIVE shape");
+}
+function requireReplayTerminal(authority: Record<string, unknown>): void {
+  if (authority.status !== "CLOSED" || authority.effect_attempts !== 1 || authority.final_result_classification !== "VERIFIED_ABSENT") throw new Error("replay is forbidden before independently verified CLOSED authority");
 }
 function isPlatformRefusal(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -68,6 +79,7 @@ async function main() {
   const { tenantDid, nodeUrl, t3n } = await connectTenant();
   if (tenantDid !== operatorDid) throw new Error("live runner authenticated as unexpected operator");
   const incidentId = `C1-${Date.now()}`;
+  liveRunContext = { runDir: actualBarrierDir, incidentId };
   const registration = JSON.parse(await readFile(path.join(root, "winner", "evidence", "contract-registration.json"), "utf8")) as { operator_did?: string; contract?: { name?: string; version?: string; contract_id?: number; expected_functions_from_local_component?: string[]; locally_verified_component_exports?: string[]; node_routing_verified_functions?: string[] }; map?: { private?: boolean; acl_contract_id?: number } };
   const config = JSON.parse(await readFile(path.join(root, "winner", "evidence", "delegation-configuration.json"), "utf8")) as { status?: string; operator_did?: string; contract?: string; contract_version?: string; contract_id?: number; remediation_agent_did?: string; effect_broker_did?: string; exact_authority?: { remediation?: unknown; broker?: unknown } };
   const contractId = contractName(operatorDid);
@@ -95,7 +107,7 @@ async function main() {
   requireActiveAuthority(afterBrokerWrongRole);
   if (JSON.stringify(afterBrokerWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("broker wrong-role reserve changed the ACTIVE authority");
   wrongRoleChecks.after_broker_readback = afterBrokerWrongRole;
-  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId }, "caller is not the effect broker");
+  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId, expected_claim_version: 0 }, "caller is not the effect broker");
   const afterRemediationWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
   requireActiveAuthority(afterRemediationWrongRole);
   if (JSON.stringify(afterRemediationWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("remediation wrong-role claim changed the ACTIVE authority");
@@ -108,20 +120,23 @@ async function main() {
   if (reserveResponse.result !== "WON" || reserveResponse.function !== RESERVATION_FUNCTION) throw new Error("remediation agent did not commit the expected reservation");
   const childA = path.join(actualBarrierDir, "broker-a.ready");
   const childB = path.join(actualBarrierDir, "broker-b.ready");
-  const common = { C1_BARRIER_FILE: barrier, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId };
+  const common = { C1_BARRIER_FILE: barrier, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId, C1_EXPECTED_CLAIM_VERSION: "0" };
   const brokerBase = childEnv(process.env, { EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: brokerDid, ...common }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT"]);
-  const aPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childA, C1_CONTENDER_ID: "broker-a" });
-  const bPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childB, C1_CONTENDER_ID: "broker-b" });
+  const brokerAResultFile = path.join(actualBarrierDir, "broker-a.result.json");
+  const brokerBResultFile = path.join(actualBarrierDir, "broker-b.result.json");
+  const aPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childA, C1_RESULT_FILE: brokerAResultFile, C1_CONTENDER_ID: "broker-a" });
+  const bPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childB, C1_RESULT_FILE: brokerBResultFile, C1_CONTENDER_ID: "broker-b" });
   const deadline = Date.now() + 120_000;
   while ((!existsSync(childA) || !existsSync(childB)) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
   if (!existsSync(childA) || !existsSync(childB)) throw new Error("broker race children did not reach the common barrier");
   await writeFile(barrier, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
   const [a, b] = await Promise.all([aPromise, bPromise]);
-  if (a.code !== 0 || b.code !== 0) throw new Error(`broker child failed: ${a.stderr.slice(0, 500)} ${b.stderr.slice(0, 500)}`);
-  const brokers = [parseChildJson(a.stdout), parseChildJson(b.stdout)];
-  let activity: unknown;
-  try { activity = await t3n.getActivityLog({ contract: CONTRACT_TAIL, limit: 100 }); } catch (error) { activity = { error: redactError(error, [process.env.T3N_API_KEY ?? ""]) }; }
-  const replayEnv = childEnv(process.env, { EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: brokerDid, C1_OPERATOR_DID: operatorDid, C1_READY_FILE: path.join(actualBarrierDir, "replay.ready"), C1_BARRIER_FILE: path.join(actualBarrierDir, "replay.release"), C1_CONTENDER_ID: "replay" }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT"]);
+  const brokers = [await readJsonFile<Record<string, unknown>>(brokerAResultFile), await readJsonFile<Record<string, unknown>>(brokerBResultFile)];
+  if (a.code !== 0 || b.code !== 0) throw new Error(`broker child failed after durable result capture: ${a.stderr.slice(0, 500)} ${b.stderr.slice(0, 500)}`);
+  const preReplayReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
+  const preReplayAuthority = authorityFromResult(preReplayReadbackResponse, "FOUND", "get-incident", incidentId);
+  requireReplayTerminal(preReplayAuthority);
+  const replayEnv = childEnv(process.env, { EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: brokerDid, C1_OPERATOR_DID: operatorDid, C1_EXPECTED_CLAIM_VERSION: String(preReplayAuthority.effect_claim_version), C1_RESULT_FILE: path.join(actualBarrierDir, "replay.result.json"), C1_READY_FILE: path.join(actualBarrierDir, "replay.ready"), C1_BARRIER_FILE: path.join(actualBarrierDir, "replay.release"), C1_CONTENDER_ID: "replay" }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT"]);
   const replayReady = path.join(actualBarrierDir, "replay.ready");
   const replayRelease = path.join(actualBarrierDir, "replay.release");
   const replayPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], replayEnv);
@@ -131,9 +146,12 @@ async function main() {
   await writeFile(replayRelease, "release");
   const replay = await replayPromise;
   if (replay.code !== 0) throw new Error(`replay broker failed: ${redact(replay.stderr, [brokerKey])}`);
-  const replayObservation = parseChildJson(replay.stdout);
-  const finalReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
-  const finalAuthority = authorityFromResult(finalReadbackResponse, "FOUND", "get-incident", incidentId);
+  const replayObservation = await readJsonFile<Record<string, unknown>>(path.join(actualBarrierDir, "replay.result.json"));
+  const postReplayReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
+  const finalAuthority = authorityFromResult(postReplayReadbackResponse, "FOUND", "get-incident", incidentId);
+  requireReplayTerminal(finalAuthority);
+  let activity: unknown;
+  try { activity = await t3n.getActivityLog({ contract: CONTRACT_TAIL, limit: 100 }); } catch (error) { activity = { error: redactError(error, [process.env.T3N_API_KEY ?? ""]) }; }
   const totalDelete = brokers.reduce((sum, item) => sum + Number(item.destructive_call_count ?? 0), 0);
   const totalTokens = brokers.filter((item) => item.token_minted === true).length;
   const statuses = brokers.map((item) => item.claim_outcome);
@@ -174,4 +192,4 @@ async function main() {
   console.log(JSON.stringify({ status: "C1_PASS", incident_id: incidentId, deploy_key_id: target.id, broker_race: { statuses, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, evidence: "winner/evidence/C1-live-proof.json" }, null, 2));
 }
 
-main().catch((error) => { console.error(`C1 live proof failed: ${redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""])}`); process.exitCode = 1; });
+main().catch(async (error) => { try { await persistParentFailure(error); } catch { /* retain the original bounded failure below */ } console.error(`C1 live proof failed: ${redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""])}`); process.exitCode = 1; });

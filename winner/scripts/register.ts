@@ -8,7 +8,7 @@ import { CONTRACT_TAIL, CONTRACT_VERSION, INCIDENT_MAP_TAIL, contractName } from
 const root = path.resolve(import.meta.dirname, "../..");
 const wasmPath = path.join(root, "winner", "contract", "target", "wasm32-wasip2", "release", "breakglass_winner_contract.wasm");
 const evidencePath = path.join(root, "winner", "evidence", "contract-registration.json");
-const EXPECTED_C1_FUNCTIONS = ["create-incident", "get-incident", "reserve-incident", "claim-effect", "release-not-attempted", "finalize-effect", "reconcile-effect"] as const;
+const EXPECTED_C1_FUNCTIONS = ["create-incident", "get-incident", "reserve-incident", "claim-effect", "release-not-attempted", "begin-effect", "finalize-effect", "reconcile-effect"] as const;
 
 async function ensureMap(tenant: Awaited<ReturnType<typeof connectTenant>>["tenant"], contractId: number) {
   const acl = { only: [contractId] };

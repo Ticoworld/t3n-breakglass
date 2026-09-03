@@ -10,7 +10,7 @@ const broker = await readFile(new URL("../broker/run.ts", import.meta.url), "utf
 const reserve = await readFile(new URL("../scripts/reserve-agent.ts", import.meta.url), "utf8");
 
 test("R5 active C1 version and delegation surfaces are exact", () => {
-  assert.match(constants, /CONTRACT_VERSION = "2\.0\.2"/);
+  assert.match(constants, /CONTRACT_VERSION = "2\.0\.3"/);
   assert.match(configure, /node_routing_verified_functions/);
   assert.match(configure, /functions: \[RESERVATION_FUNCTION\]/);
   assert.match(configure, /functions: \[\.\.\.BROKER_FUNCTIONS\]/);

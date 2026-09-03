@@ -44,6 +44,6 @@ test("broker runtime refuses a PAT and never enables a fallback", () => {
   assert.equal(processMustRefusePat({}), false);
 });
 
-test("broker input is incident-only", () => {
-  assert.deepEqual({ incident_id: "INC-1" }, { incident_id: "INC-1" });
+test("broker input carries only incident identity and trusted claim generation", () => {
+  assert.deepEqual({ incident_id: "INC-1", expected_claim_version: 0 }, { incident_id: "INC-1", expected_claim_version: 0 });
 });

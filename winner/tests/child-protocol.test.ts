@@ -30,6 +30,14 @@ test("malformed child output fails before the incident authority write", () => {
 });
 
 test("all machine-consumed C1 child outputs use the complete-document parser", () => {
-  assert.equal((liveSource.match(/parseChildJson\(/g) ?? []).length, 5);
+  assert.equal((liveSource.match(/parseChildJson\(/g) ?? []).length, 2);
   assert.equal(liveSource.includes("lines.at(-1)"), false);
+});
+
+test("live broker children use durable per-run result files", () => {
+  assert.match(liveSource, /broker-a\.result\.json/);
+  assert.match(liveSource, /broker-b\.result\.json/);
+  assert.match(liveSource, /replay\.result\.json/);
+  assert.match(liveSource, /readJsonFile<Record<string, unknown>>\(brokerAResultFile\)/);
+  assert.match(liveSource, /persistParentFailure/);
 });

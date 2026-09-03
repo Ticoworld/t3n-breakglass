@@ -37,7 +37,7 @@ test("two separate broker processes produce exactly one local claim winner", asy
       const [a, b] = await Promise.all([aPromise, bPromise]);
       assert.equal(a.code, 0, `${a.stderr} ${a.stdout}`);
       assert.equal(b.code, 0, `${b.stderr} ${b.stdout}`);
-      const results = [JSON.parse(a.stdout), JSON.parse(b.stdout)] as Array<Record<string, any>>;
+      const results = [JSON.parse(await readFile(path.join(directory, "broker-a.result.json"))), JSON.parse(await readFile(path.join(directory, "broker-b.result.json")))] as Array<Record<string, any>>;
       assert.notEqual(results[0].pid, results[1].pid, "contenders must be separate processes");
       assert.equal(results.filter((result) => result.claim_outcome === "CLAIM_WON").length, 1);
       assert.equal(results.filter((result) => result.claim_outcome === "CLAIM_LOST").length, 1);
@@ -46,6 +46,7 @@ test("two separate broker processes produce exactly one local claim winner", asy
       const winner = results.find((result) => result.claim_outcome === "CLAIM_WON")!;
       const loser = results.find((result) => result.claim_outcome === "CLAIM_LOST")!;
       assert.deepEqual(winner.events.slice(0, 2), ["CLAIM_REQUEST", "CLAIM_COMMITTED_WON"]);
+      assert.ok(winner.events.indexOf("BEGIN_EFFECT_COMMITTED") < winner.events.indexOf("PROVIDER_DELETE"));
       assert.deepEqual(loser.events, ["CLAIM_REQUEST", "CLAIM_LOST"]);
       assert.equal(loser.token_mint_count, 0);
       assert.equal(loser.destructive_delete_count, 0);

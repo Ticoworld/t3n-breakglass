@@ -23,9 +23,11 @@ test("claim-before-effect ordering is source-enforced", () => {
   assert.ok(claim >= 0 && committed > claim && jwt > committed && token > jwt && providerGet > token && providerDelete > providerGet);
   assert.equal(runSource.includes("Promise.all"), false, "broker must not start provider work concurrently with claim");
   const release = runSource.indexOf("const releaseClaim");
+  const begin = runSource.indexOf('"begin-effect"');
   const deleteBoundary = runSource.indexOf("deleteMayHaveBeenInitiated = true");
-  const catchRelease = runSource.indexOf("if (!deleteMayHaveBeenInitiated && !releaseAttempted)");
-  assert.ok(release >= 0 && deleteBoundary > release && catchRelease > deleteBoundary);
+  const catchRelease = runSource.indexOf("if (!beginEffectSent && !deleteMayHaveBeenInitiated && !releaseAttempted)");
+  assert.ok(release >= 0 && begin > providerGet && deleteBoundary > begin && catchRelease > deleteBoundary);
+  assert.match(runSource, /begin-effect did not return a committed EFFECT_STARTED result/);
 });
 
 test("claim target cannot widen beyond fixed repository configuration", () => {
@@ -77,7 +79,7 @@ test("fake provider adapter covers destructive and verification failure matrix",
 test("strict claim parsing rejects target injection and incomplete authority", () => {
   assert.throws(() => parseClaim({ result: "WON", detail: { action: "something_else", github_owner: "Ticoworld", github_repo: "t3n-breakglass-sandbox", deploy_key_id: 1, claim_id: "claim-1" } }));
   assert.throws(() => parseClaim({ result: "WON", detail: { action: "revoke_github_deploy_key", github_owner: "Ticoworld", github_repo: "t3n-breakglass-sandbox", deploy_key_id: 0, claim_id: "claim-1" } }));
-  assert.match(runSource, /input: \{ incident_id: incidentId \}/);
+  assert.match(runSource, /input: \{ incident_id: incidentId, expected_claim_version: expectedClaimVersion \}/);
   assert.match(runSource, /authority_loaded_target/);
 });
 

@@ -5,7 +5,7 @@ extern crate alloc;
 
 mod model;
 
-pub const CONTRACT_VERSION: &str = "2.0.2";
+pub const CONTRACT_VERSION: &str = "2.0.3";
 
 wit_bindgen::generate!({
     world: "breakglass-winner",
@@ -23,6 +23,7 @@ impl exports::z::breakglass_winner::contracts::Guest for Component {
     fn reserve_incident(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("reserve-incident", req.input.as_deref()) }
     fn claim_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("claim-effect", req.input.as_deref()) }
     fn release_not_attempted(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("release-not-attempted", req.input.as_deref()) }
+    fn begin_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("begin-effect", req.input.as_deref()) }
     fn finalize_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("finalize-effect", req.input.as_deref()) }
     fn reconcile_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("reconcile-effect", req.input.as_deref()) }
 }
@@ -41,7 +42,12 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
     }
 
     let request_id = match function_name {
-        "reserve-incident" | "claim-effect" => parse_incident(raw)?,
+        "reserve-incident" => parse_incident(raw)?,
+        "claim-effect" => {
+            let parsed: model::ClaimRequest = parse_json(raw)?;
+            if parsed.incident_id.trim().is_empty() { return Err("incident_id is invalid".into()) }
+            parsed.incident_id
+        }
         "release-not-attempted" => {
             let parsed: model::ClaimIdentityRequest = parse_json(raw)?;
             if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
@@ -54,6 +60,11 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         }
         "reconcile-effect" => {
             let parsed: model::FinalizeRequest = parse_json(raw)?;
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
+            parsed.incident_id
+        }
+        "begin-effect" => {
+            let parsed: model::ClaimIdentityRequest = parse_json(raw)?;
             if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
             parsed.incident_id
         }
@@ -70,7 +81,10 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
 
     let decision = match function_name {
         "reserve-incident" => model::reserve(&mut authority, caller.as_deref(), now),
-        "claim-effect" => model::claim(&mut authority, caller.as_deref(), now),
+        "claim-effect" => {
+            let request: model::ClaimRequest = parse_json(raw)?;
+            model::claim(&mut authority, caller.as_deref(), now, request.expected_claim_version)
+        }
         "release-not-attempted" => {
             let request: model::ClaimIdentityRequest = parse_json(raw)?;
             model::release_not_attempted(&mut authority, caller.as_deref(), &request.claim_id, now)
@@ -82,6 +96,10 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         "reconcile-effect" => {
             let request: model::FinalizeRequest = parse_json(raw)?;
             model::reconcile(&mut authority, caller.as_deref(), &request.claim_id, &request.classification)
+        }
+        "begin-effect" => {
+            let request: model::ClaimIdentityRequest = parse_json(raw)?;
+            model::begin_effect(&mut authority, caller.as_deref(), &request.claim_id, now)
         }
         _ => unreachable!(),
     };
@@ -96,7 +114,7 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         kv_store::put(&map, request_id.as_bytes(), &encoded).map_err(|_| "incident authority write failed".to_string())?;
     }
     let _ = logging::info(&alloc::format!("winner-c1 function={} incident={} result={} status={}", function_name, request_id, result, authority.status.label()));
-    let detail = if function_name == "claim-effect" && result == "WON" {
+    let detail = if matches!(function_name, "claim-effect" | "begin-effect") && result == "WON" {
         serde_json::json!({"action": authority.action, "github_owner": authority.github_owner, "github_repo": authority.github_repo, "deploy_key_id": authority.deploy_key_id, "claim_id": authority.effect_claim_id, "claim_version": authority.effect_claim_version})
     } else { serde_json::json!({}) };
     json_result_with_detail(&request_id, function_name, result, Some(&authority), detail, note)
@@ -193,5 +211,5 @@ fn json_result_with_detail(incident_id: &str, function_name: &str, result: &str,
 #[cfg(test)]
 mod tests {
     use super::CONTRACT_VERSION;
-    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.2"); }
+    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.3"); }
 }

@@ -1,0 +1,110 @@
+{
+  "phase": "C1-R6A failed-run closure and effect-start repair",
+  "status": "C1_R6A_ARCHITECTURE_REPAIR_PASS",
+  "starting_sha": "64a7f5fc73d761e1b1b471c4d2e85c839aeaaec9",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "r6_failure": {
+    "incident_id": "C1-1788441029399",
+    "final_state": "EFFECT_CLAIMED",
+    "effect_attempts": 0,
+    "effect_claim_version": 2,
+    "provider_target_absent": true,
+    "exact_delete_path_reconstructible": false,
+    "historical_artifact_preserved": true,
+    "required_statement": "The provider target is independently absent, but the exact responsible DELETE path is not reconstructible from the retained R6 process evidence."
+  },
+  "forensic_findings": {
+    "replay_ordering_bug": "PROVEN",
+    "child_result_durability_gap": "PROVEN",
+    "effect_start_not_committed": "PROVEN",
+    "stale_contender_after_release": "CODE-REACHABLE; not proven to have occurred in R6"
+  },
+  "repair": {
+    "candidate_version": "2.0.3",
+    "begin_effect_added": true,
+    "claim_generation_fence_added": true,
+    "effect_started_recovery": "reconcile-effect accepts EFFECT_STARTED with effect_attempts=1; VERIFIED_ABSENT closes, present/unknown remain bounded reconciliation; no budget reset",
+    "replay_terminal_gate_added": true,
+    "durable_child_results_added": true,
+    "finalize_no_longer_increments_budget": true,
+    "release_after_begin_forbidden": true,
+    "revocation_probe_transport_is_not_refusal": true
+  },
+  "local_component": {
+    "wasm_path": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm",
+    "sha256": "e4b46d46009caf29280884352b79d4ec430f49ac33504b2bd4d14a63c85f4639",
+    "bytes": 209508,
+    "exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "release-not-attempted",
+      "begin-effect",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "inspection_tool": "wasm-tools component wit",
+    "clean_rebuild_performed": true,
+    "pre_rebuild_from_preserved_r4_evidence": {
+      "sha256": "0668b97eaf3eac086ef7a37bfba36eabde2e01ef1e64814e1749f94fac62aebc",
+      "bytes": null,
+      "exports": [
+        "reserve-incident",
+        "claim-effect",
+        "release-not-attempted",
+        "finalize-effect",
+        "reconcile-effect"
+      ]
+    },
+    "all_expected_exports_verified": true
+  },
+  "tests": {
+    "root_product_tests": { "passed": 7, "failed": 0 },
+    "winner_typescript_tests": { "passed": 52, "failed": 0 },
+    "rust_unit_tests": { "passed": 26, "failed": 0 },
+    "rust_doc_tests": { "passed": 1, "failed": 0 },
+    "property_test_sequences": 4000,
+    "property_test_operations_per_sequence": 80,
+    "local_two_process_race_iterations": 32,
+    "parent_failure_persistence_regressions": "passed",
+    "candidate_wasm_build": "passed"
+  },
+  "live_calls": {
+    "t3n_mutations": 0,
+    "new_incidents": 0,
+    "reservations": 0,
+    "claims": 0,
+    "finalizations": 0,
+    "reconciliations": 0,
+    "github_api_calls": 0,
+    "provider_mutations": 0
+  },
+  "claims_allowed": [
+    "source-level replay ordering is repaired",
+    "child broker results are atomically persisted and parent-consumed",
+    "one-effect budget is committed at begin-effect in the local state model",
+    "stale release-era claim generations lose unless explicitly refreshed",
+    "candidate 2.0.3 local component exposes the eight expected functions"
+  ],
+  "claims_forbidden": [
+    "C1_PASS",
+    "live T3N registration or OCC proof",
+    "provider-side exactly-once",
+    "atomic GitHub plus T3N transactionality",
+    "durable outbox",
+    "zero-standing provider authority",
+    "C2 completion",
+    "submission readiness"
+  ],
+  "sensitive_value_hygiene": {
+    "credentials_in_evidence": false,
+    "api_keys_in_evidence": false,
+    "github_tokens_in_evidence": false,
+    "jwt_in_evidence": false,
+    "authorization_headers_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false
+  },
+  "next_gate": "C1-R6B — register 2.0.3 and prove state-only effect-start/fencing semantics with zero GitHub provider operation"
+}

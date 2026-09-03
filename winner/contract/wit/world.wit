@@ -25,6 +25,7 @@ interface contracts {
     reserve-incident: func(req: generic-input) -> result<list<u8>, string>;
     claim-effect: func(req: generic-input) -> result<list<u8>, string>;
     release-not-attempted: func(req: generic-input) -> result<list<u8>, string>;
+    begin-effect: func(req: generic-input) -> result<list<u8>, string>;
     finalize-effect: func(req: generic-input) -> result<list<u8>, string>;
     reconcile-effect: func(req: generic-input) -> result<list<u8>, string>;
 }

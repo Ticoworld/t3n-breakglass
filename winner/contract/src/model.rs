@@ -35,6 +35,7 @@ pub struct GetIncidentRequest {
 #[serde(deny_unknown_fields)]
 pub struct ClaimRequest {
     pub incident_id: String,
+    pub expected_claim_version: u64,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -58,6 +59,7 @@ pub enum Status {
     Active,
     Reserved,
     EffectClaimed,
+    EffectStarted,
     ReadyRetry,
     Closed,
     Expired,
@@ -71,6 +73,7 @@ impl Status {
             Self::Active => "ACTIVE",
             Self::Reserved => "RESERVED",
             Self::EffectClaimed => "EFFECT_CLAIMED",
+            Self::EffectStarted => "EFFECT_STARTED",
             Self::ReadyRetry => "READY_RETRY",
             Self::Closed => "CLOSED",
             Self::Expired => "EXPIRED",
@@ -131,6 +134,10 @@ pub fn valid_shape(authority: &IncidentAuthority) -> bool {
                 && authority.effect_claim_id.is_none()
                 && authority.final_result_classification.is_none(),
             Status::EffectClaimed => authority.effect_attempts == 0
+                && authority.reservation_id.is_some()
+                && authority.effect_claim_id.is_some()
+                && authority.final_result_classification.is_none(),
+            Status::EffectStarted => authority.effect_attempts == 1
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
                 && authority.final_result_classification.is_none(),
@@ -250,11 +257,11 @@ pub fn reserve(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u6
             Decision::Won
         }
         Status::Reserved | Status::ReadyRetry => Decision::Lost,
-        Status::EffectClaimed | Status::Closed | Status::ReconcileRequired | Status::Failed | Status::Expired => Decision::Lost,
+        Status::EffectClaimed | Status::EffectStarted | Status::Closed | Status::ReconcileRequired | Status::Failed | Status::Expired => Decision::Lost,
     }
 }
 
-pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64) -> Decision {
+pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64, expected_claim_version: u64) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
     if !valid_time(authority, now) {
@@ -264,14 +271,16 @@ pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64)
         return Decision::Denied("incident expired according to cluster time")
     }
     if authority.max_effects != 1 || authority.effect_attempts != 0 { return Decision::Lost }
+    if authority.effect_claim_version != expected_claim_version { return Decision::Lost }
     match authority.status {
         Status::Reserved | Status::ReadyRetry => {
-            authority.effect_claim_version = authority.effect_claim_version.saturating_add(1);
+            let Some(next_version) = authority.effect_claim_version.checked_add(1) else { return Decision::Denied("claim generation exhausted") };
+            authority.effect_claim_version = next_version;
             authority.effect_claim_id = Some(format!("claim-{}-{}", authority.incident_id, authority.effect_claim_version));
             authority.status = Status::EffectClaimed;
             Decision::Won
         }
-        Status::EffectClaimed | Status::Closed | Status::ReconcileRequired | Status::Failed | Status::Active | Status::Expired => Decision::Lost,
+        Status::EffectClaimed | Status::EffectStarted | Status::Closed | Status::ReconcileRequired | Status::Failed | Status::Active | Status::Expired => Decision::Lost,
     }
 }
 
@@ -287,21 +296,31 @@ pub fn release_not_attempted(authority: &mut IncidentAuthority, caller: Option<&
     Decision::Won
 }
 
+pub fn begin_effect(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, now: u64) -> Decision {
+    if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
+    if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
+    if authority.status != Status::EffectClaimed || authority.effect_attempts != 0 || authority.effect_claim_id.as_deref() != Some(claim_id) {
+        return Decision::Denied("claim identity or state does not match")
+    }
+    if !valid_time(authority, now) { return Decision::Denied("incident expired according to cluster time") }
+    authority.effect_attempts = 1;
+    authority.status = Status::EffectStarted;
+    Decision::Won
+}
+
 pub fn finalize(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
-    if authority.status != Status::EffectClaimed || authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_attempts != 0 {
+    if authority.status != Status::EffectStarted || authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_attempts != 1 {
         return Decision::Denied("claim identity or state does not match")
     }
     match classification {
         "VERIFIED_ABSENT" => {
-            authority.effect_attempts = 1;
             authority.final_result_classification = Some(classification.to_string());
             authority.status = Status::Closed;
             Decision::Won
         }
         "PROVIDER_ACKNOWLEDGED" | "ATTEMPTED_OUTCOME_UNKNOWN" | "VERIFIED_PRESENT" => {
-            authority.effect_attempts = 1;
             authority.final_result_classification = Some(classification.to_string());
             authority.status = if classification == "VERIFIED_PRESENT" { Status::Failed } else { Status::ReconcileRequired };
             Decision::Won
@@ -313,7 +332,7 @@ pub fn finalize(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_
 pub fn reconcile(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
-    if !matches!(authority.status, Status::ReconcileRequired | Status::Failed) {
+    if !matches!(authority.status, Status::EffectStarted | Status::ReconcileRequired | Status::Failed) {
         return Decision::Denied("authority is not awaiting reconciliation")
     }
     if authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_attempts != 1 {
@@ -425,17 +444,22 @@ mod tests {
 
     #[test] fn wrong_remediation_did_is_denied() { let mut a = authority(); assert_eq!(reserve(&mut a, Some(&BROKER_BYTES), 120), Decision::Denied("caller is not the remediation agent")); }
     #[test] fn reserve_race_second_observes_reserved() { let mut a = authority(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 120), Decision::Won); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 120), Decision::Lost); }
-    #[test] fn wrong_broker_cannot_claim() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&AGENT_BYTES), 120), Decision::Denied("caller is not the effect broker")); }
-    #[test] fn claim_is_one_winner() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120), Decision::Won); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120), Decision::Lost); }
+    #[test] fn wrong_broker_cannot_claim() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&AGENT_BYTES), 120, 0), Decision::Denied("caller is not the effect broker")); }
+    #[test] fn claim_is_one_winner() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Won); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Lost); }
+    #[test] fn begin_effect_consumes_budget_before_provider_phase() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Won); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(a.status, Status::EffectStarted); assert_eq!(a.effect_attempts, 1); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Denied("claim is not releasable")); assert_eq!(begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Denied("claim identity or state does not match")); }
+    #[test] fn normal_effect_path_closes_without_finalize_budget_increment() { let mut a = authority(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 120), Decision::Won); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Won); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(finalize(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Won); assert_eq!(a.status, Status::Closed); assert_eq!(a.effect_attempts, 1); assert!(valid_shape(&a)); }
+    #[test] fn effect_started_recovery_never_restores_budget() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Won); assert_eq!(a.status, Status::Closed); assert_eq!(a.effect_attempts, 1); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 1), Decision::Lost); }
+    #[test] fn effect_started_present_stays_in_reconciliation_without_budget_reset() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_PRESENT"), Decision::Won); assert_eq!(a.status, Status::ReconcileRequired); assert_eq!(a.effect_attempts, 1); assert_ne!(claim(&mut a, Some(&BROKER_BYTES), 120, 1), Decision::Won); }
+    #[test] fn stale_claim_generation_loses_after_not_attempted_release() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Won); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(a.effect_claim_version, 1); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Lost); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 1), Decision::Won); }
     #[test] fn expiry_denies_and_marks_expired() { let mut a = authority(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::Expired); }
-    #[test] fn release_does_not_consume_budget() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(a.status, Status::ReadyRetry); assert_eq!(a.effect_attempts, 0); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120), Decision::Won); }
-    #[test] fn wrong_claim_and_wrong_did_are_denied() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); assert_eq!(finalize(&mut a, Some(&AGENT_BYTES), "bad", "VERIFIED_ABSENT"), Decision::Denied("caller is not the effect broker")); assert_eq!(finalize(&mut a, Some(&BROKER_BYTES), "bad", "VERIFIED_ABSENT"), Decision::Denied("claim identity or state does not match")); }
-    #[test] fn only_verified_absence_closes() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(finalize(&mut a, Some(&BROKER_BYTES), &id, "PROVIDER_ACKNOWLEDGED"), Decision::Won); assert_eq!(a.status, Status::ReconcileRequired); assert_eq!(a.effect_attempts, 1); }
-    #[test] fn reconciliation_never_reopens_effect_budget() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); let id = a.effect_claim_id.clone().unwrap(); finalize(&mut a, Some(&BROKER_BYTES), &id, "ATTEMPTED_OUTCOME_UNKNOWN"); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Won); assert_eq!(a.status, Status::Closed); assert_eq!(a.effect_attempts, 1); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Denied("authority is not awaiting reconciliation")); }
-    #[test] fn release_after_expiry_does_not_reopen_retry() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::EffectClaimed); }
+    #[test] fn release_does_not_consume_budget() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(a.status, Status::ReadyRetry); assert_eq!(a.effect_attempts, 0); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Lost); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 120, 1), Decision::Won); }
+    #[test] fn wrong_claim_and_wrong_did_are_denied() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(finalize(&mut a, Some(&AGENT_BYTES), "bad", "VERIFIED_ABSENT"), Decision::Denied("caller is not the effect broker")); assert_eq!(finalize(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Denied("claim identity or state does not match")); }
+    #[test] fn only_verified_absence_closes() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120), Decision::Won); assert_eq!(finalize(&mut a, Some(&BROKER_BYTES), &id, "PROVIDER_ACKNOWLEDGED"), Decision::Won); assert_eq!(a.status, Status::ReconcileRequired); assert_eq!(a.effect_attempts, 1); }
+    #[test] fn reconciliation_never_reopens_effect_budget() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); begin_effect(&mut a, Some(&BROKER_BYTES), &id, 120); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Won); assert_eq!(a.status, Status::Closed); assert_eq!(a.effect_attempts, 1); assert_eq!(reconcile(&mut a, Some(&BROKER_BYTES), &id, "VERIFIED_ABSENT"), Decision::Denied("authority is not awaiting reconciliation")); }
+    #[test] fn release_after_expiry_does_not_reopen_retry() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let id = a.effect_claim_id.clone().unwrap(); assert_eq!(release_not_attempted(&mut a, Some(&BROKER_BYTES), &id, 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::EffectClaimed); }
     #[test] fn malformed_terminal_state_is_rejected() { let mut a = authority(); a.status = Status::Closed; a.effect_attempts = 0; assert!(!valid_shape(&a)); }
-    #[test] fn expired_claim_marks_unclaimed_state_expired() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::Expired); }
-    #[test] fn reserve_after_effect_claim_expiry_does_not_corrupt_claim() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120); let claim_id = a.effect_claim_id.clone(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::EffectClaimed); assert_eq!(a.effect_claim_id, claim_id); }
+    #[test] fn expired_claim_marks_unclaimed_state_expired() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 200, 0), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::Expired); }
+    #[test] fn reserve_after_effect_claim_expiry_does_not_corrupt_claim() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let claim_id = a.effect_claim_id.clone(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::EffectClaimed); assert_eq!(a.effect_claim_id, claim_id); }
     #[test] fn malformed_or_extra_input_is_rejected_by_serde() { assert!(serde_json::from_str::<IncidentRequest>(r#"{"incident_id":"x","github_repo":"evil"}"#).is_err()); }
 
     #[test]
@@ -451,7 +475,7 @@ mod tests {
             let mut claim_wins = 0u32;
             let mut release_wins = 0u32;
             for _step in 0..80 {
-                let operation = next(&mut seed) % 6;
+                let operation = next(&mut seed) % 8;
                 let caller_bytes = match next(&mut seed) % 5 {
                     0 => Some(&AGENT_BYTES[..]),
                     1 => Some(&BROKER_BYTES[..]),
@@ -461,7 +485,7 @@ mod tests {
                 let decision = match operation {
                     0 => reserve(&mut a, caller_bytes, now),
                     1 => {
-                        let decision = claim(&mut a, caller_bytes, now);
+                        let decision = claim(&mut a, caller_bytes, now, 0);
                         if decision == Decision::Won { claim_wins += 1; }
                         decision
                     }
@@ -479,14 +503,18 @@ mod tests {
                         let id = a.effect_claim_id.clone().unwrap_or_else(|| "wrong-claim".into());
                         reconcile(&mut a, caller_bytes, &id, if next(&mut seed) % 2 == 0 { "VERIFIED_ABSENT" } else { "VERIFIED_PRESENT" })
                     }
-                    _ => claim(&mut a, caller_bytes, now),
+                    6 => {
+                        let id = a.effect_claim_id.clone().unwrap_or_else(|| "wrong-claim".into());
+                        begin_effect(&mut a, caller_bytes, &id, now)
+                    }
+                    _ => claim(&mut a, caller_bytes, now, 0),
                 };
                 let _ = decision;
                 assert!(valid_shape(&a), "sequence {sequence} produced invalid reachable shape: {a:?}");
                 assert!(a.effect_attempts <= 1);
                 assert!(claim_wins <= release_wins + 1, "sequence {sequence} authorized a second claim without release");
                 if a.effect_attempts == 1 {
-                    assert_ne!(claim(&mut a, Some(&BROKER_BYTES), 120), Decision::Won);
+                    assert_ne!(claim(&mut a, Some(&BROKER_BYTES), 120, 0), Decision::Won);
                     assert!(valid_shape(&a));
                 }
             }

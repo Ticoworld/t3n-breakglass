@@ -1,5 +1,6 @@
 import { open, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { writeAtomicJson } from "../scripts/result-file.js";
 
 const [directory, contender] = process.argv.slice(2);
 if (!directory || !contender) throw new Error("local-race-child requires a directory and contender id");
@@ -42,10 +43,10 @@ const committed = await withCommitLock(async () => {
 });
 
 if (committed.won) {
-  events.push("CLAIM_COMMITTED_WON", "APP_JWT_MINT", "INSTALLATION_TOKEN_MINT", "PROVIDER_GET", "PROVIDER_DELETE", "PROVIDER_VERIFY", "TOKEN_REVOKE", "FINALIZE");
+  events.push("CLAIM_COMMITTED_WON", "APP_JWT_MINT", "INSTALLATION_TOKEN_MINT", "PROVIDER_GET", "BEGIN_EFFECT_COMMITTED", "PROVIDER_DELETE", "PROVIDER_VERIFY", "TOKEN_REVOKE", "FINALIZE");
 } else {
   events.push("CLAIM_LOST");
 }
 const result = { contender, pid: process.pid, initial_observed_status: initial.status, ...committed, claim_outcome: committed.won ? "CLAIM_WON" : "CLAIM_LOST", token_mint_count: committed.won ? 1 : 0, destructive_delete_count: committed.won ? 1 : 0, events };
-await writeFile(resultFile, JSON.stringify(result));
+await writeAtomicJson(resultFile, result);
 process.stdout.write(JSON.stringify(result));

@@ -142,7 +142,7 @@ async function runPrincipal(role: "remediation" | "broker"): Promise<JsonObject>
   } else {
     for (const functionName of BROKER_FUNCTIONS) {
       const input: JsonObject = { incident_id: fresh(`broker-${functionName.replaceAll("-", "_")}`) };
-      if (functionName === "release-not-attempted" || functionName === "finalize-effect" || functionName === "reconcile-effect") input.claim_id = "r5-safe-check";
+      if (functionName === "release-not-attempted" || functionName === "begin-effect" || functionName === "finalize-effect" || functionName === "reconcile-effect") input.claim_id = "r5-safe-check";
       if (functionName === "finalize-effect" || functionName === "reconcile-effect") input.classification = "VERIFIED_ABSENT";
       await invokeOne(functionName, input, "authorized");
     }
