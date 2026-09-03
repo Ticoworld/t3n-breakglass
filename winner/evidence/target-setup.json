@@ -1,0 +1,44 @@
+{
+  "experiment": "C1 disposable GitHub deploy-key setup via broker",
+  "status": "READY",
+  "github_api_version": "2022-11-28",
+  "app": {
+    "app_id": "4793116",
+    "installation_id": "158227303"
+  },
+  "repository": {
+    "owner": "Ticoworld",
+    "name": "t3n-breakglass-sandbox",
+    "private": true
+  },
+  "target": {
+    "id": 162149642,
+    "title": "breakglass-c1-1788419776993-1c31e28b",
+    "read_only": true,
+    "repository": "Ticoworld/t3n-breakglass-sandbox"
+  },
+  "setup_token": {
+    "minted": true,
+    "expires_at": "2026-09-03T08:16:15Z",
+    "repository_selection": "selected",
+    "permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "repository_access_http_status": 200,
+    "repository_read_http_status": 200,
+    "credential_material_in_evidence": false
+  },
+  "provider_mutations": {
+    "deploy_key_create_count": 1,
+    "deploy_key_delete_count": 0
+  },
+  "credential_safety": {
+    "jwt_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false,
+    "pat_used": false
+  }
+}

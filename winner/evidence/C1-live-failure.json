@@ -1,0 +1,76 @@
+{
+  "experiment": "C1 effect-safe T3N reservation + JIT GitHub remediation",
+  "status": "C1_FAIL",
+  "date_utc": "2026-09-03T07:16:18Z",
+  "branch": "winner-v2-core",
+  "tested_git_head": "270b4528bd1f070e4bd076e28b01f848fb020a6c",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "failure_stage": "before incident authority seed",
+  "failure_reason": "c1-live.ts parseJson selected the final closing-brace line from pretty-printed prepare-target JSON and failed before map entrySet",
+  "incident_id": null,
+  "incident_authority_seeded": false,
+  "c1_contract_invocations": 0,
+  "t3n_mutations": 0,
+  "principals": {
+    "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "target": {
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deploy_key_id": 162149642,
+    "title": "breakglass-c1-1788419776993-1c31e28b",
+    "read_only": true,
+    "private": true,
+    "created": true
+  },
+  "reservation": {
+    "result": "NOT_STARTED",
+    "provider_mutations": 0
+  },
+  "provider_state_after_failure": {
+    "exact_get_http_status": 200,
+    "list_get_http_status": 200,
+    "target_present_exact_get": true,
+    "target_present_list": true,
+    "list_body_valid": true,
+    "provider_delete_attempts": 0,
+    "manual_cleanup_or_reconciliation_required": true
+  },
+  "provider_mutations": {
+    "deploy_key_create_count": 1,
+    "deploy_key_delete_count": 0,
+    "destructive_delete_total": 0
+  },
+  "github_app_setup": {
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "repository_private": true,
+    "requested_repository_subset": ["t3n-breakglass-sandbox"],
+    "requested_permissions": {"administration": "write"},
+    "repository_access_http_status": 200,
+    "repository_read_http_status": 200,
+    "setup_token_revoked_http_status": 204,
+    "pat_used": false
+  },
+  "replay": "NOT_STARTED",
+  "activity": "NOT_RETRIEVED; runner failed before activity retrieval",
+  "credential_safety": {
+    "pat_used": false,
+    "jwt_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false,
+    "t3n_api_key_in_evidence": false
+  },
+  "limitations": [
+    "No C1 incident was seeded and no reservation, claim, effect, finalization, reconciliation, or replay call ran.",
+    "The live runner was not patched or retried in this phase.",
+    "The created read-only deploy key remains present and requires manual cleanup before another authorized attempt.",
+    "No provider-side exactly-once claim is made."
+  ]
+}
