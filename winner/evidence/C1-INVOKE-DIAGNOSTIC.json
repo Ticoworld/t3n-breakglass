@@ -1,0 +1,359 @@
+{
+  "phase": "C1 zero-mutation invocation diagnostic",
+  "created_at_utc": "2026-09-03T11:27:05.828Z",
+  "starting_branch": "winner-v2-core",
+  "starting_sha": "e5c486c2255960125af5f82b1a4e8ad1b5c513d7",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "t3n_node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk_version": "@terminal3/t3n-sdk 5.2.0",
+  "installed_sdk_findings": {
+    "package_files": [
+      "node_modules/@terminal3/t3n-sdk/dist/index.d.ts",
+      "node_modules/@terminal3/t3n-sdk/dist/index.js",
+      "node_modules/@terminal3/t3n-sdk/dist/index.esm.js"
+    ],
+    "invoke": {
+      "type_source": "dist/index.d.ts lines 3965-3980, 4067-4085",
+      "semantics": "one stateless opaque-key invocation; decoded contract value on 2xx; InvokeError on non-2xx",
+      "request_fields": [
+        "contract_id",
+        "contract_version",
+        "function_name",
+        "input"
+      ],
+      "error_fields_preserved": [
+        "status"
+      ],
+      "detail_code_request_id_preserved_by_thrown_error": false,
+      "implementation_source_note": "published JS is bundled/minified without a source map; public type/docs are the installed source evidence"
+    },
+    "session_execute": {
+      "type_source": "dist/index.d.ts lines 2825-2831, 3007-3022, 3274-3291",
+      "semantics": "authenticated session action.execute; execute returns JSON text and executeAndDecode parses the contract value",
+      "request_fields": [
+        "contract_id",
+        "contract_version",
+        "function_name",
+        "input"
+      ],
+      "error_surface": [
+        "RpcError.rpcMethod",
+        "RpcError.httpStatus",
+        "RpcError.detail",
+        "RpcError.requestId"
+      ]
+    },
+    "direct_project_comparison": "winner/scripts/broker-credit-preflight.ts uses a direct POST /api/invoke with Content-Type and X-T3N-Api-Key and the same canonical request field names"
+  },
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.1",
+    "numeric_id": 875
+  },
+  "principals": {
+    "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "diagnostics": {
+    "current_helper": {
+      "label": "current-helper-get-incident",
+      "transport": "top-level invokeC1 -> SDK invoke (opaque-key/stateless /api/invoke)",
+      "function": "get-incident",
+      "incident_id": "C1-INVOKE-DIAGNOSTIC-helper-get-1788434817425-c1905129",
+      "request_fields": [
+        "incident_id"
+      ],
+      "guest_level_application_behavior_observed": false,
+      "success": false,
+      "error": {
+        "class": "InvokeError",
+        "name": "InvokeError",
+        "message": "invoke request failed: server returned HTTP 400",
+        "status": 400,
+        "code": "AGENT_EXECUTE_ERROR"
+      },
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171594
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171594
+        },
+        "new_entries": []
+      }
+    },
+    "authenticated_execute": {
+      "label": "authenticated-execute-get-incident",
+      "transport": "T3nClient.executeAndDecode (authenticated session action.execute)",
+      "function": "get-incident",
+      "incident_id": "C1-INVOKE-DIAGNOSTIC-session-get-1788434819427-8b107610",
+      "request_fields": [
+        "incident_id"
+      ],
+      "guest_level_application_behavior_observed": false,
+      "success": false,
+      "error": {
+        "class": "RpcError",
+        "name": "RpcError",
+        "message": "RPC Error: contract interface error: Function not found: Function 'get-incident' not found in contract (looked up under 'z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1@2.0.1.get-incident' and walked every interface export) [216811ce-0c83-443c-8839-2accbe637fb9]",
+        "http_status": -32602,
+        "rpc_method": "action.execute",
+        "code": "RPC_ERROR",
+        "detail": "contract interface error: Function not found: Function 'get-incident' not found in contract (looked up under 'z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1@2.0.1.get-incident' and walked every interface export)",
+        "request_id": "216811ce-0c83-443c-8839-2accbe637fb9"
+      },
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171594
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171596
+        },
+        "new_entries": [
+          {
+            "seq_no": 183226,
+            "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+            "timestamp_ms": 1788434820544,
+            "caller_type": "human",
+            "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+            "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+            "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+            "function": "get-incident",
+            "outcome": "error",
+            "roles": "undefined"
+          }
+        ]
+      }
+    },
+    "raw_api_invoke": {
+      "label": "raw-api-invoke-get-incident",
+      "transport": "direct POST /api/invoke with operator opaque key",
+      "function": "get-incident",
+      "incident_id": "C1-INVOKE-DIAGNOSTIC-raw-get-1788434821677-3235d390",
+      "request_fields": [
+        "incident_id"
+      ],
+      "guest_level_application_behavior_observed": false,
+      "success": false,
+      "http_status": 400,
+      "response_code": "bad_request",
+      "detail": null,
+      "request_id": "80adc1bb-aee1-4dcb-918b-830fd4f3f6e3",
+      "body": {
+        "error": "api_key resolve_api_key: invalid api key: malformed api key token",
+        "code": "bad_request",
+        "request_id": "80adc1bb-aee1-4dcb-918b-830fd4f3f6e3"
+      },
+      "application_result": null,
+      "application_note": null,
+      "activity": {
+        "before": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171596
+        },
+        "after": {
+          "read_succeeded": true,
+          "entries": [
+            {
+              "seq_no": 183226,
+              "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+              "timestamp_ms": 1788434820544,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            },
+            {
+              "seq_no": 183212,
+              "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+              "timestamp_ms": 1788434729633,
+              "caller_type": "human",
+              "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+              "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+              "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+              "function": "get-incident",
+              "outcome": "error",
+              "roles": "undefined"
+            }
+          ],
+          "next_seq": 171596
+        },
+        "new_entries": []
+      }
+    },
+    "selected_transport_for_create": null,
+    "deliberate_create_ttl_denied": null,
+    "post_probe_nonexistence": null,
+    "all_get_transports": [
+      {
+        "label": "current-helper-get-incident",
+        "guest_reached": false,
+        "result": null,
+        "note": null
+      },
+      {
+        "label": "authenticated-execute-get-incident",
+        "guest_reached": false,
+        "result": null,
+        "note": null
+      },
+      {
+        "label": "raw-api-invoke-get-incident",
+        "guest_reached": false,
+        "result": null,
+        "note": null
+      }
+    ]
+  },
+  "deliberate_create_probe": {
+    "attempted": false,
+    "ttl_secs": 1,
+    "expected_guest_result": "DENIED for bounded TTL; no KV write",
+    "observed_ttl_denial": false,
+    "post_probe_confirmed_absent": false
+  },
+  "native_tenant_control_plane_map_write_research": {
+    "no_call_made": true,
+    "entrySet_type_source": "dist/index.d.ts lines 5860-5874",
+    "entrySet_documented_semantics": "TenantMapsNamespace.entrySet writes a UTF-8 key/value through the tenant management map-entry-set surface and supports an optional tenantTarget for an org admin.",
+    "executeControl_type_source": "dist/index.d.ts lines 6035-6046",
+    "executeControl_documented_semantics": "TenantClient exposes a generic executeControl(functionName, input) method; the installed declaration does not expose a more specific map-entry-set input type.",
+    "conclusion": "T3N has an intentional tenant control-plane map-write surface in the SDK; this diagnostic did not use it. Whether it may seed a private map for this organization must be established by a separate reviewed control-plane experiment, not inferred from this read-only diagnostic."
+  },
+  "zero_provider_work": {
+    "github_api_calls": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "installation_tokens": 0,
+    "provider_mutations": 0,
+    "successful_incident_creations": 0,
+    "reservation_calls": 0,
+    "broker_race_calls": 0,
+    "replay_calls": 0
+  },
+  "c1_contract_invocation_attempts": 3,
+  "credentials_in_evidence": false,
+  "credential_safety": {
+    "pat": false,
+    "github_app_credential": false,
+    "authorization_header": false,
+    "t3n_api_key": false,
+    "provider_calls": false
+  },
+  "final_root_cause_classification": "CONTRACT_EXECUTION_NOT_REACHED"
+}
