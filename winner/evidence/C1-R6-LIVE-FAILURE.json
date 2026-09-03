@@ -1,0 +1,577 @@
+{
+  "phase": "C1-R6 failed-run read-only reconciliation",
+  "status": "C1_FAIL_RECONCILED_NO_RETRY",
+  "failure_stage": "post-run pass-criteria check / final authority readback",
+  "failure_reason": "The live runner raised its effect-safe kill condition. Read-only final state was EFFECT_CLAIMED with effect_attempts=0 and no final classification, so C1 did not reach the required CLOSED terminal state.",
+  "manual_recovery_required": true,
+  "incident_id": "C1-1788441029399",
+  "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.2"
+  },
+  "target": {
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "deploy_key_id": 162181065,
+    "title": "breakglass-c1-1788441044940-f2aaa016",
+    "read_only": true,
+    "metadata_match": true
+  },
+  "final_t3n_authority": {
+    "response": {
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "created_at": 1788441052,
+        "deploy_key_id": 162181065,
+        "effect_attempts": 0,
+        "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "effect_claim_id": "claim-C1-1788441029399-2",
+        "effect_claim_version": 2,
+        "expires_at": 1788441952,
+        "final_result_classification": null,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox",
+        "incident_id": "C1-1788441029399",
+        "max_effects": 1,
+        "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "reservation_id": "reservation-C1-1788441029399-1",
+        "reservation_version": 1,
+        "status": "EFFECT_CLAIMED"
+      },
+      "effect_attempts": 0,
+      "function": "get-incident",
+      "incident_id": "C1-1788441029399",
+      "note": "incident authority read through the C1 contract",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "FOUND",
+      "state": "EFFECT_CLAIMED"
+    },
+    "read_only_call": true
+  },
+  "host_activity": {
+    "classification": "HOST_ACTIVITY",
+    "entries": [
+      {
+        "seq_no": 183642,
+        "hash": "b2a617ac916360828f1ffe5ee1236ef5b0fa2d3b68e1a3bd7303ff0589394ed3",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183634,
+        "hash": "a542f96ba907c4256002c6b914cf2ee4ed7800c87fd567eeec37e94d44382d7a",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183623,
+        "hash": "aea78332b21d56124768aff325ada3ec29d3324efbf77f8d1005f883f8c79cb4",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183619,
+        "hash": "fc4298bca940a5d80120ef7bf5ca7aa2c24aed6facc108f633d99621b1f13d5b",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183613,
+        "hash": "aca1812e02f51d014d987c37a5eac75c9ff0157ae6e27e51df2fc0ab71ffdb46",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "finalize-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183609,
+        "hash": "783dd2e1a45ac24ef10b208e987b4296ddd6f3efdeb67261abf09963c81a8402",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "release-not-attempted",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183603,
+        "hash": "c3add0f04a48b82bb3d823097b97537ad39d081890410f2d9b9b0dab57bf2ade",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183600,
+        "hash": "8f89ec3ddc483a1b9be883a496db8bae359632afc432dfd054826a743bdd8df9",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183593,
+        "hash": "92811bba81228da66e8307497b601639a65937dea14d128923f033c18aa755bf",
+        "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "on_behalf_of": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183587,
+        "hash": "04a19b4a7a53dc73988e190d79437b39e801588f73c1ebb1fc023af8d40575dc",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183584,
+        "hash": "afbb6434a6a71919a021f329e4aca4d8d303a670d2f6dc45eb2b9793268bb430",
+        "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "on_behalf_of": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183580,
+        "hash": "7192a4ea7da1b3e420c684f0b8261eab972917e824683ac5447631c9eebbc0e8",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183577,
+        "hash": "148586f0c0ebcfa406810e88a246fddc7d6e88e7553668fe6ab15ac1f19d86e1",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183574,
+        "hash": "35fc84225b02b2d34278e23687e87e2b6fe6fd0191f3f4f87bdf9eccfb66030f",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183570,
+        "hash": "583747235a3b2a5a428d0fa7a136596cd0f3c0f066b5b5e7cbb100868b439f03",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "create-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183474,
+        "hash": "7400f9ae364a58d73680ca03a330da405577ba761d97305c287a5ac42e173525",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183471,
+        "hash": "288038aaf438b600f2e6879a110ce17948d663e0a33c616faf75c79419f3f0b1",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183460,
+        "hash": "55354dae5aeb784b3a09c5da48e05e3b8f5bb21474b845236f38fcf667f22a82",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "error"
+      },
+      {
+        "seq_no": 183458,
+        "hash": "028aeef938496d75e4602ae143a95cfef998d3ae56b6d23e6d0f11f1893c498a",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "error"
+      },
+      {
+        "seq_no": 183457,
+        "hash": "8b7a0b4baeb5a894b8fc6c99f4d180947af0d4a849556f1270d6afe47a385a60",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183454,
+        "hash": "27c563998296b6af04db3dd0767f37a5802430bb5e3a466c9218ac4af12227e0",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183452,
+        "hash": "017f4a4d333d0f49803d02dda43bbc87d4f72bbf45bec7711837e105d9075a18",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183448,
+        "hash": "46487164bdd1f1326b55cf460a1fea559b06b0f0c8e49498df9a0ffde06355ed",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183445,
+        "hash": "a7317aab0ef1fc5abcbd3298ea325176d6d8b4d611d073df87c840c3efcd68f2",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183442,
+        "hash": "0d38be7f361b2ed6eacb4e82d68c9696cd095cf570a224b678f4369ffbcd30ba",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183439,
+        "hash": "dd65b0424255744277f538191ac8791668c6b7848eb02404fd69663103173429",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reconcile-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183436,
+        "hash": "30d7c4fe0cee5e2c78fde3d418040223e01050980cc28bad1b097a81cc3a159e",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "finalize-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183433,
+        "hash": "e5d3756ff51847a008924e533a562413b2d1f93e8c68a52106369f23885b168d",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "release-not-attempted",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183431,
+        "hash": "2dfa776e694910d174a9a434b92a107d2279845f84b8ca757716b59dca9dd5ac",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183427,
+        "hash": "77df9486810f3279d286d879ff3222c34e078a6252d67b2de33c0cec0a58075b",
+        "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "on_behalf_of": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183424,
+        "hash": "bce463622b155c2533266cf98ecdaa2a3357795cf7a7a7037c50323f735660ec",
+        "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "on_behalf_of": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183316,
+        "hash": "fc7fb781df84bc24d5955dac7a4b3fb0727715ba60664663cb19292d181c9b05",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183312,
+        "hash": "7f337fd4d4304109e6dbdb7b4c0bbd86424a7076b8ea978853c2fcf653950444",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "create-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183308,
+        "hash": "0c3996d26960a04647c064260a787322e7e58f5c8bcb7507e2adc72cf0692fe2",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reconcile-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183304,
+        "hash": "fb0ec73ebd3cb5feadf600f6d79774b789cc4ea5c63265c293cfa9966468fec8",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "finalize-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183300,
+        "hash": "a3ba5ded4c3aa3bbce9af14d4456b9d3bb456558c0fc26c60c86afa77ee28a1e",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "release-not-attempted",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183296,
+        "hash": "a9d99ed3af368c1d50a6597578712e58414e4048829beae9120467f52c832037",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183292,
+        "hash": "95419366c3ee2d06dfb198e68b96f046bf19fc050cb9d3c08bc4a9afca3ad28f",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183288,
+        "hash": "9607a47631b03748acc82f4626c9d98666130e7664dbc583b243b34f15ce2fe5",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 183226,
+        "hash": "c1e33f3b15ddb296578b9352614962fa67e33757f97f92b6f4874992932b300b",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "error"
+      },
+      {
+        "seq_no": 183212,
+        "hash": "bfec03774289af9059ff8af8e3e4bf689d4c6517a355996b223f9ccc87662d9d",
+        "actor": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "on_behalf_of": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "get-incident",
+        "outcome": "error"
+      },
+      {
+        "seq_no": 181070,
+        "hash": "9641b27ef7f384702929b9d82ab16379ccdf8c11101a3eb7c127f23c2b3ea9e9",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 181067,
+        "hash": "8a815f926d38172c478ba49da999cbc57386242476a06b2f798b6b9209c71759",
+        "actor": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "on_behalf_of": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 174424,
+        "hash": "e1929f145993742f55bbec5c57a3d3e091c970b7c04fb346975048db2ed98e22",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "error"
+      },
+      {
+        "seq_no": 174422,
+        "hash": "12a73c4ba366de46e21ca41ad976c10ea7991c36492c043aff40dc57ce26ae76",
+        "actor": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "on_behalf_of": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "org": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "function": "claim-effect",
+        "outcome": "error"
+      }
+    ],
+    "limitations": [
+      "Host-stamped metadata only; not a Merkle proof, body commitment, or complete causal receipt."
+    ]
+  },
+  "provider_reconciliation": {
+    "inspection_token_scope": {
+      "repository_selection": "selected",
+      "permissions": {
+        "administration": "write",
+        "metadata": "read"
+      },
+      "expires_at": "2026-09-03T14:15:18Z",
+      "repository_list_http_status": 200
+    },
+    "exact_get": {
+      "http_status": 404,
+      "target": {
+        "id": null,
+        "title": null,
+        "read_only": null,
+        "private": null
+      }
+    },
+    "list_get": {
+      "http_status": 200,
+      "body_valid": true,
+      "target_present": false,
+      "target": null
+    },
+    "delete_performed_by_inspector": false,
+    "installation_token_revoked": true,
+    "broker_delete_acknowledgement": "NOT_RECONSTRUCTIBLE_FROM_DISCARDED_RUN_OUTPUT",
+    "delete_may_have_been_initiated": true,
+    "blind_retry_forbidden": true,
+    "target_cleanup_required": false
+  },
+  "live_run_counters": {
+    "target_created": 1,
+    "broker_delete_count_observed": null,
+    "broker_effect_token_mint_count_observed": null,
+    "replay_effect_token_mint_count_observed": null,
+    "provider_mutations_by_inspector": 0,
+    "automatic_retries": 0
+  },
+  "run_trace": {
+    "barrier_directory_observed": true,
+    "incident_id_from_barrier": "C1-1788441029399",
+    "broker_ready_files_observed": 2,
+    "replay_ready_file_observed": true,
+    "pass_artifact_written": false
+  },
+  "counters": {
+    "inspection_operator_get_calls": 1,
+    "inspection_installation_tokens_minted": 1,
+    "inspection_provider_mutations": 0,
+    "automatic_retry_count": 0
+  },
+  "credential_safety": {
+    "pat_used": false,
+    "credentials_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "jwt_in_evidence": false,
+    "authorization_header_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false,
+    "t3n_api_key_in_evidence": false
+  },
+  "classification": "C1_FAIL — live pass gate failed; run reconciled read-only and no retry performed"
+}

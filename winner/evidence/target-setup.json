@@ -12,14 +12,14 @@
     "private": true
   },
   "target": {
-    "id": 162168386,
-    "title": "breakglass-c1-1788432199275-30c4ce4a",
+    "id": 162181065,
+    "title": "breakglass-c1-1788441044940-f2aaa016",
     "read_only": true,
     "repository": "Ticoworld/t3n-breakglass-sandbox"
   },
   "setup_token": {
     "minted": true,
-    "expires_at": "2026-09-03T11:43:17Z",
+    "expires_at": "2026-09-03T14:10:38Z",
     "repository_selection": "selected",
     "permissions": {
       "administration": "write",
