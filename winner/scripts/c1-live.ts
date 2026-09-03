@@ -6,13 +6,13 @@ import path from "node:path";
 import { connectTenant, redactError } from "../../scripts/lib.js";
 import { trustedNodeTimeSeconds } from "../../scripts/product.js";
 import { ACTION, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, INCIDENT_MAP_TAIL } from "./constants.js";
+import { parseChildJson } from "./child-protocol.js";
 import { invokeC1, requireValue, redact } from "./t3n.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
 function envValue(contents: string, name: string): string { const value = contents.split(/\r?\n/).find((line) => line.startsWith(`${name}=`))?.slice(name.length + 1).trim(); if (!value) throw new Error(`${name} missing from environment file`); return value; }
 async function readEnvFile(file: string, name: string): Promise<string> { return envValue(await readFile(path.join(root, file), "utf8"), name); }
-function parseJson(stdout: string): any { const lines = stdout.trim().split(/\r?\n/).filter(Boolean); return JSON.parse(lines.at(-1) ?? ""); }
 function run(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => { const child = spawn(command, args, { cwd: root, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }); let stdout = ""; let stderr = ""; child.stdout.on("data", (chunk) => { stdout += String(chunk); }); child.stderr.on("data", (chunk) => { stderr += String(chunk); }); child.on("close", (code) => resolve({ stdout, stderr, code: code ?? 1 })); });
 }
@@ -39,7 +39,7 @@ async function main() {
   const targetChildEnv = childEnv(process.env, {}, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "EFFECT_BROKER_T3N_API_KEY", "GITHUB_PAT"]);
   const targetRun = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "prepare-target.ts")], targetChildEnv);
   if (targetRun.code !== 0) throw new Error(`target setup failed: ${redact(targetRun.stderr, [brokerKey])}`);
-  const targetSetup = parseJson(targetRun.stdout);
+  const targetSetup = parseChildJson(targetRun.stdout);
   const target = targetSetup.target as { id: number; title: string; read_only: boolean };
   const authority = { incident_id: incidentId, remediation_agent_did: remediationDid, effect_broker_did: brokerDid, action: ACTION, github_owner: GITHUB_OWNER, github_repo: GITHUB_REPOSITORY, deploy_key_id: target.id, created_at: createdAt, expires_at: expiresAt, max_effects: 1, effect_attempts: 0, status: "ACTIVE", reservation_id: null, reservation_version: 0, effect_claim_id: null, effect_claim_version: 0, final_result_classification: null };
   const encoded = JSON.stringify(authority);
@@ -49,7 +49,7 @@ async function main() {
   const reserveEnv = childEnv(process.env, { AGENT_T3N_API_KEY: remediationKey, AGENT_DID: remediationDid, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId }, ["T3N_API_KEY", "GITHUB_PAT", "EFFECT_BROKER_T3N_API_KEY"]);
   const reserveChild = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "scripts", "reserve-agent.ts")], reserveEnv);
   if (reserveChild.code !== 0) throw new Error(`reserve failed: ${reserveChild.stderr.slice(0, 500)}`);
-  const reserveResult = parseJson(reserveChild.stdout);
+  const reserveResult = parseChildJson(reserveChild.stdout);
   const childA = path.join(actualBarrierDir, "broker-a.ready");
   const childB = path.join(actualBarrierDir, "broker-b.ready");
   const common = { C1_BARRIER_FILE: barrier, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId };
@@ -62,7 +62,7 @@ async function main() {
   await writeFile(barrier, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
   const [a, b] = await Promise.all([aPromise, bPromise]);
   if (a.code !== 0 || b.code !== 0) throw new Error(`broker child failed: ${a.stderr.slice(0, 500)} ${b.stderr.slice(0, 500)}`);
-  const brokers = [parseJson(a.stdout), parseJson(b.stdout)];
+  const brokers = [parseChildJson(a.stdout), parseChildJson(b.stdout)];
   const finalAuthority = await tenant.maps.entryGet(INCIDENT_MAP_TAIL, incidentId);
   let activity: unknown;
   try { activity = await t3n.getActivityLog({ contract: CONTRACT_TAIL, limit: 100 }); } catch (error) { activity = { error: redactError(error, [process.env.T3N_API_KEY ?? ""]) }; }
@@ -76,7 +76,7 @@ async function main() {
   await writeFile(replayRelease, "release");
   const replay = await replayPromise;
   if (replay.code !== 0) throw new Error(`replay broker failed: ${redact(replay.stderr, [brokerKey])}`);
-  const replayObservation = parseJson(replay.stdout);
+  const replayObservation = parseChildJson(replay.stdout);
   const totalDelete = brokers.reduce((sum, item) => sum + Number(item.destructive_call_count ?? 0), 0);
   const totalTokens = brokers.filter((item) => item.token_minted === true).length;
   const statuses = brokers.map((item) => item.claim_outcome);
