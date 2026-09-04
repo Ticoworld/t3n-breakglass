@@ -20,11 +20,11 @@ function runChild(directory: string, contender: string): Promise<{ code: number;
 }
 
 test("two separate broker processes produce exactly one local claim winner", async () => {
-  const iterations = 32;
+  const iterations = 64;
   for (let iteration = 0; iteration < iterations; iteration += 1) {
-    const directory = await mkdtemp(path.join(os.tmpdir(), "breakglass-c1-race-"));
-    try {
-      await writeFile(path.join(directory, "state.json"), JSON.stringify({ status: "RESERVED" }));
+      const directory = await mkdtemp(path.join(os.tmpdir(), "breakglass-c1-race-"));
+      try {
+        await writeFile(path.join(directory, "state.json"), JSON.stringify({ status: "RESERVED" }));
       const aPromise = runChild(directory, "broker-a");
       const bPromise = runChild(directory, "broker-b");
       while (true) {
@@ -34,20 +34,30 @@ test("two separate broker processes produce exactly one local claim winner", asy
         } catch { await new Promise((resolve) => setTimeout(resolve, 1)); }
       }
       await writeFile(path.join(directory, "barrier"), "release");
+      while (true) {
+        try {
+          await Promise.all([readFile(path.join(directory, "broker-a.proposal.json")), readFile(path.join(directory, "broker-b.proposal.json"))]);
+          break;
+        } catch { await new Promise((resolve) => setTimeout(resolve, 1)); }
+      }
+      await writeFile(path.join(directory, "proposals.complete"), "release");
       const [a, b] = await Promise.all([aPromise, bPromise]);
       assert.equal(a.code, 0, `${a.stderr} ${a.stdout}`);
       assert.equal(b.code, 0, `${b.stderr} ${b.stdout}`);
       const results = [JSON.parse(await readFile(path.join(directory, "broker-a.result.json"))), JSON.parse(await readFile(path.join(directory, "broker-b.result.json")))] as Array<Record<string, any>>;
       assert.notEqual(results[0].pid, results[1].pid, "contenders must be separate processes");
+      assert.notEqual(results[0].contender_nonce, results[1].contender_nonce, "contenders must use distinct nonces");
       assert.equal(results.filter((result) => result.claim_outcome === "CLAIM_WON").length, 1);
       assert.equal(results.filter((result) => result.claim_outcome === "CLAIM_LOST").length, 1);
+      assert.equal(results.filter((result) => result.ownership_confirmation === "CONFIRMED").length, 1);
+      assert.equal(results.filter((result) => result.ownership_confirmation === "NOT_OWNER").length, 1);
       assert.equal(results.reduce((sum, result) => sum + result.token_mint_count, 0), 1);
       assert.equal(results.reduce((sum, result) => sum + result.destructive_delete_count, 0), 1);
       const winner = results.find((result) => result.claim_outcome === "CLAIM_WON")!;
       const loser = results.find((result) => result.claim_outcome === "CLAIM_LOST")!;
-      assert.deepEqual(winner.events.slice(0, 2), ["CLAIM_REQUEST", "CLAIM_COMMITTED_WON"]);
+      assert.deepEqual(winner.events.slice(0, 3), ["CLAIM_REQUEST", "CLAIM_PROPOSAL_COMMITTED", "CLAIM_CONFIRM_CONFIRMED"]);
       assert.ok(winner.events.indexOf("BEGIN_EFFECT_COMMITTED") < winner.events.indexOf("PROVIDER_DELETE"));
-      assert.deepEqual(loser.events, ["CLAIM_REQUEST", "CLAIM_LOST"]);
+      assert.deepEqual(loser.events, ["CLAIM_REQUEST", "CLAIM_CONFIRM_NOT_OWNER", "CLAIM_LOST"]);
       assert.equal(loser.token_mint_count, 0);
       assert.equal(loser.destructive_delete_count, 0);
       assert.equal(JSON.parse(await readFile(path.join(directory, "state.json"), "utf8")).winner, winner.contender);

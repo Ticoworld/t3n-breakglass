@@ -68,7 +68,7 @@ test("only the operator path receives create/get and agents retain lifecycle-onl
   assert.match(liveSource, /invokeC1OperatorSession\(t3n, contractId, "create-incident"/);
   assert.match(liveSource, /invokeC1OperatorSession\(t3n, contractId, "get-incident"/);
   assert.match(reserveSource, /input: \{ incident_id: incidentId \}/);
-  assert.match(brokerSource, /input: \{ incident_id: incidentId, expected_claim_version: expectedClaimVersion \}/);
+  assert.match(brokerSource, /expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce/);
 });
 
 test("TTL and overflow constraints are explicit and live readback is mediated", () => {

@@ -10,11 +10,11 @@ const reserve = await readFile(new URL("../scripts/reserve-agent.ts", import.met
 const broker = await readFile(new URL("../broker/run.ts", import.meta.url), "utf8");
 const register = await readFile(new URL("../scripts/register.ts", import.meta.url), "utf8");
 
-const functions = ["create-incident", "get-incident", "reserve-incident", "claim-effect", "release-not-attempted", "begin-effect", "finalize-effect", "reconcile-effect"];
+const functions = ["create-incident", "get-incident", "reserve-incident", "claim-effect", "confirm-claim", "release-not-attempted", "begin-effect", "confirm-effect-start", "finalize-effect", "reconcile-effect"];
 
 test("C1 R4 version and local source surface agree", () => {
-  assert.match(constants, /CONTRACT_VERSION = "2\.0\.3"/);
-  assert.match(rust, /CONTRACT_VERSION: &str = "2\.0\.3"/);
+  assert.match(constants, /CONTRACT_VERSION = "2\.0\.4"/);
+  assert.match(rust, /CONTRACT_VERSION: &str = "2\.0\.4"/);
   for (const name of functions) assert.match(rust, new RegExp(name.replaceAll("-", "_")));
 });
 

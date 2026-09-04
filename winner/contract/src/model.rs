@@ -36,6 +36,7 @@ pub struct GetIncidentRequest {
 pub struct ClaimRequest {
     pub incident_id: String,
     pub expected_claim_version: u64,
+    pub contender_nonce: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
@@ -47,9 +48,26 @@ pub struct ClaimIdentityRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
+pub struct BeginEffectRequest {
+    pub incident_id: String,
+    pub claim_id: String,
+    pub start_nonce: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ConfirmEffectStartRequest {
+    pub incident_id: String,
+    pub claim_id: String,
+    pub effect_start_id: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct FinalizeRequest {
     pub incident_id: String,
     pub claim_id: String,
+    pub effect_start_id: String,
     pub classification: String,
 }
 
@@ -102,13 +120,22 @@ pub struct IncidentAuthority {
     pub reservation_version: u64,
     pub effect_claim_id: Option<String>,
     pub effect_claim_version: u64,
+    pub effect_start_id: Option<String>,
     pub final_result_classification: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Decision {
     Won,
+    Proposed,
     Lost,
+    Denied(&'static str),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Confirmation {
+    Confirmed,
+    NotOwner,
     Denied(&'static str),
 }
 
@@ -124,37 +151,54 @@ pub fn valid_shape(authority: &IncidentAuthority) -> bool {
         && authority.created_at < authority.expires_at
         && authority.max_effects == 1
         && authority.effect_attempts <= authority.max_effects
+        && ((authority.reservation_id.is_none() && authority.reservation_version == 0)
+            || (authority.reservation_id.as_deref().is_some_and(valid_state_id) && authority.reservation_version > 0))
+        && (authority.effect_claim_id.is_none()
+            || (authority.effect_claim_id.as_deref().is_some_and(valid_state_id) && authority.effect_claim_version > 0))
+        && (authority.effect_start_id.is_none() || authority.effect_start_id.as_deref().is_some_and(valid_state_id))
         && match authority.status {
             Status::Active => authority.effect_attempts == 0
                 && authority.reservation_id.is_none()
+                && authority.reservation_version == 0
                 && authority.effect_claim_id.is_none()
+                && authority.effect_claim_version == 0
+                && authority.effect_start_id.is_none()
                 && authority.final_result_classification.is_none(),
             Status::Reserved | Status::ReadyRetry => authority.effect_attempts == 0
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_none()
-                && authority.final_result_classification.is_none(),
+                && authority.effect_start_id.is_none()
+                && authority.final_result_classification.is_none()
+                && ((authority.status == Status::Reserved && authority.effect_claim_version == 0)
+                    || (authority.status == Status::ReadyRetry && authority.effect_claim_version > 0)),
             Status::EffectClaimed => authority.effect_attempts == 0
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
+                && authority.effect_start_id.is_none()
                 && authority.final_result_classification.is_none(),
             Status::EffectStarted => authority.effect_attempts == 1
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
+                && authority.effect_start_id.is_some()
                 && authority.final_result_classification.is_none(),
             Status::Expired => authority.effect_attempts == 0
                 && authority.effect_claim_id.is_none()
+                && authority.effect_start_id.is_none()
                 && authority.final_result_classification.is_none(),
             Status::Closed => authority.effect_attempts == 1
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
+                && authority.effect_start_id.is_some()
                 && authority.final_result_classification.as_deref() == Some("VERIFIED_ABSENT"),
             Status::ReconcileRequired => authority.effect_attempts == 1
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
+                && authority.effect_start_id.is_some()
                 && matches!(authority.final_result_classification.as_deref(), Some("PROVIDER_ACKNOWLEDGED" | "ATTEMPTED_OUTCOME_UNKNOWN" | "VERIFIED_PRESENT")),
             Status::Failed => authority.effect_attempts == 1
                 && authority.reservation_id.is_some()
                 && authority.effect_claim_id.is_some()
+                && authority.effect_start_id.is_some()
                 && authority.final_result_classification.as_deref() == Some("VERIFIED_PRESENT"),
         }
 }
@@ -227,6 +271,7 @@ pub fn build_incident_authority(
         reservation_version: 0,
         effect_claim_id: None,
         effect_claim_version: 0,
+        effect_start_id: None,
         final_result_classification: None,
     };
     if !valid_shape(&authority) {
@@ -261,7 +306,7 @@ pub fn reserve(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u6
     }
 }
 
-pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64, expected_claim_version: u64) -> Decision {
+pub fn claim_with_nonce(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64, expected_claim_version: u64, contender_nonce: &str) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
     if !valid_time(authority, now) {
@@ -272,13 +317,14 @@ pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64,
     }
     if authority.max_effects != 1 || authority.effect_attempts != 0 { return Decision::Lost }
     if authority.effect_claim_version != expected_claim_version { return Decision::Lost }
+    if !valid_nonce(contender_nonce) { return Decision::Denied("contender_nonce is invalid") }
     match authority.status {
         Status::Reserved | Status::ReadyRetry => {
             let Some(next_version) = authority.effect_claim_version.checked_add(1) else { return Decision::Denied("claim generation exhausted") };
             authority.effect_claim_version = next_version;
-            authority.effect_claim_id = Some(format!("claim-{}-{}", authority.incident_id, authority.effect_claim_version));
+            authority.effect_claim_id = Some(format!("claim-{}-{}", authority.effect_claim_version, contender_nonce));
             authority.status = Status::EffectClaimed;
-            Decision::Won
+            Decision::Proposed
         }
         Status::EffectClaimed | Status::EffectStarted | Status::Closed | Status::ReconcileRequired | Status::Failed | Status::Active | Status::Expired => Decision::Lost,
     }
@@ -296,22 +342,61 @@ pub fn release_not_attempted(authority: &mut IncidentAuthority, caller: Option<&
     Decision::Won
 }
 
-pub fn begin_effect(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, now: u64) -> Decision {
+/// Legacy pure-model convenience used by older tests.  The contract entry
+/// point always uses `claim_with_nonce`, so live ownership proposals are
+/// contender-bound and reported as provisional.
+pub fn claim(authority: &mut IncidentAuthority, caller: Option<&[u8]>, now: u64, expected_claim_version: u64) -> Decision {
+    match claim_with_nonce(authority, caller, now, expected_claim_version, "00000000000000000000000000000000") {
+        Decision::Proposed => Decision::Won,
+        other => other,
+    }
+}
+
+pub fn begin_effect_with_nonce(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, start_nonce: &str, now: u64) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
     if authority.status != Status::EffectClaimed || authority.effect_attempts != 0 || authority.effect_claim_id.as_deref() != Some(claim_id) {
         return Decision::Denied("claim identity or state does not match")
     }
+    if !valid_nonce(start_nonce) { return Decision::Denied("start_nonce is invalid") }
     if !valid_time(authority, now) { return Decision::Denied("incident expired according to cluster time") }
     authority.effect_attempts = 1;
+    authority.effect_start_id = Some(format!("start-{}-{}", authority.effect_claim_version, start_nonce));
     authority.status = Status::EffectStarted;
     Decision::Won
 }
 
-pub fn finalize(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
+pub fn begin_effect(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, now: u64) -> Decision {
+    begin_effect_with_nonce(authority, caller, claim_id, "00000000000000000000000000000000", now)
+}
+
+pub fn confirm_claim(authority: &IncidentAuthority, caller: Option<&[u8]>, claim_id: &str) -> Confirmation {
+    if !valid_shape(authority) { return Confirmation::Denied("invalid authority shape") }
+    if !caller_matches(&authority.effect_broker_did, caller) { return Confirmation::Denied("caller is not the effect broker") }
+    if authority.status == Status::EffectClaimed && authority.effect_attempts == 0 && authority.effect_claim_id.as_deref() == Some(claim_id) {
+        Confirmation::Confirmed
+    } else {
+        Confirmation::NotOwner
+    }
+}
+
+pub fn confirm_effect_start(authority: &IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, effect_start_id: &str) -> Confirmation {
+    if !valid_shape(authority) { return Confirmation::Denied("invalid authority shape") }
+    if !caller_matches(&authority.effect_broker_did, caller) { return Confirmation::Denied("caller is not the effect broker") }
+    if matches!(authority.status, Status::EffectStarted | Status::Closed | Status::ReconcileRequired | Status::Failed)
+        && authority.effect_attempts == 1
+        && authority.effect_claim_id.as_deref() == Some(claim_id)
+        && authority.effect_start_id.as_deref() == Some(effect_start_id) {
+        Confirmation::Confirmed
+    } else {
+        Confirmation::NotOwner
+    }
+}
+
+pub fn finalize_with_start(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, effect_start_id: &str, classification: &str) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
-    if authority.status != Status::EffectStarted || authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_attempts != 1 {
+    if authority.status != Status::EffectStarted || authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_start_id.as_deref() != Some(effect_start_id) || authority.effect_attempts != 1 {
         return Decision::Denied("claim identity or state does not match")
     }
     match classification {
@@ -329,13 +414,22 @@ pub fn finalize(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_
     }
 }
 
-pub fn reconcile(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
+pub fn finalize(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
+    if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
+    if authority.status != Status::EffectStarted || authority.effect_attempts != 1 || authority.effect_claim_id.as_deref() != Some(claim_id) {
+        return Decision::Denied("claim identity or state does not match")
+    }
+    let Some(effect_start_id) = authority.effect_start_id.clone() else { return Decision::Denied("effect-start identity is missing") };
+    finalize_with_start(authority, caller, claim_id, &effect_start_id, classification)
+}
+
+pub fn reconcile_with_start(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, effect_start_id: &str, classification: &str) -> Decision {
     if !valid_shape(authority) { return Decision::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
     if !matches!(authority.status, Status::EffectStarted | Status::ReconcileRequired | Status::Failed) {
         return Decision::Denied("authority is not awaiting reconciliation")
     }
-    if authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_attempts != 1 {
+    if authority.effect_claim_id.as_deref() != Some(claim_id) || authority.effect_start_id.as_deref() != Some(effect_start_id) || authority.effect_attempts != 1 {
         return Decision::Denied("reconciliation identity or state does not match")
     }
     match classification {
@@ -353,8 +447,28 @@ pub fn reconcile(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim
     }
 }
 
+pub fn reconcile(authority: &mut IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, classification: &str) -> Decision {
+    if !caller_matches(&authority.effect_broker_did, caller) { return Decision::Denied("caller is not the effect broker") }
+    if !matches!(authority.status, Status::EffectStarted | Status::ReconcileRequired | Status::Failed) {
+        return Decision::Denied("authority is not awaiting reconciliation")
+    }
+    if authority.effect_attempts != 1 || authority.effect_claim_id.as_deref() != Some(claim_id) {
+        return Decision::Denied("reconciliation identity or state does not match")
+    }
+    let Some(effect_start_id) = authority.effect_start_id.clone() else { return Decision::Denied("effect-start identity is missing") };
+    reconcile_with_start(authority, caller, claim_id, &effect_start_id, classification)
+}
+
 fn safe_segment(value: &str) -> bool {
     !value.is_empty() && value.len() <= 100 && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || byte == b'.' || byte == b'-' || byte == b'_')
+}
+
+pub fn valid_nonce(value: &str) -> bool {
+    value.len() == 32 && value.bytes().all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+}
+
+fn valid_state_id(value: &str) -> bool {
+    !value.is_empty() && value.len() <= 256 && value.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b':' | b'-' | b'_'))
 }
 
 #[cfg(test)]
@@ -372,7 +486,7 @@ mod tests {
             incident_id: "INC-TEST".into(), remediation_agent_did: AGENT.into(), effect_broker_did: BROKER.into(),
             action: ACTION_REVOKE_GITHUB_DEPLOY_KEY.into(), github_owner: "Ticoworld".into(), github_repo: "sandbox".into(), deploy_key_id: 7,
             created_at: 100, expires_at: 200, max_effects: 1, effect_attempts: 0, status: Status::Active,
-            reservation_id: None, reservation_version: 0, effect_claim_id: None, effect_claim_version: 0, final_result_classification: None,
+            reservation_id: None, reservation_version: 0, effect_claim_id: None, effect_claim_version: 0, effect_start_id: None, final_result_classification: None,
         }
     }
 
@@ -461,6 +575,56 @@ mod tests {
     #[test] fn expired_claim_marks_unclaimed_state_expired() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); assert_eq!(claim(&mut a, Some(&BROKER_BYTES), 200, 0), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::Expired); }
     #[test] fn reserve_after_effect_claim_expiry_does_not_corrupt_claim() { let mut a = authority(); reserve(&mut a, Some(&AGENT_BYTES), 120); claim(&mut a, Some(&BROKER_BYTES), 120, 0); let claim_id = a.effect_claim_id.clone(); assert_eq!(reserve(&mut a, Some(&AGENT_BYTES), 200), Decision::Denied("incident expired according to cluster time")); assert_eq!(a.status, Status::EffectClaimed); assert_eq!(a.effect_claim_id, claim_id); }
     #[test] fn malformed_or_extra_input_is_rejected_by_serde() { assert!(serde_json::from_str::<IncidentRequest>(r#"{"incident_id":"x","github_repo":"evil"}"#).is_err()); }
+
+    #[test]
+    fn contender_nonce_makes_proposals_distinct_and_confirmation_is_read_only() {
+        let nonce_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let nonce_b = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        let mut first = authority();
+        assert_eq!(reserve(&mut first, Some(&AGENT_BYTES), 120), Decision::Won);
+        assert_eq!(claim_with_nonce(&mut first, Some(&BROKER_BYTES), 120, 0, nonce_a), Decision::Proposed);
+        assert_eq!(claim_with_nonce(&mut first, Some(&BROKER_BYTES), 120, 0, nonce_b), Decision::Lost);
+        let before = first.clone();
+        let first_id = first.effect_claim_id.clone().unwrap();
+        assert_eq!(confirm_claim(&first, Some(&BROKER_BYTES), &first_id), Confirmation::Confirmed);
+        assert_eq!(confirm_claim(&first, Some(&BROKER_BYTES), &format!("claim-1-{nonce_b}")), Confirmation::NotOwner);
+        assert_eq!(confirm_claim(&first, Some(&AGENT_BYTES), &first_id), Confirmation::Denied("caller is not the effect broker"));
+        assert_eq!(first, before);
+    }
+
+    #[test]
+    fn effect_start_nonce_is_bound_and_confirmation_cannot_mutate() {
+        let claim_nonce = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        let start_nonce_a = "cccccccccccccccccccccccccccccccc";
+        let start_nonce_b = "dddddddddddddddddddddddddddddddd";
+        let mut first = authority();
+        reserve(&mut first, Some(&AGENT_BYTES), 120);
+        assert_eq!(claim_with_nonce(&mut first, Some(&BROKER_BYTES), 120, 0, claim_nonce), Decision::Proposed);
+        let claim_id = first.effect_claim_id.clone().unwrap();
+        let mut second = first.clone();
+        assert_eq!(begin_effect_with_nonce(&mut first, Some(&BROKER_BYTES), &claim_id, start_nonce_a, 120), Decision::Won);
+        assert_eq!(begin_effect_with_nonce(&mut second, Some(&BROKER_BYTES), &claim_id, start_nonce_b, 120), Decision::Won);
+        assert_ne!(first.effect_start_id, second.effect_start_id);
+        assert_eq!(first.effect_attempts, 1);
+        let before = first.clone();
+        let start_id = first.effect_start_id.clone().unwrap();
+        assert_eq!(confirm_effect_start(&first, Some(&BROKER_BYTES), &claim_id, &start_id), Confirmation::Confirmed);
+        assert_eq!(confirm_effect_start(&first, Some(&BROKER_BYTES), &claim_id, "wrong-start"), Confirmation::NotOwner);
+        assert_eq!(first, before);
+        assert_eq!(finalize_with_start(&mut first, Some(&BROKER_BYTES), &claim_id, "wrong-start", "VERIFIED_ABSENT"), Decision::Denied("claim identity or state does not match"));
+        assert_eq!(finalize_with_start(&mut first, Some(&BROKER_BYTES), &claim_id, &start_id, "VERIFIED_ABSENT"), Decision::Won);
+        assert_eq!(first.status, Status::Closed);
+        assert_eq!(first.effect_attempts, 1);
+    }
+
+    #[test]
+    fn nonce_and_effect_start_requests_are_strict_and_bounded() {
+        assert!(valid_nonce("0123456789abcdef0123456789abcdef"));
+        assert!(!valid_nonce("0123456789ABCDEF0123456789ABCDEF"));
+        assert!(!valid_nonce("short"));
+        assert!(serde_json::from_str::<ClaimRequest>(r#"{"incident_id":"x","expected_claim_version":0,"contender_nonce":"0123456789abcdef0123456789abcdef","action":"evil"}"#).is_err());
+        assert!(serde_json::from_str::<BeginEffectRequest>(r#"{"incident_id":"x","claim_id":"c","start_nonce":"0123456789abcdef0123456789abcdef","owner":"evil"}"#).is_err());
+    }
 
     #[test]
     fn generated_operation_sequences_preserve_single_effect_invariant() {

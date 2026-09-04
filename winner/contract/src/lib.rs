@@ -5,7 +5,7 @@ extern crate alloc;
 
 mod model;
 
-pub const CONTRACT_VERSION: &str = "2.0.3";
+pub const CONTRACT_VERSION: &str = "2.0.4";
 
 wit_bindgen::generate!({
     world: "breakglass-winner",
@@ -22,8 +22,10 @@ impl exports::z::breakglass_winner::contracts::Guest for Component {
     fn get_incident(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { get_incident(req.input.as_deref()) }
     fn reserve_incident(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("reserve-incident", req.input.as_deref()) }
     fn claim_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("claim-effect", req.input.as_deref()) }
+    fn confirm_claim(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("confirm-claim", req.input.as_deref()) }
     fn release_not_attempted(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("release-not-attempted", req.input.as_deref()) }
     fn begin_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("begin-effect", req.input.as_deref()) }
+    fn confirm_effect_start(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("confirm-effect-start", req.input.as_deref()) }
     fn finalize_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("finalize-effect", req.input.as_deref()) }
     fn reconcile_effect(req: exports::z::breakglass_winner::contracts::GenericInput) -> Result<alloc::vec::Vec<u8>, alloc::string::String> { dispatch("reconcile-effect", req.input.as_deref()) }
 }
@@ -48,6 +50,11 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
             if parsed.incident_id.trim().is_empty() { return Err("incident_id is invalid".into()) }
             parsed.incident_id
         }
+        "confirm-claim" => {
+            let parsed: model::ClaimIdentityRequest = parse_json(raw)?;
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
+            parsed.incident_id
+        }
         "release-not-attempted" => {
             let parsed: model::ClaimIdentityRequest = parse_json(raw)?;
             if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
@@ -64,8 +71,13 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
             parsed.incident_id
         }
         "begin-effect" => {
-            let parsed: model::ClaimIdentityRequest = parse_json(raw)?;
-            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
+            let parsed: model::BeginEffectRequest = parse_json(raw)?;
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() || parsed.start_nonce.trim().is_empty() { return Err("incident_id, claim_id, and start_nonce are required".into()) }
+            parsed.incident_id
+        }
+        "confirm-effect-start" => {
+            let parsed: model::ConfirmEffectStartRequest = parse_json(raw)?;
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() || parsed.effect_start_id.trim().is_empty() { return Err("incident_id, claim_id, and effect_start_id are required".into()) }
             parsed.incident_id
         }
         _ => return Err("unknown function".into()),
@@ -83,7 +95,19 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         "reserve-incident" => model::reserve(&mut authority, caller.as_deref(), now),
         "claim-effect" => {
             let request: model::ClaimRequest = parse_json(raw)?;
-            model::claim(&mut authority, caller.as_deref(), now, request.expected_claim_version)
+            model::claim_with_nonce(&mut authority, caller.as_deref(), now, request.expected_claim_version, &request.contender_nonce)
+        }
+        "confirm-claim" => {
+            let request: model::ClaimIdentityRequest = parse_json(raw)?;
+            let confirmation = model::confirm_claim(&authority, caller.as_deref(), &request.claim_id);
+            let (result, note, detail) = match confirmation {
+                model::Confirmation::Confirmed => ("CONFIRMED", "persisted claim ownership confirmed", serde_json::json!({"action": authority.action, "github_owner": authority.github_owner, "github_repo": authority.github_repo, "deploy_key_id": authority.deploy_key_id, "claim_id": authority.effect_claim_id, "claim_version": authority.effect_claim_version})),
+                model::Confirmation::NotOwner => ("NOT_OWNER", "persisted authority is owned by another claim identity", serde_json::json!({})),
+                model::Confirmation::Denied(note) => ("DENIED", note, serde_json::json!({})),
+            };
+            let response = json_result_with_detail(&request.incident_id, "confirm-claim", result, Some(&authority), detail, note)?;
+            let _ = logging::info(&alloc::format!("winner-c1 function=confirm-claim incident={} result={}", request.incident_id, result));
+            return Ok(response);
         }
         "release-not-attempted" => {
             let request: model::ClaimIdentityRequest = parse_json(raw)?;
@@ -91,31 +115,46 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         }
         "finalize-effect" => {
             let request: model::FinalizeRequest = parse_json(raw)?;
-            model::finalize(&mut authority, caller.as_deref(), &request.claim_id, &request.classification)
+            model::finalize_with_start(&mut authority, caller.as_deref(), &request.claim_id, &request.effect_start_id, &request.classification)
         }
         "reconcile-effect" => {
             let request: model::FinalizeRequest = parse_json(raw)?;
-            model::reconcile(&mut authority, caller.as_deref(), &request.claim_id, &request.classification)
+            model::reconcile_with_start(&mut authority, caller.as_deref(), &request.claim_id, &request.effect_start_id, &request.classification)
         }
         "begin-effect" => {
-            let request: model::ClaimIdentityRequest = parse_json(raw)?;
-            model::begin_effect(&mut authority, caller.as_deref(), &request.claim_id, now)
+            let request: model::BeginEffectRequest = parse_json(raw)?;
+            model::begin_effect_with_nonce(&mut authority, caller.as_deref(), &request.claim_id, &request.start_nonce, now)
+        }
+        "confirm-effect-start" => {
+            let request: model::ConfirmEffectStartRequest = parse_json(raw)?;
+            let confirmation = model::confirm_effect_start(&authority, caller.as_deref(), &request.claim_id, &request.effect_start_id);
+            let (result, note) = match confirmation {
+                model::Confirmation::Confirmed => ("CONFIRMED", "persisted effect-start ownership confirmed"),
+                model::Confirmation::NotOwner => ("NOT_OWNER", "persisted authority is owned by another effect-start identity"),
+                model::Confirmation::Denied(note) => ("DENIED", note),
+            };
+            let response = json_result(&request.incident_id, "confirm-effect-start", result, Some(&authority), note)?;
+            let _ = logging::info(&alloc::format!("winner-c1 function=confirm-effect-start incident={} result={}", request.incident_id, result));
+            return Ok(response);
         }
         _ => unreachable!(),
     };
 
     let (result, note) = match decision {
         model::Decision::Won => ("WON", "state transition committed in this transaction"),
+        model::Decision::Proposed => ("PROPOSED", "claim proposal committed; ownership requires confirm-claim"),
         model::Decision::Lost => ("LOST", "another committed state transition already won"),
         model::Decision::Denied(note) => ("DENIED", note),
     };
-    if matches!(&decision, model::Decision::Won) || authority.status == model::Status::Expired {
+    if matches!(&decision, model::Decision::Won | model::Decision::Proposed) || authority.status == model::Status::Expired {
         let encoded = serde_json::to_vec(&authority).map_err(|_| "incident authority serialization failed".to_string())?;
         kv_store::put(&map, request_id.as_bytes(), &encoded).map_err(|_| "incident authority write failed".to_string())?;
     }
     let _ = logging::info(&alloc::format!("winner-c1 function={} incident={} result={} status={}", function_name, request_id, result, authority.status.label()));
-    let detail = if matches!(function_name, "claim-effect" | "begin-effect") && result == "WON" {
-        serde_json::json!({"action": authority.action, "github_owner": authority.github_owner, "github_repo": authority.github_repo, "deploy_key_id": authority.deploy_key_id, "claim_id": authority.effect_claim_id, "claim_version": authority.effect_claim_version})
+    let detail = if function_name == "claim-effect" && result == "PROPOSED" {
+        serde_json::json!({"claim_id": authority.effect_claim_id, "claim_version": authority.effect_claim_version})
+    } else if function_name == "begin-effect" && result == "WON" {
+        serde_json::json!({"claim_id": authority.effect_claim_id, "claim_version": authority.effect_claim_version, "effect_start_id": authority.effect_start_id})
     } else { serde_json::json!({}) };
     json_result_with_detail(&request_id, function_name, result, Some(&authority), detail, note)
 }
@@ -211,5 +250,5 @@ fn json_result_with_detail(incident_id: &str, function_name: &str, result: &str,
 #[cfg(test)]
 mod tests {
     use super::CONTRACT_VERSION;
-    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.3"); }
+    #[test] fn version_is_c1() { assert_eq!(CONTRACT_VERSION, "2.0.4"); }
 }

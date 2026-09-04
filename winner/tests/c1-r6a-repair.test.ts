@@ -11,8 +11,8 @@ const broker = await readFile(path.join(root, "winner", "broker", "run.ts"), "ut
 const model = await readFile(path.join(root, "winner", "contract", "src", "model.rs"), "utf8");
 const wit = await readFile(path.join(root, "winner", "contract", "wit", "world.wit"), "utf8");
 
-test("R6A source exposes the eight-function candidate and committed effect-start boundary", () => {
-  for (const name of ["create-incident", "get-incident", "reserve-incident", "claim-effect", "release-not-attempted", "begin-effect", "finalize-effect", "reconcile-effect"]) assert.match(wit, new RegExp(name));
+test("R6A source exposes the ten-function candidate and committed effect-start boundary", () => {
+  for (const name of ["create-incident", "get-incident", "reserve-incident", "claim-effect", "confirm-claim", "release-not-attempted", "begin-effect", "confirm-effect-start", "finalize-effect", "reconcile-effect"]) assert.match(wit, new RegExp(name));
   assert.match(model, /EffectStarted/);
   assert.match(model, /pub fn begin_effect/);
   assert.match(model, /pub expected_claim_version: u64/);

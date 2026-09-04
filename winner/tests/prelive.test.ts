@@ -79,7 +79,7 @@ test("fake provider adapter covers destructive and verification failure matrix",
 test("strict claim parsing rejects target injection and incomplete authority", () => {
   assert.throws(() => parseClaim({ result: "WON", detail: { action: "something_else", github_owner: "Ticoworld", github_repo: "t3n-breakglass-sandbox", deploy_key_id: 1, claim_id: "claim-1" } }));
   assert.throws(() => parseClaim({ result: "WON", detail: { action: "revoke_github_deploy_key", github_owner: "Ticoworld", github_repo: "t3n-breakglass-sandbox", deploy_key_id: 0, claim_id: "claim-1" } }));
-  assert.match(runSource, /input: \{ incident_id: incidentId, expected_claim_version: expectedClaimVersion \}/);
+  assert.match(runSource, /expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce/);
   assert.match(runSource, /authority_loaded_target/);
 });
 

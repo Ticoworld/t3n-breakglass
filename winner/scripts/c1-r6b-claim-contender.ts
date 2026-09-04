@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { open } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { writeAtomicJson } from "./result-file.js";
 import { connectC1Principal, invokeC1, redact, requireValue } from "./t3n.js";
 import { CONTRACT_VERSION, contractName } from "./constants.js";
@@ -34,12 +35,13 @@ async function main(): Promise<void> {
   const ready = requireValue("C1_R6B_READY_FILE");
   const resultFile = requireValue("C1_R6B_RESULT_FILE");
   const broker = await connectC1Principal("EFFECT_BROKER_T3N_API_KEY", "EFFECT_BROKER_DID");
-  const evidence: Record<string, unknown> = { phase: "R6B state-only claim contender", contender, pid: process.pid, did: broker.did, incident_id: incidentId, expected_claim_version: expectedClaimVersion, contract: contractName(operatorDid), version: CONTRACT_VERSION, provider_operations: 0, ready_at_unix_ms: Date.now() };
+  const contenderNonce = randomBytes(16).toString("hex");
+  const evidence: Record<string, unknown> = { phase: "R6B state-only claim contender", contender, pid: process.pid, did: broker.did, incident_id: incidentId, expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce, contract: contractName(operatorDid), version: CONTRACT_VERSION, provider_operations: 0, ready_at_unix_ms: Date.now() };
   await writeAtomicJson(ready, { contender, pid: process.pid, ready_at_unix_ms: evidence.ready_at_unix_ms });
   await waitFor(barrier);
   evidence.started_at_unix_ms = Date.now();
   try {
-    const raw = await invokeC1(broker.apiKey, broker.nodeUrl, contractName(operatorDid), "claim-effect", { incident_id: incidentId, expected_claim_version: expectedClaimVersion });
+    const raw = await invokeC1(broker.apiKey, broker.nodeUrl, contractName(operatorDid), "claim-effect", { incident_id: incidentId, expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce });
     const response = parseResult(raw);
     evidence.response = response;
     evidence.claim_outcome = response.result === "WON" ? "CLAIM_WON" : response.result === "LOST" ? "CLAIM_LOST" : "APPLICATION_RESULT";

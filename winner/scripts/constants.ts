@@ -1,5 +1,5 @@
 export const CONTRACT_TAIL = "breakglass-winner-c1";
-export const CONTRACT_VERSION = "2.0.3";
+export const CONTRACT_VERSION = "2.0.4";
 export const INCIDENT_MAP_TAIL = "winner-incidents";
 export const ACTION = "revoke_github_deploy_key";
 export const GITHUB_HOST = "api.github.com";
@@ -10,10 +10,19 @@ export const ORGANISATION_DID = "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a91
 export const RESERVATION_FUNCTION = "reserve-incident";
 export const BROKER_FUNCTIONS = [
   "claim-effect",
+  "confirm-claim",
   "release-not-attempted",
   "begin-effect",
+  "confirm-effect-start",
   "finalize-effect",
   "reconcile-effect",
+] as const;
+
+export const C1_FUNCTIONS = [
+  "create-incident",
+  "get-incident",
+  RESERVATION_FUNCTION,
+  ...BROKER_FUNCTIONS,
 ] as const;
 
 export function contractName(operatorDid: string): string {

@@ -1,0 +1,114 @@
+{
+  "phase": "C1-R6B-R4A concurrent claim ownership repair",
+  "status": "C1_R6B_R4A_CLAIM_OWNERSHIP_REPAIR_PASS",
+  "starting_sha": "8b7396a7b0766c3cc3f2d7ad3e07ab838dd753cc",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "r3_failure": {
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "classification": "R6B_R3_CONCURRENT_CLAIM_FAILED",
+    "both_reached_common_barrier": true,
+    "contenders": 2,
+    "winner_count": 2,
+    "loser_count": 0,
+    "same_claim_id_returned": true,
+    "provider_operations": 0,
+    "retained_as_historical_failure": true,
+    "internal_terminal3_cause": "not inferred"
+  },
+  "forensic_findings": {
+    "application_claim_identity_gap": "PROVEN",
+    "claim_identity_before": "incident plus claim generation only",
+    "claim_identity_after": "generation plus process-generated contender nonce",
+    "effect_start_not_confirmed_before_provider": "PROVEN_IN_CANDIDATE_REPAIR",
+    "provider_effect_before_committed_effect_start": "forbidden_by_candidate_source_order",
+    "child_result_durability_gap": "CLOSED_IN_CANDIDATE",
+    "replay_terminal_gate": "PRESENT_AND_SOURCE_TESTED",
+    "stale_contender_after_release": "CODE-IMPOSSIBLE_WITH_GENERATION_FENCE"
+  },
+  "repair": {
+    "candidate_version": "2.0.4",
+    "begin_effect_added": true,
+    "claim_generation_fence_added": false,
+    "existing_claim_generation_fence_retained": true,
+    "contender_nonce_added": true,
+    "confirm_claim_added": true,
+    "confirm_effect_start_added": true,
+    "effect_started_recovery": "reconcile requires exact claim and effect_start_id and preserves effect_attempts=1",
+    "replay_terminal_gate_added": false,
+    "durable_child_results_added": true,
+    "registration_performed": false
+  },
+  "local_component": {
+    "path": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm",
+    "sha256": "f55ea526c8e6c903ba14697b805bfb6569009b0ae0b92e27d6ff890f3c6cd0c4",
+    "bytes": 226819,
+    "exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "confirm-claim",
+      "release-not-attempted",
+      "begin-effect",
+      "confirm-effect-start",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "all_expected_exports_verified": true,
+    "inspection": "wasm-tools component wit",
+    "build": "clean supported wasm32-wasip2 rebuild via WSL fallback"
+  },
+  "local_proofs": {
+    "state_machine_sequences": 4000,
+    "operations_per_sequence": 80,
+    "two_process_race_iterations": 64,
+    "distinct_nonce_proposals": true,
+    "single_confirmation_owner_model": true,
+    "effect_start_confirmation_before_provider_model": true,
+    "parent_failure_result_persistence_model": true
+  },
+  "live_calls": {
+    "t3n_reads": 0,
+    "t3n_writes": 0,
+    "contract_invocations": 0,
+    "new_incidents": 0,
+    "reservations": 0,
+    "claims": 0,
+    "begin_effect_calls": 0,
+    "finalizations": 0,
+    "reconciliations": 0,
+    "github_api_calls": 0,
+    "provider_mutations": 0
+  },
+  "historical_incident": {
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "touched": false,
+    "optional_readback_performed": false
+  },
+  "claims_allowed": [
+    "the R3 application-level claim identity gap was reproduced from retained evidence and source",
+    "the local candidate binds proposals to distinct process nonces",
+    "only a persisted exact claim identity can receive target details in the candidate",
+    "provider DELETE is source-ordered after committed begin-effect and confirm-effect-start in the candidate",
+    "effect_attempts is consumed at begin-effect in the candidate",
+    "the local two-process model produced one confirmation owner per iteration"
+  ],
+  "claims_forbidden": [
+    "live Terminal 3 OCC proof for 2.0.4",
+    "provider-side exactly-once",
+    "atomic T3N and GitHub transactionality",
+    "C1_PASS",
+    "registered or delegated 2.0.4 operation",
+    "C2 completion or submission readiness"
+  ],
+  "credential_safety": {
+    "credentials_in_evidence": false,
+    "t3n_api_keys_in_evidence": false,
+    "github_tokens_in_evidence": false,
+    "jwt_in_evidence": false,
+    "authorization_headers_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false
+  },
+  "next_gate": "C1-R6B-R4B candidate review and, only if approved, one registration of 2.0.4"
+}
