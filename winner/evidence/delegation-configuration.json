@@ -7,8 +7,8 @@
   "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
   "organisation_did": "did:t3n:3c63f09271c0d9184abbcccbfae28698a8f4a912",
   "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
-  "contract_version": "2.0.3",
-  "contract_id": 877,
+  "contract_version": "2.0.4",
+  "contract_id": 878,
   "operator_admin_read": {
     "exact_call": "SessionOrgDataClient.amIAdmin({ orgDid })",
     "success": true,
@@ -91,7 +91,7 @@
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.3",
+          "version_req": "2.0.4",
           "window": {
             "valid_from_secs": 1788469469,
             "valid_until_secs": 1796245469
@@ -113,15 +113,17 @@
           "contract_id": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
           "functions": [
             "claim-effect",
+            "confirm-claim",
             "release-not-attempted",
             "begin-effect",
+            "confirm-effect-start",
             "finalize-effect",
             "reconcile-effect"
           ],
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.3",
+          "version_req": "2.0.4",
           "window": {
             "valid_from_secs": 1788469472,
             "valid_until_secs": 1796245472
@@ -149,7 +151,7 @@
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.3",
+          "version_req": "2.0.4",
           "window": {
             "valid_from_secs": 1788469469,
             "valid_until_secs": 1796245469
@@ -171,15 +173,17 @@
           "contract_id": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
           "functions": [
             "claim-effect",
+            "confirm-claim",
             "release-not-attempted",
             "begin-effect",
+            "confirm-effect-start",
             "finalize-effect",
             "reconcile-effect"
           ],
           "scopes": [],
           "read_scopes": null,
           "allowed_hosts": null,
-          "version_req": "2.0.3",
+          "version_req": "2.0.4",
           "window": {
             "valid_from_secs": 1788469472,
             "valid_until_secs": 1796245472
@@ -201,20 +205,22 @@
       ],
       "scopes": [],
       "allowed_hosts": [],
-      "version_req": "2.0.3",
+      "version_req": "2.0.4",
       "provider_http": false
     },
     "broker": {
       "functions": [
         "claim-effect",
+        "confirm-claim",
         "release-not-attempted",
         "begin-effect",
+        "confirm-effect-start",
         "finalize-effect",
         "reconcile-effect"
       ],
       "scopes": [],
       "allowed_hosts": [],
-      "version_req": "2.0.3",
+      "version_req": "2.0.4",
       "provider_http": false
     },
     "function_order_comparison": "order-insensitive; readback values are preserved"
@@ -231,5 +237,12 @@
   "github_api_calls": 0,
   "provider_mutations": 0,
   "c1_contract_invocations": 0,
-  "credentials_in_evidence": false
+  "credentials_in_evidence": false,
+  "active_state_basis": "C1-R6B-R4C-LIVE-CLAIM-OWNERSHIP.json records the 2.0.4 delegation activation and C1-R6B-R4D-LIVE-EFFECT-START-OWNERSHIP.json independently records 2.0.4 effect-start use",
+  "historical_canonical_state": {
+    "contract_version": "2.0.3",
+    "contract_id": 877,
+    "preserved_in_prior_fields": true
+  },
+  "reconciliation_live_calls": 0
 }
