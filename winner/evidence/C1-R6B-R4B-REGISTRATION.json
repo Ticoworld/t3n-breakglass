@@ -1,0 +1,91 @@
+{
+  "phase": "C1-R6B-R4B v2.0.4 registration / artifact identity attestation",
+  "status": "PASS_2_0_4_REGISTERED_ARTIFACT_IDENTITY_VERIFIED",
+  "evidence_tier": "LIVE_T3N_TESTNET_REGISTRATION_AND_READBACK",
+  "observed_at_utc": "2026-09-04T13:24:34.1500662Z",
+  "repository": {
+    "branch": "winner-v2-core",
+    "head": "c494a7b04bf7d2f9664cbde36d35fe31179832bd",
+    "worktree_clean": true,
+    "historical_r3_start_sha": "8b7396a7b0766c3cc3f2d7ad3e07ab838dd753cc",
+    "origin_main_sha": "4a077035474337b7a1ad16204820e68ed3020477"
+  },
+  "tenant": {
+    "operator_did": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "node_url": "https://cn-api.sg.testnet.t3n.terminal3.io",
+    "sdk": "@terminal3/t3n-sdk 5.2.0"
+  },
+  "local_artifact": {
+    "path": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm",
+    "version": "2.0.4",
+    "bytes": 227011,
+    "sha256": "ca7032b112b837b06e4334c10bca8820447f6ea1756b74db9bccd3181ad4d5d0",
+    "wit_inspection": "wasm-tools component wit",
+    "exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "confirm-claim",
+      "release-not-attempted",
+      "begin-effect",
+      "confirm-effect-start",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "deterministic_clean_release_rebuild": true
+  },
+  "registration": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "tail": "breakglass-winner-c1",
+    "version": "2.0.4",
+    "contract_id": 878,
+    "registration_result_fields": ["name", "contract_id"],
+    "transaction_receipt": "not exposed by TenantContractsNamespace.register; no chain tx hash is available from the SDK response",
+    "registration_call_only": true,
+    "delegation_performed": false,
+    "contract_invocation_performed": false,
+    "map_update_performed": false,
+    "provider_mutations": 0
+  },
+  "registration_readback": {
+    "contracts_list_name_present": true,
+    "contracts_list_detailed": {
+      "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "short_name": "breakglass-winner-c1",
+      "version": "2.0.4",
+      "status": "active",
+      "descriptor": null
+    },
+    "current_version_is_exact": true,
+    "artifact_hash_server_readback": "not exposed by current SDK contract inventory; correspondence is established by the exact WASM bytes supplied to register and returned registration identity",
+    "expected_exports_server_readback": "not exposed by current SDK inventory; local component export set recorded above"
+  },
+  "historical_registration_preserved": {
+    "artifact": "winner/evidence/contract-registration.json",
+    "version": "2.0.3",
+    "contract_id": 877,
+    "unchanged": true,
+    "r3_incident_preserved": true
+  },
+  "nonce_generation": {
+    "source": "winner/broker/run.ts",
+    "implementation": "randomBytes(16).toString(\"hex\")",
+    "entropy": "Node.js cryptographically secure random bytes",
+    "contender_nonce_length": 32,
+    "parent_duplicate_check": "test-harness hygiene only; production uniqueness authority remains the persisted claim identity and confirmation readback"
+  },
+  "forbidden_actions_not_performed": [
+    "delegation",
+    "incident creation",
+    "reservation",
+    "claim",
+    "contract invocation",
+    "effect start",
+    "finalization",
+    "reconciliation",
+    "GitHub API call",
+    "provider mutation",
+    "live race"
+  ]
+}
