@@ -1,0 +1,646 @@
+{
+  "phase": "C1-R6B-R1 quota-aware live state-only effect-start and generation-fence proof",
+  "status": "C1_R6B_STATE_PROTOCOL_FAILURE",
+  "environment": "testnet",
+  "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "numeric_contract_id": 877
+  },
+  "principals": {
+    "operator": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "remediation_agent": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "provider_counters": {
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "counters": {
+    "contract_registrations": 0,
+    "map_acl_updates": 0,
+    "map_entry_writes": 0,
+    "successful_incident_creations": 1,
+    "reservations": 1,
+    "claims": 2,
+    "releases": 1,
+    "begins": 1,
+    "finalizations": 0,
+    "reconciliations": 0
+  },
+  "quota_errors": 0,
+  "pacing": [
+    {
+      "label": "after_quota_readiness",
+      "started_at_unix_ms": 1788511505893,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511575947
+    },
+    {
+      "label": "after_reservation",
+      "started_at_unix_ms": 1788511592517,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511662532
+    },
+    {
+      "label": "after_generation_zero_race",
+      "started_at_unix_ms": 1788511672134,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511742149
+    },
+    {
+      "label": "after_stale_generation_check",
+      "started_at_unix_ms": 1788511756449,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511826460
+    },
+    {
+      "label": "after_fresh_claim_and_remediation_denial",
+      "started_at_unix_ms": 1788511836038,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511906051
+    },
+    {
+      "label": "after_committed_begin_effect",
+      "started_at_unix_ms": 1788511911971,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788511981980
+    }
+  ],
+  "run_context_file": "winner/evidence/C1-R6B-R1-RUN-CONTEXT.json",
+  "credential_safety": {
+    "credentials_in_evidence": false,
+    "t3n_api_key_in_evidence": false,
+    "github_api_call": false,
+    "provider_mutation": false
+  },
+  "quota_readiness": {
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-quota-readiness-1788511505292-bedd6b7b",
+    "result": {
+      "detail": {},
+      "effect_attempts": null,
+      "function": "get-incident",
+      "incident_id": "C1-R6B-STATE-quota-readiness-1788511505292-bedd6b7b",
+      "note": "incident authority does not exist",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "DENIED",
+      "state": null
+    },
+    "successful_application_denial": true
+  },
+  "quota_readiness_classification": "QUOTA_READINESS_CONFIRMED_BY_SUCCESSFUL_C1_CALL",
+  "run_id": "C1-R6B-R1-1788511505884-4bcc737c",
+  "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+  "run_context_persisted_before_create": true,
+  "creation": {
+    "request_fields": [
+      "incident_id",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "deploy_key_id",
+      "ttl_secs"
+    ],
+    "result": {
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "created_at": 1788511577,
+        "deploy_key_id": 1,
+        "effect_attempts": 0,
+        "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "effect_claim_id": null,
+        "effect_claim_version": 0,
+        "expires_at": 1788512477,
+        "final_result_classification": null,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox",
+        "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+        "max_effects": 1,
+        "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "reservation_id": null,
+        "reservation_version": 0,
+        "status": "ACTIVE"
+      },
+      "effect_attempts": 0,
+      "function": "create-incident",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "incident authority created in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "ACTIVE"
+    },
+    "valid_incident_created": true,
+    "operator_readback": {
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "created_at": 1788511577,
+        "deploy_key_id": 1,
+        "effect_attempts": 0,
+        "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "effect_claim_id": null,
+        "effect_claim_version": 0,
+        "expires_at": 1788512477,
+        "final_result_classification": null,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox",
+        "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+        "max_effects": 1,
+        "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "reservation_id": null,
+        "reservation_version": 0,
+        "status": "ACTIVE"
+      },
+      "effect_attempts": 0,
+      "function": "get-incident",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "incident authority read through the C1 contract",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "FOUND",
+      "state": "ACTIVE"
+    },
+    "exact_active": true
+  },
+  "reservation": {
+    "role": "remediation",
+    "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "function": "reserve-incident",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "request_fields": [
+      "incident_id"
+    ],
+    "response": {
+      "detail": {},
+      "effect_attempts": 0,
+      "function": "reserve-incident",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "RESERVED"
+    },
+    "provider_operations": 0,
+    "state_mutation_expected": false,
+    "credentials_in_output": false,
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "WON",
+    "application_note": "state transition committed in this transaction",
+    "label": "state_reservation",
+    "exit_code": 0
+  },
+  "after_reservation": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788511577,
+      "deploy_key_id": 1,
+      "effect_attempts": 0,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": null,
+      "effect_claim_version": 0,
+      "expires_at": 1788512477,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+      "reservation_version": 1,
+      "status": "RESERVED"
+    },
+    "effect_attempts": 0,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "RESERVED"
+  },
+  "race": {
+    "common_barrier": {
+      "both_ready": true,
+      "ready_files": [
+        {
+          "contender": "broker-a",
+          "pid": 5372,
+          "ready_at_unix_ms": 1788511667418
+        },
+        {
+          "contender": "broker-b",
+          "pid": 16072,
+          "ready_at_unix_ms": 1788511666468
+        }
+      ],
+      "released": true
+    },
+    "contenders": [
+      {
+        "phase": "R6B state-only claim contender",
+        "contender": "broker-a",
+        "pid": 5372,
+        "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+        "expected_claim_version": 0,
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "version": "2.0.3",
+        "provider_operations": 0,
+        "ready_at_unix_ms": 1788511667418,
+        "started_at_unix_ms": 1788511667448,
+        "response": {
+          "detail": {
+            "action": "revoke_github_deploy_key",
+            "claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+            "claim_version": 1,
+            "deploy_key_id": 1,
+            "github_owner": "Ticoworld",
+            "github_repo": "t3n-breakglass-sandbox"
+          },
+          "effect_attempts": 0,
+          "function": "claim-effect",
+          "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+          "note": "state transition committed in this transaction",
+          "provider_http": {
+            "attempted": false,
+            "count": 0
+          },
+          "result": "WON",
+          "state": "EFFECT_CLAIMED"
+        },
+        "claim_outcome": "CLAIM_WON",
+        "claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+        "claim_version": 1,
+        "token_minted": false,
+        "destructive_call_count": 0,
+        "finished_at_unix_ms": 1788511668434
+      },
+      {
+        "phase": "R6B state-only claim contender",
+        "contender": "broker-b",
+        "pid": 16072,
+        "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+        "expected_claim_version": 0,
+        "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+        "version": "2.0.3",
+        "provider_operations": 0,
+        "ready_at_unix_ms": 1788511666468,
+        "started_at_unix_ms": 1788511667447,
+        "response": {
+          "detail": {},
+          "effect_attempts": 0,
+          "function": "claim-effect",
+          "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+          "note": "another committed state transition already won",
+          "provider_http": {
+            "attempted": false,
+            "count": 0
+          },
+          "result": "LOST",
+          "state": "EFFECT_CLAIMED"
+        },
+        "claim_outcome": "CLAIM_LOST",
+        "claim_id": null,
+        "claim_version": null,
+        "token_minted": false,
+        "destructive_call_count": 0,
+        "finished_at_unix_ms": 1788511669137
+      }
+    ],
+    "process_exit_codes": [
+      0,
+      0
+    ]
+  },
+  "release": {
+    "role": "broker",
+    "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "function": "release-not-attempted",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "request_fields": [
+      "claim_id",
+      "incident_id"
+    ],
+    "response": {
+      "detail": {},
+      "effect_attempts": 0,
+      "function": "release-not-attempted",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "READY_RETRY"
+    },
+    "provider_operations": 0,
+    "state_mutation_expected": false,
+    "credentials_in_output": false,
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "WON",
+    "application_note": "state transition committed in this transaction",
+    "label": "release_not_attempted",
+    "exit_code": 0
+  },
+  "after_release": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788511577,
+      "deploy_key_id": 1,
+      "effect_attempts": 0,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": null,
+      "effect_claim_version": 1,
+      "expires_at": 1788512477,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+      "reservation_version": 1,
+      "status": "READY_RETRY"
+    },
+    "effect_attempts": 0,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "READY_RETRY"
+  },
+  "stale_contender": {
+    "result": {
+      "phase": "R6B state-only claim contender",
+      "contender": "stale-after-release",
+      "pid": 26296,
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "expected_claim_version": 0,
+      "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.3",
+      "provider_operations": 0,
+      "ready_at_unix_ms": 1788511753333,
+      "started_at_unix_ms": 1788511753356,
+      "response": {
+        "detail": {},
+        "effect_attempts": 0,
+        "function": "claim-effect",
+        "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+        "note": "another committed state transition already won",
+        "provider_http": {
+          "attempted": false,
+          "count": 0
+        },
+        "result": "LOST",
+        "state": "READY_RETRY"
+      },
+      "claim_outcome": "CLAIM_LOST",
+      "claim_id": null,
+      "claim_version": null,
+      "token_minted": false,
+      "destructive_call_count": 0,
+      "finished_at_unix_ms": 1788511755152
+    },
+    "process_exit_code": 0
+  },
+  "after_stale": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788511577,
+      "deploy_key_id": 1,
+      "effect_attempts": 0,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": null,
+      "effect_claim_version": 1,
+      "expires_at": 1788512477,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+      "reservation_version": 1,
+      "status": "READY_RETRY"
+    },
+    "effect_attempts": 0,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "READY_RETRY"
+  },
+  "fresh_claim": {
+    "role": "broker",
+    "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "function": "claim-effect",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "request_fields": [
+      "expected_claim_version",
+      "incident_id"
+    ],
+    "response": {
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-2",
+        "claim_version": 2,
+        "deploy_key_id": 1,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox"
+      },
+      "effect_attempts": 0,
+      "function": "claim-effect",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "EFFECT_CLAIMED"
+    },
+    "provider_operations": 0,
+    "state_mutation_expected": false,
+    "credentials_in_output": false,
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "WON",
+    "application_note": "state transition committed in this transaction",
+    "label": "fresh_generation_claim",
+    "exit_code": 0
+  },
+  "remediation_begin_negative": {
+    "role": "remediation",
+    "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "function": "begin-effect",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "request_fields": [
+      "claim_id",
+      "incident_id"
+    ],
+    "response": {
+      "detail": {},
+      "effect_attempts": 0,
+      "function": "begin-effect",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "caller is not the effect broker",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "DENIED",
+      "state": "EFFECT_CLAIMED"
+    },
+    "provider_operations": 0,
+    "state_mutation_expected": false,
+    "credentials_in_output": false,
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "DENIED",
+    "application_note": "caller is not the effect broker",
+    "label": "cross_role_begin",
+    "exit_code": 0
+  },
+  "after_fresh_claim": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788511577,
+      "deploy_key_id": 1,
+      "effect_attempts": 0,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-2",
+      "effect_claim_version": 2,
+      "expires_at": 1788512477,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+      "reservation_version": 1,
+      "status": "EFFECT_CLAIMED"
+    },
+    "effect_attempts": 0,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "EFFECT_CLAIMED"
+  },
+  "begin": {
+    "role": "broker",
+    "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "function": "begin-effect",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "request_fields": [
+      "claim_id",
+      "incident_id"
+    ],
+    "response": {
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-2",
+        "claim_version": 2,
+        "deploy_key_id": 1,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox"
+      },
+      "effect_attempts": 1,
+      "function": "begin-effect",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "EFFECT_STARTED"
+    },
+    "provider_operations": 0,
+    "state_mutation_expected": false,
+    "credentials_in_output": false,
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "routing_recognized": true,
+    "guest_reached": true,
+    "application_result": "WON",
+    "application_note": "state transition committed in this transaction",
+    "label": "begin_effect",
+    "exit_code": 0
+  },
+  "after_begin": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788511577,
+      "deploy_key_id": 1,
+      "effect_attempts": 1,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-2",
+      "effect_claim_version": 2,
+      "expires_at": 1788512477,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+      "reservation_version": 1,
+      "status": "EFFECT_STARTED"
+    },
+    "effect_attempts": 1,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "EFFECT_STARTED"
+  }
+}

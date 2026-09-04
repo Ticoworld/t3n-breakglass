@@ -1,0 +1,94 @@
+{
+  "phase": "C1-R6B-R1 quota-aware live state-only effect-start and generation-fence proof",
+  "status": "R6B_R1_HARNESS_ACCEPTANCE_FAILURE",
+  "classification": "OTHER_BOUNDED_FAILURE",
+  "starting_sha": "10119a1456dd28df56fdc30f4d77426b0a1ee3b5",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "active_contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "numeric_contract_id": 877
+  },
+  "incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+  "run_id": "C1-R6B-R1-1788511505884-4bcc737c",
+  "failure": {
+    "stage": "post-begin non-reopen acceptance gate",
+    "failed_assertion_request_sent": false,
+    "state_protocol_requests_completed": true,
+    "returned_error": "Harness rejected a safe guest-level DENIED response from remediation begin-effect because it incorrectly required pre-guest refusal.",
+    "harness_defect": true,
+    "no_automatic_retry": true
+  },
+  "quota": {
+    "readiness": "QUOTA_READINESS_CONFIRMED_BY_SUCCESSFUL_C1_CALL",
+    "quota_errors": 0,
+    "pacing_windows_completed": 6,
+    "wait_ms_each": 70000
+  },
+  "completed_protocol": {
+    "create": "WON",
+    "initial_state": "ACTIVE",
+    "reservation": "WON / RESERVED",
+    "generation_zero_race": {
+      "both_ready": true,
+      "winner_count": 1,
+      "loser_count": 1,
+      "winner_claim_version": 1,
+      "loser_token_minted": false,
+      "loser_provider_operations": 0
+    },
+    "release_not_attempted": "WON / READY_RETRY",
+    "stale_generation_zero": "CLAIM_LOST",
+    "refreshed_generation_one": "WON / EFFECT_CLAIMED / claim_version=2",
+    "remediation_begin": {
+      "result": "DENIED",
+      "note": "caller is not the effect broker",
+      "guest_reached": true,
+      "state_unchanged": true
+    },
+    "broker_begin": "WON / EFFECT_STARTED",
+    "post_begin_checks": {
+      "release": "DENIED / claim is not releasable",
+      "begin_again": "DENIED / claim identity or state does not match",
+      "claim_again": "LOST",
+      "reserve_again": "DENIED / effect budget is not exactly one"
+    }
+  },
+  "last_known_authority": {
+    "status": "EFFECT_STARTED",
+    "effect_attempts": 1,
+    "max_effects": 1,
+    "effect_claim_version": 2,
+    "effect_claim_id": "claim-C1-R6B-STATE-state-1788511505884-4208ecd3-2",
+    "reservation_id": "reservation-C1-R6B-STATE-state-1788511505884-4208ecd3-1",
+    "final_result_classification": null
+  },
+  "counters": {
+    "new_incidents": 1,
+    "reservations": 1,
+    "successful_claims": 2,
+    "releases": 1,
+    "begins": 1,
+    "finalizations": 0,
+    "reconciliations": 0
+  },
+  "provider_counters": {
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "historical_unidentified_incident_touched": false,
+  "credentials_in_evidence": false,
+  "limitations": [
+    "The run stopped before the intended pass artifact because the harness acceptance condition was too strict.",
+    "The state-only incident is intentionally left in EFFECT_STARTED and must not be automatically retried, finalized, or reconciled by this phase.",
+    "This artifact proves no provider effect; it does not prove a provider-backed C1 run."
+  ],
+  "repair_after_failure": {
+    "accepted_guest_level_role_denial": true,
+    "historical_failure_artifact_restored_unchanged": true,
+    "future_failure_path_uses_r1_artifact": "winner/evidence/C1-R6B-R1-STATE-FAILURE.json"
+  }
+}
