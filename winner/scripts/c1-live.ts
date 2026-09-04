@@ -26,6 +26,11 @@ function objectResult(raw: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("C1 contract result was not a JSON object");
   return value as Record<string, unknown>;
 }
+function readyNonce(raw: unknown, label: string): string {
+  const value = objectResult(raw).contender_nonce;
+  if (typeof value !== "string" || !/^[0-9a-f]{32}$/.test(value)) throw new Error(`${label} did not publish a valid contender nonce before the claim barrier`);
+  return value;
+}
 function authorityFromResult(raw: unknown, expectedResult: string, functionName: string, incidentId: string): Record<string, unknown> {
   const response = objectResult(raw);
   if (response.result !== expectedResult || response.function !== functionName) throw new Error(`C1 ${functionName} returned an unexpected result`);
@@ -108,7 +113,7 @@ async function main() {
   requireActiveAuthority(afterBrokerWrongRole);
   if (JSON.stringify(afterBrokerWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("broker wrong-role reserve changed the ACTIVE authority");
   wrongRoleChecks.after_broker_readback = afterBrokerWrongRole;
-  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId, expected_claim_version: 0 }, "caller is not the effect broker");
+  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId, expected_claim_version: 0, contender_nonce: "00000000000000000000000000000000" }, "caller is not the effect broker");
   const afterRemediationWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
   requireActiveAuthority(afterRemediationWrongRole);
   if (JSON.stringify(afterRemediationWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("remediation wrong-role claim changed the ACTIVE authority");
@@ -130,6 +135,23 @@ async function main() {
   const deadline = Date.now() + 120_000;
   while ((!existsSync(childA) || !existsSync(childB)) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
   if (!existsSync(childA) || !existsSync(childB)) throw new Error("broker race children did not reach the common barrier");
+  const readyA = await readJsonFile<Record<string, unknown>>(childA);
+  const readyB = await readJsonFile<Record<string, unknown>>(childB);
+  let nonceA: string;
+  let nonceB: string;
+  try {
+    nonceA = readyNonce(readyA, "broker-a");
+    nonceB = readyNonce(readyB, "broker-b");
+  } catch (error) {
+    await writeFile(barrier, JSON.stringify({ abort: true, reason: "invalid_contender_nonce", incident_id: incidentId }));
+    await Promise.all([aPromise, bPromise]);
+    throw error;
+  }
+  if (nonceA === nonceB) {
+    await writeFile(barrier, JSON.stringify({ abort: true, reason: "duplicate_contender_nonce", incident_id: incidentId }));
+    await Promise.all([aPromise, bPromise]);
+    throw new Error("duplicate contender nonce detected before claim calls; race aborted safely");
+  }
   await writeFile(barrier, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
   const proposalDeadline = Date.now() + 120_000;
   while ((!existsSync(brokerAResultFile) || !existsSync(brokerBResultFile)) && Date.now() < proposalDeadline) await new Promise((resolve) => setTimeout(resolve, 25));

@@ -383,7 +383,7 @@ pub fn confirm_claim(authority: &IncidentAuthority, caller: Option<&[u8]>, claim
 pub fn confirm_effect_start(authority: &IncidentAuthority, caller: Option<&[u8]>, claim_id: &str, effect_start_id: &str) -> Confirmation {
     if !valid_shape(authority) { return Confirmation::Denied("invalid authority shape") }
     if !caller_matches(&authority.effect_broker_did, caller) { return Confirmation::Denied("caller is not the effect broker") }
-    if matches!(authority.status, Status::EffectStarted | Status::Closed | Status::ReconcileRequired | Status::Failed)
+    if authority.status == Status::EffectStarted
         && authority.effect_attempts == 1
         && authority.effect_claim_id.as_deref() == Some(claim_id)
         && authority.effect_start_id.as_deref() == Some(effect_start_id) {
@@ -615,6 +615,7 @@ mod tests {
         assert_eq!(finalize_with_start(&mut first, Some(&BROKER_BYTES), &claim_id, &start_id, "VERIFIED_ABSENT"), Decision::Won);
         assert_eq!(first.status, Status::Closed);
         assert_eq!(first.effect_attempts, 1);
+        assert_eq!(confirm_effect_start(&first, Some(&BROKER_BYTES), &claim_id, &start_id), Confirmation::NotOwner);
     }
 
     #[test]

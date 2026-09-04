@@ -62,12 +62,12 @@ fn dispatch(function_name: &str, raw: Option<&[u8]>) -> Result<alloc::vec::Vec<u
         }
         "finalize-effect" => {
             let parsed: model::FinalizeRequest = parse_json(raw)?;
-            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() || parsed.effect_start_id.trim().is_empty() || parsed.classification.trim().is_empty() { return Err("incident_id, claim_id, effect_start_id, and classification are required".into()) }
             parsed.incident_id
         }
         "reconcile-effect" => {
             let parsed: model::FinalizeRequest = parse_json(raw)?;
-            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() { return Err("incident_id and claim_id are required".into()) }
+            if parsed.incident_id.trim().is_empty() || parsed.claim_id.trim().is_empty() || parsed.effect_start_id.trim().is_empty() || parsed.classification.trim().is_empty() { return Err("incident_id, claim_id, effect_start_id, and classification are required".into()) }
             parsed.incident_id
         }
         "begin-effect" => {

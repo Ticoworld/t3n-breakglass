@@ -85,7 +85,8 @@ claim proposal
 ```
 
 `begin-effect` commits `EFFECT_STARTED`, sets `effect_attempts=1`, and stores
-`effect_start_id`. `confirm-effect-start` is broker-only and read-only. The
+`effect_start_id`. `confirm-effect-start` is broker-only and read-only; it
+confirms only the exact live `EFFECT_STARTED` state (not a terminal state). The
 provider DELETE is source-ordered after that confirmation. `finalize-effect`
 does not increment the budget; it accepts only `EFFECT_STARTED` with the exact
 claim and start identity. Recovery from `EFFECT_STARTED` uses reads and
@@ -119,13 +120,19 @@ R4A local tests model both relevant cases:
 
 The local two-process harness uses separate child processes, distinct nonces,
 proposal persistence, a common proposal-completion barrier, and an atomic
-single-owner confirmation step. It was run for 64 iterations.
+single-owner confirmation step. The live-parent harness validates both ready
+nonces before releasing the claim barrier; a malformed or duplicate nonce
+causes an abort barrier and both children stop before invoking `claim-effect`.
+It was run for 64 iterations. A separate affirmative-proposal model exercises
+two distinct proposal identities against one persisted row and confirms that
+exactly one receives target details while the other receives `NOT_OWNER`.
 
 ## Evidence durability and replay
 
 Each live broker child receives `C1_RESULT_FILE` and writes its sanitized
-result atomically. The parent waits for both proposal result files before
-allowing confirmation to continue, then reads the persisted final documents.
+result atomically. The parent validates distinct ready nonces, waits for both
+proposal result files before allowing confirmation to continue, then reads the
+persisted final documents.
 The documents contain claim/confirmation identity, provider-before/after
 metadata, effect-start identity, token and DELETE counters, revocation and
 finalization observations, but no credentials.

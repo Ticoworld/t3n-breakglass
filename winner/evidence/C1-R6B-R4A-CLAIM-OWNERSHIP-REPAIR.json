@@ -20,6 +20,7 @@
     "claim_identity_before": "incident plus claim generation only",
     "claim_identity_after": "generation plus process-generated contender nonce",
     "effect_start_not_confirmed_before_provider": "PROVEN_IN_CANDIDATE_REPAIR",
+    "effect_start_confirmation_requires_exact_effect_started_state": "PROVEN_IN_CANDIDATE_REPAIR",
     "provider_effect_before_committed_effect_start": "forbidden_by_candidate_source_order",
     "child_result_durability_gap": "CLOSED_IN_CANDIDATE",
     "replay_terminal_gate": "PRESENT_AND_SOURCE_TESTED",
@@ -40,8 +41,8 @@
   },
   "local_component": {
     "path": "winner/contract/target/wasm32-wasip2/release/breakglass_winner_contract.wasm",
-    "sha256": "f55ea526c8e6c903ba14697b805bfb6569009b0ae0b92e27d6ff890f3c6cd0c4",
-    "bytes": 226819,
+    "sha256": "ca7032b112b837b06e4334c10bca8820447f6ea1756b74db9bccd3181ad4d5d0",
+    "bytes": 227011,
     "exports": [
       "create-incident",
       "get-incident",
@@ -63,6 +64,8 @@
     "operations_per_sequence": 80,
     "two_process_race_iterations": 64,
     "distinct_nonce_proposals": true,
+    "duplicate_nonce_barrier": "parent validates both ready nonces and aborts before claim calls",
+    "double_affirmative_confirmation_model": true,
     "single_confirmation_owner_model": true,
     "effect_start_confirmation_before_provider_model": true,
     "parent_failure_result_persistence_model": true

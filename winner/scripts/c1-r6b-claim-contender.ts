@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   const broker = await connectC1Principal("EFFECT_BROKER_T3N_API_KEY", "EFFECT_BROKER_DID");
   const contenderNonce = randomBytes(16).toString("hex");
   const evidence: Record<string, unknown> = { phase: "R6B state-only claim contender", contender, pid: process.pid, did: broker.did, incident_id: incidentId, expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce, contract: contractName(operatorDid), version: CONTRACT_VERSION, provider_operations: 0, ready_at_unix_ms: Date.now() };
-  await writeAtomicJson(ready, { contender, pid: process.pid, ready_at_unix_ms: evidence.ready_at_unix_ms });
+  await writeAtomicJson(ready, { contender, pid: process.pid, contender_nonce: contenderNonce, ready_at_unix_ms: evidence.ready_at_unix_ms });
   await waitFor(barrier);
   evidence.started_at_unix_ms = Date.now();
   try {

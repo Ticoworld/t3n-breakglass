@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { invokeC1, connectC1Principal, redact, requireValue } from "../scripts/t3n.js";
@@ -11,6 +11,14 @@ import { writeAtomicJson } from "../scripts/result-file.js";
 function json(raw: unknown): any { return typeof raw === "string" ? JSON.parse(raw) : raw; }
 function safeError(error: unknown, secrets: string[]): Record<string, unknown> { return { message: redact(error, secrets), category: error instanceof Error ? error.name : "unknown" }; }
 async function waitForFile(file: string): Promise<void> { const deadline = Date.now() + 120_000; while (!existsSync(file)) { if (Date.now() > deadline) throw new Error("common broker barrier timed out"); await new Promise((resolve) => setTimeout(resolve, 10)); } }
+async function barrierAborted(file: string): Promise<boolean> {
+  try {
+    const parsed = JSON.parse(await readFile(file, "utf8")) as unknown;
+    return Boolean(parsed && typeof parsed === "object" && !Array.isArray(parsed) && (parsed as Record<string, unknown>).abort === true);
+  } catch {
+    return false;
+  }
+}
 function readyPayload(incidentId: string, did: string, contenderNonce: string) { return { incident_id: incidentId, broker_did: did, contender_nonce: contenderNonce, ready_at_unix_ms: Date.now(), process_id: process.pid }; }
 
 let evidenceForFailure: Record<string, unknown> | undefined;
@@ -52,6 +60,12 @@ async function main() {
   await writeFile(ready, JSON.stringify(evidence.ready));
   await waitForFile(barrier);
   evidence.started_at_unix_ms = Date.now();
+  if (await barrierAborted(barrier)) {
+    evidence.claim_outcome = "DUPLICATE_NONCE_ABORT";
+    evidence.duplicate_nonce_abort = true;
+    await persist();
+    return;
+  }
 
   let proposal: { claim_id: string; claim_version: number } | undefined;
   try {
@@ -104,9 +118,6 @@ async function main() {
   }
 
   const config = appConfigFromEnvironment(process.env);
-  if (!claimTargetMatchesConfiguredRepository(target, config.owner, config.repository)) {
-    throw new Error("CLAIM_TARGET_MISMATCH: committed incident target differs from broker fixed repository configuration");
-  }
   let token: string | null = null;
   let revoked = false;
   let classificationToFinalize: ProviderClassification | undefined;
@@ -121,6 +132,19 @@ async function main() {
     try { evidence.release_not_attempted = await invokeC1(broker.apiKey, broker.nodeUrl, contractId, "release-not-attempted", { incident_id: incidentId, claim_id: target.claim_id }); }
     catch (error) { evidence.release_error = safeError(error, [broker.apiKey]); throw error; }
   };
+
+  if (!claimTargetMatchesConfiguredRepository(target, config.owner, config.repository)) {
+    evidence.claim_target_mismatch = true;
+    try {
+      await releaseClaim();
+      evidence.classification = "NOT_ATTEMPTED";
+    } catch (error) {
+      evidence.release_error = safeError(error, [broker.apiKey]);
+      evidence.claim_error = safeError(error, [broker.apiKey]);
+    }
+    await persist();
+    return;
+  }
 
   try {
     const jwt = await appJwt(config);

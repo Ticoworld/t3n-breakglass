@@ -34,8 +34,8 @@ async function withCommitLock<T>(work: () => Promise<T>): Promise<T> {
 }
 
 const initial = JSON.parse(await readFile(stateFile, "utf8")) as { status: string; winner?: string };
-const contenderNonce = `${contender}-local-nonce`;
-await writeFile(ready, JSON.stringify({ contender, pid: process.pid }));
+const contenderNonce = contender === "broker-a" ? "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+await writeFile(ready, JSON.stringify({ contender, pid: process.pid, contender_nonce: contenderNonce }));
 await waitFor(barrier);
 const events: string[] = ["CLAIM_REQUEST"];
 await writeAtomicJson(proposalFile, { contender, pid: process.pid, contender_nonce: contenderNonce, expected_claim_version: 0 });

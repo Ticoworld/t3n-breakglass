@@ -33,6 +33,11 @@ test("two separate broker processes produce exactly one local claim winner", asy
           break;
         } catch { await new Promise((resolve) => setTimeout(resolve, 1)); }
       }
+      const readyA = JSON.parse(await readFile(path.join(directory, "broker-a.ready"), "utf8")) as Record<string, unknown>;
+      const readyB = JSON.parse(await readFile(path.join(directory, "broker-b.ready"), "utf8")) as Record<string, unknown>;
+      assert.match(String(readyA.contender_nonce), /^[0-9a-f]{32}$/);
+      assert.match(String(readyB.contender_nonce), /^[0-9a-f]{32}$/);
+      assert.notEqual(readyA.contender_nonce, readyB.contender_nonce, "parent nonce barrier must reject duplicate identities");
       await writeFile(path.join(directory, "barrier"), "release");
       while (true) {
         try {
