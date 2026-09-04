@@ -1,0 +1,59 @@
+{
+  "phase": "C1-R6B-R2 completed live-run evidence closure",
+  "status": "R6B_R2_EVIDENCE_INSUFFICIENT",
+  "starting_sha": "1135f33798c3b53617d735fe678308a5afbbcccf",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "source_run": "C1-R6B-R1",
+  "source_incident_id": "C1-R6B-STATE-state-1788511505884-4208ecd3",
+  "retained_artifacts": {
+    "historical_failure_preserved_unchanged": true,
+    "run_context": "winner/evidence/C1-R6B-R1-RUN-CONTEXT.json",
+    "failure_artifact": "winner/evidence/C1-R6B-R1-STATE-FAILURE.json"
+  },
+  "false_negative_review": {
+    "classification": "NOT_MECHANICALLY_PROVEN_FROM_RETAINED_PRIMARY_EVIDENCE",
+    "observed_remediation_begin": {
+      "result": "DENIED",
+      "note": "caller is not the effect broker",
+      "guest_reached": true
+    },
+    "starting_commit_10119_predicate": "guest_reached !== true || application_result === DENIED",
+    "current_commit_1135_predicate": "application_result !== WON",
+    "both_committed_predicates_accept_observed_denial": true,
+    "executed_intermediate_predicate_retained": false,
+    "conclusion": "The retained records establish the safe guest-level denial and the corrected current acceptance rule, but do not independently preserve the exact predicate executed during the failed R1 process."
+  },
+  "offline_verifier": {
+    "result": "FAIL",
+    "status": "R6B_R2_EVIDENCE_INSUFFICIENT",
+    "missing_primary_observations": [
+      "post_race_authority",
+      "post_begin_denials",
+      "final_authority",
+      "host_activity_retained"
+    ],
+    "secondary_failure_summary_not_used_as_primary_proof": true
+  },
+  "closure_counters": {
+    "t3n_reads": 0,
+    "t3n_writes": 0,
+    "contract_invocations": 0,
+    "new_incidents": 0,
+    "reservations": 0,
+    "claims": 0,
+    "release_calls": 0,
+    "begin_calls": 0,
+    "finalize_calls": 0,
+    "reconcile_calls": 0,
+    "github_api_calls": 0,
+    "provider_operations": 0
+  },
+  "no_pass_artifact_written": true,
+  "credentials_in_evidence": false,
+  "limitations": [
+    "No new live execution was performed.",
+    "The primary run-context was persisted through begin-effect but not through the final post-begin assertion.",
+    "The original full in-memory failure object was not retained as a committed primary result document."
+  ],
+  "next_gate": "Do not claim R6B state-protocol PASS; obtain a separately authorized evidence-complete state-only run or equivalent durable result bundle before provider-backed C1 work."
+}
