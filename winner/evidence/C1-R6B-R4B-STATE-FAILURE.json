@@ -1,0 +1,81 @@
+{
+  "phase": "C1-R6B-R4B v2.0.4 registration and confirmed-owner state proof",
+  "status": "R4B_REGISTRATION_FAILED",
+  "classification": "R4B_REGISTRATION_FAILED_CURRENT_VERSION_ALREADY_2_0_4",
+  "branch": "winner-v2-core",
+  "starting_sha": "c494a7b04bf7d2f9664cbde36d35fe31179832bd",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "candidate": {
+    "version": "2.0.4",
+    "bytes": 227011,
+    "sha256": "ca7032b112b837b06e4334c10bca8820447f6ea1756b74db9bccd3181ad4d5d0",
+    "exports": [
+      "create-incident",
+      "get-incident",
+      "reserve-incident",
+      "claim-effect",
+      "confirm-claim",
+      "release-not-attempted",
+      "begin-effect",
+      "confirm-effect-start",
+      "finalize-effect",
+      "reconcile-effect"
+    ],
+    "integrity_verified": true
+  },
+  "failure": {
+    "stage": "register-2.0.4",
+    "request_sent": true,
+    "registration_attempt_count": 1,
+    "error_classification": "RPC_ERROR",
+    "sanitized_error": "contract version invalid: version 2.0.4 is not higher than current version 2.0.4",
+    "request_id": "361383c8-f64f-41bf-a0d2-a3579f36d9e6",
+    "successful_registration_confirmed": false,
+    "returned_contract_id": null,
+    "map_acl_update_attempted": false
+  },
+  "interpretation": {
+    "testnet_reports_2_0_4_already_current": true,
+    "numeric_contract_id_verified_by_this_run": false,
+    "map_acl_verified_by_this_run": false,
+    "do_not_retry_registration": true,
+    "do_not_continue_surface_or_state_proof": true
+  },
+  "completed_before_failure": {
+    "hardened_checkpoint_reconciliation": true,
+    "local_tests": {
+      "root": 7,
+      "winner_c1": 88,
+      "rust_unit": 29,
+      "rust_doc": 1,
+      "git_diff_check": true
+    },
+    "wasm_build": true
+  },
+  "counters": {
+    "successful_contract_registrations": 0,
+    "map_acl_updates": 0,
+    "delegation_updates": 0,
+    "map_entry_writes": 0,
+    "valid_incident_creations": 0,
+    "reservations": 0,
+    "claims": 0,
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "credential_safety": {
+    "credentials_in_evidence": false,
+    "t3n_api_keys_in_evidence": false,
+    "github_tokens_in_evidence": false,
+    "jwt_in_evidence": false,
+    "authorization_headers_in_evidence": false,
+    "private_key_in_evidence": false,
+    "ssh_private_key_in_evidence": false
+  },
+  "historical_incidents_touched": false,
+  "automatic_retry_performed": false,
+  "next_gate": "Reconcile the already-current testnet 2.0.4 registration and its private winner-incidents ACL before any further R4B action."
+}
