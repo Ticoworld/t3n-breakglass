@@ -149,6 +149,92 @@
     "exactly_one_target_bearing_confirmation": true,
     "loser_targetless": true
   },
+  "activity_log_relevant": {
+    "scope": "Read-only Terminal 3 activity-log entries for this incident and its follow-up checks. The activity API exposes sequence/hash/caller/function/time/outcome, but not the full input/result payload.",
+    "entries": [
+      {
+        "seq_no": 186448,
+        "hash": "6625c35a6baec41aa9a42c1bb2de6adb97bc475025254b1d70b44ebd075e059c",
+        "timestamp_ms": 1788530006429,
+        "caller_type": "human",
+        "function": "create-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186454,
+        "hash": "80127930d9897e3dbe476ab1d179f815d74c8d00c0bedbf4e46fa1c23b1004c2",
+        "timestamp_ms": 1788530010321,
+        "caller_type": "agent",
+        "function": "reserve-incident",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186460,
+        "hash": "5833cada9d48ecb8efaddb4b0fa87f99d4598ceb9e0a4fcda842b87c2b5967a6",
+        "timestamp_ms": 1788530015021,
+        "caller_type": "agent",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186463,
+        "hash": "6684233b947e013024ddddf7f0c42cf262ef21c00303d02556dccb0310c6baf2",
+        "timestamp_ms": 1788530015526,
+        "caller_type": "agent",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186468,
+        "hash": "0cfd0eb32130343875cbd3575521b87b56b994ebf7a4a1d8c676c68fb04cdebc",
+        "timestamp_ms": 1788530018312,
+        "caller_type": "agent",
+        "function": "confirm-claim",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186472,
+        "hash": "3e95fa516c1f7ca131781ea912437726a3261b942e0c119a7e955bcb243268ce",
+        "timestamp_ms": 1788530020121,
+        "caller_type": "agent",
+        "function": "confirm-claim",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186476,
+        "hash": "8cecda5cbe602d0d04588d2457615ad363dfb8882bb038ce2b58c795b6718e40",
+        "timestamp_ms": 1788530020766,
+        "caller_type": "agent",
+        "function": "confirm-claim",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186480,
+        "hash": "86f32ca1240099865882a455ac4e34435fc4a278217b4cbc0f358e1317fcc103",
+        "timestamp_ms": 1788530021521,
+        "caller_type": "agent",
+        "function": "confirm-claim",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186483,
+        "hash": "a35173bc2a1ff40924c13149d450ee5bcbbf4441cbe62330851090aa29327da6",
+        "timestamp_ms": 1788530022170,
+        "caller_type": "agent",
+        "function": "claim-effect",
+        "outcome": "success"
+      },
+      {
+        "seq_no": 186487,
+        "hash": "f34695a2299fded304b52e1c3dd4e286a48edf9a5a23da911575f055c425fc21",
+        "timestamp_ms": 1788530023692,
+        "caller_type": "human",
+        "function": "get-incident",
+        "outcome": "success"
+      }
+    ],
+    "interpretation": "The two claim-effect entries are the concurrent contenders; subsequent confirm-claim entries include winner confirmation/reconfirmation and loser NOT_OWNER checks, followed by stale claim rejection and final incident readback. Older unrelated activity remains in the account history and is not reclassified by this artifact."
+  },
   "stale_contender": {
     "contender_nonce": "30f44875c5594ea8d25aabade8f3d30d",
     "expected_claim_version": 0,
