@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "begin-effect",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "claim identity or state does not match",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "EFFECT_STARTED"
+  },
+  "function": "begin-effect",
+  "input_keys": [
+    "incident_id",
+    "claim_id",
+    "start_nonce"
+  ]
+}

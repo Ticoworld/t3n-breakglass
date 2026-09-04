@@ -1,0 +1,32 @@
+{
+  "detail": {
+    "action": "revoke_github_deploy_key",
+    "created_at": 1788544408,
+    "deploy_key_id": 1,
+    "effect_attempts": 0,
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "effect_claim_id": null,
+    "effect_claim_version": 0,
+    "effect_start_id": null,
+    "expires_at": 1788545308,
+    "final_result_classification": null,
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "max_effects": 1,
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "reservation_id": null,
+    "reservation_version": 0,
+    "status": "ACTIVE"
+  },
+  "effect_attempts": 0,
+  "function": "create-incident",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "note": "incident authority created in this transaction",
+  "provider_http": {
+    "attempted": false,
+    "count": 0
+  },
+  "result": "WON",
+  "state": "ACTIVE"
+}

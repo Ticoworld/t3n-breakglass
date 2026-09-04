@@ -1,0 +1,32 @@
+{
+  "detail": {
+    "action": "revoke_github_deploy_key",
+    "created_at": 1788544408,
+    "deploy_key_id": 1,
+    "effect_attempts": 1,
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "effect_claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+    "effect_claim_version": 1,
+    "effect_start_id": "start-1-f360fc27eca8664772551a877ee66619",
+    "expires_at": 1788545308,
+    "final_result_classification": null,
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "max_effects": 1,
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "reservation_id": "reservation-C1-R6B-R4D-R1-1788544407841-399edfc94898159f-1",
+    "reservation_version": 1,
+    "status": "EFFECT_STARTED"
+  },
+  "effect_attempts": 1,
+  "function": "get-incident",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "note": "incident authority read through the C1 contract",
+  "provider_http": {
+    "attempted": false,
+    "count": 0
+  },
+  "result": "FOUND",
+  "state": "EFFECT_STARTED"
+}

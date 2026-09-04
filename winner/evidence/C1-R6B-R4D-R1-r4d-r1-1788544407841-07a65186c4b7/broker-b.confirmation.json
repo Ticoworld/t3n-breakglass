@@ -1,0 +1,18 @@
+{
+  "label": "broker-b",
+  "effect_start_id": "start-1-49827509133eae4f2c094e40bd1f1ab4",
+  "called_after_complete_marker": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "confirm-effect-start",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "persisted authority is owned by another effect-start identity",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "NOT_OWNER",
+    "state": "EFFECT_STARTED"
+  }
+}

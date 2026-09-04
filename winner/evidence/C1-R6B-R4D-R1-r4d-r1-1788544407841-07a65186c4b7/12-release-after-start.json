@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "release-not-attempted",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "claim is not releasable",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "EFFECT_STARTED"
+  },
+  "function": "release-not-attempted",
+  "input_keys": [
+    "incident_id",
+    "claim_id"
+  ]
+}

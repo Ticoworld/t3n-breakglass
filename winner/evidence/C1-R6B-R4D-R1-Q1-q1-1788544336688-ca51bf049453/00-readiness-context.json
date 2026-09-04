@@ -1,0 +1,20 @@
+{
+  "phase": "C1-R6B-R4D-R1-Q1 readiness observability",
+  "probe_id": "q1-1788544336688-ca51bf049453",
+  "incident_id": "C1-R6B-R4D-R1-Q1-1788544336688-9d17ead814887a96",
+  "starting_sha": "06a050d7a5b32ed1cf6e228e06c2d62e6ddd4f4d",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "version": "2.0.4",
+  "numeric_id": 878,
+  "requested_function": "get-incident",
+  "request_sent": false,
+  "provider_counters": {
+    "github_api_calls": 0,
+    "installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "started_at_unix_ms": 1788544336689
+}

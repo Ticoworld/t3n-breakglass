@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "confirm-effect-start",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "caller is not the effect broker",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "EFFECT_STARTED"
+  },
+  "function": "confirm-effect-start",
+  "input_keys": [
+    "incident_id",
+    "claim_id",
+    "effect_start_id"
+  ]
+}

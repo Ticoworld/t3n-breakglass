@@ -33,11 +33,63 @@ let currentStage = "startup";
 let activeRunDirectory: string | null = null;
 let activeIncidentId: string | null = null;
 let lastKnownAuthority: unknown = null;
+let readinessFailureWritten = false;
 
 function parseObject(value: unknown): JsonObject {
   const parsed = typeof value === "string" ? JSON.parse(value) : value;
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Terminal 3 response was not an object");
   return parsed as JsonObject;
+}
+
+function objectAt(value: unknown): JsonObject | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : null;
+}
+
+export function sanitizeEvidence(value: unknown, secrets: string[] = [], seen = new WeakSet<object>()): unknown {
+  if (value === null || value === undefined || typeof value === "boolean" || typeof value === "number") return value;
+  if (typeof value === "string") return redact(value, secrets);
+  if (typeof value !== "object") return String(value);
+  if (seen.has(value)) return "[CIRCULAR]";
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((entry) => sanitizeEvidence(entry, secrets, seen));
+  const output: JsonObject = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const normalized = key.toLowerCase();
+    if (normalized === "token" || normalized.endsWith("_token") || normalized.includes("authorization") || normalized.includes("api_key") || normalized.includes("private_key") || normalized.includes("jwt") || normalized.includes("pem") || normalized.includes("password") || normalized === "pat" || normalized.endsWith("_pat")) {
+      output[key] = "[REDACTED]";
+    } else {
+      output[key] = sanitizeEvidence(entry, secrets, seen);
+    }
+  }
+  return output;
+}
+
+function safeThrownError(error: unknown, secret: string): JsonObject {
+  const object = error && typeof error === "object" ? error as JsonObject : null;
+  return {
+    error_class: error instanceof Error ? error.constructor.name : typeof error,
+    sanitized_error_message: redact(error instanceof Error ? error.message : String(error), [secret]),
+    error_code: sanitizeEvidence(object?.code ?? object?.error_code, [secret]),
+    request_id: sanitizeEvidence(object?.request_id ?? object?.requestId, [secret]),
+    response_status: sanitizeEvidence(object?.status ?? object?.status_code ?? object?.response?.status, [secret]),
+    response_detail: sanitizeEvidence(object?.detail ?? object?.response?.detail, [secret]),
+    response_body: sanitizeEvidence(object?.body ?? object?.response?.body, [secret]),
+    error_metadata: sanitizeEvidence(error, [secret]),
+  };
+}
+
+function explicitReadinessSignal(value: unknown, patterns: RegExp[]): boolean {
+  const text = JSON.stringify(sanitizeEvidence(value)).toLowerCase();
+  return patterns.some((pattern) => pattern.test(text));
+}
+
+export function classifyReadiness(result: JsonObject): string {
+  const payload = result.outcome_kind === "RETURNED_RESPONSE" ? result.sanitized_response : result;
+  if (explicitReadinessSignal(payload, [/fuel[_ ]per[_ ]minute/, /quota[_ -]?exceed/, /quota limit/, /rate limit/])) return "R4D_R1_QUOTA_CONFIRMED";
+  if (explicitReadinessSignal(payload, [/insufficient[_ ]credit/, /credit[_ ]exhausted/, /credit limit/, /available\s*=\s*0/])) return "R4D_R1_CREDIT_LIMIT_CONFIRMED";
+  const response = objectAt(result.sanitized_response);
+  if (result.outcome_kind === "RETURNED_RESPONSE" && response?.function === "get-incident" && response.result === "DENIED") return "R4D_R1_READINESS_PASS";
+  return "R4D_R1_OTHER_READINESS_FAILURE";
 }
 
 function requireResponse(value: unknown, functionName: string, result?: string): JsonObject {
@@ -135,6 +187,54 @@ async function sha256File(file: string): Promise<string> {
   return createHash("sha256").update(await readFile(file)).digest("hex");
 }
 
+function relativeEvidence(file: string): string {
+  return path.relative(root, file).replaceAll("\\", "/");
+}
+
+async function captureReadinessProbe(t3n: Awaited<ReturnType<typeof connectTenant>>["t3n"], operatorKey: string, probeDirectory: string, probeId: string, incidentId: string): Promise<{ context: JsonObject; result: JsonObject; classification: string; resultFile: string }> {
+  const resultFile = path.join(probeDirectory, "01-readiness-result.json");
+  const context = await persist(path.join(probeDirectory, "00-readiness-context.json"), {
+    phase: "C1-R6B-R4D-R1-Q1 readiness observability",
+    probe_id: probeId,
+    incident_id: incidentId,
+    starting_sha: STARTING_SHA,
+    main_sha: MAIN_SHA,
+    contract: CONTRACT_ID,
+    version: CONTRACT_VERSION,
+    numeric_id: CONTRACT_NUMERIC_ID,
+    requested_function: "get-incident",
+    request_sent: false,
+    provider_counters: { github_api_calls: 0, installation_tokens: 0, deploy_key_creates: 0, deploy_key_deletes: 0, provider_mutations: 0 },
+    started_at_unix_ms: Date.now(),
+  });
+  let result: JsonObject;
+  try {
+    const response = await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId });
+    result = {
+      phase: "C1-R6B-R4D-R1-Q1 readiness observability",
+      probe_id: probeId,
+      incident_id: incidentId,
+      outcome_kind: "RETURNED_RESPONSE",
+      request_sent: true,
+      sanitized_response: sanitizeEvidence(response, [operatorKey]),
+      completed_at_unix_ms: Date.now(),
+    };
+  } catch (error) {
+    result = {
+      phase: "C1-R6B-R4D-R1-Q1 readiness observability",
+      probe_id: probeId,
+      incident_id: incidentId,
+      outcome_kind: "THROWN_ERROR",
+      request_sent: true,
+      ...safeThrownError(error, operatorKey),
+      completed_at_unix_ms: Date.now(),
+    };
+  }
+  const persistedResult = await persist(resultFile, result);
+  const classification = classifyReadiness(persistedResult);
+  return { context, result: persistedResult, classification, resultFile };
+}
+
 function safeAttempt(apiKey: string, nodeUrl: string, functionName: string, input: JsonObject): Promise<JsonObject> {
   return invokeC1(apiKey, nodeUrl, CONTRACT_ID, functionName, input)
     .then((value) => ({ ok: true, response: parseObject(value), function: functionName, input_keys: Object.keys(input) }))
@@ -193,9 +293,40 @@ async function main(): Promise<void> {
   if (!remediationGrant.exact || !brokerGrant.exact) throw new Error("live delegation mismatch");
 
   currentStage = "quota readiness";
-  const quotaId = `C1-R6B-R4D-R1-QUOTA-${Date.now()}-${randomBytes(6).toString("hex")}`;
-  const quotaResponse = requireResponse(await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: quotaId }), "get-incident");
-  if (quotaResponse.result !== "DENIED" || /fuel_per_minute|quota/i.test(JSON.stringify(quotaResponse))) throw new Error("quota readiness did not return a normal application denial");
+  const readinessProbeId = `q1-${Date.now()}-${randomBytes(6).toString("hex")}`;
+  const readinessId = `C1-R6B-R4D-R1-Q1-${Date.now()}-${randomBytes(8).toString("hex")}`;
+  const readinessDirectory = path.join(root, "winner", "evidence", `C1-R6B-R4D-R1-Q1-${readinessProbeId}`);
+  await mkdir(readinessDirectory, { recursive: true });
+  const readiness = await captureReadinessProbe(t3n, operatorKey, readinessDirectory, readinessProbeId, readinessId);
+  const quotaReadiness: JsonObject = {
+    probe_id: readinessProbeId,
+    incident_id: readinessId,
+    result_file: relativeEvidence(readiness.resultFile),
+    outcome_kind: readiness.result.outcome_kind,
+    classification: readiness.classification,
+    success: readiness.classification === "R4D_R1_READINESS_PASS",
+    quota_error: readiness.classification === "R4D_R1_QUOTA_CONFIRMED",
+    response: readiness.result.sanitized_response ?? null,
+    error: readiness.result.outcome_kind === "THROWN_ERROR" ? readiness.result : null,
+  };
+  if (readiness.classification !== "R4D_R1_READINESS_PASS") {
+    readinessFailureWritten = true;
+    await writeAtomicJson(path.join(root, "winner", "evidence", "C1-R6B-R4D-R1-Q1-READINESS-FAILURE.json"), {
+      phase: "C1-R6B-R4D-R1-Q1 readiness observability",
+      classification: readiness.classification,
+      probe_id: readinessProbeId,
+      probe_directory: relativeEvidence(readinessDirectory),
+      readiness_result_file: relativeEvidence(readiness.resultFile),
+      request_sent_count: 1,
+      valid_incidents: 0,
+      state_mutations: 0,
+      provider_counters: { github_api_calls: 0, installation_tokens: 0, deploy_key_creates: 0, deploy_key_deletes: 0, provider_mutations: 0 },
+      automatic_retry: false,
+      historical_r4d_r1_failure_preserved: true,
+      exact_readiness_result: readiness.result,
+    });
+    throw new Error(`readiness classification ${readiness.classification}`);
+  }
   await sleepPacing();
 
   const runId = `r4d-r1-${Date.now()}-${randomBytes(6).toString("hex")}`;
@@ -379,7 +510,7 @@ async function main(): Promise<void> {
     active_contract: { name: CONTRACT_ID, version: CONTRACT_VERSION, numeric_id: CONTRACT_NUMERIC_ID, status: inventory.status, wasm_bytes: WASM_BYTES, wasm_sha256: WASM_SHA256 },
     principals: { operator: OPERATOR_DID, remediation_agent: REMEDIATION_DID, effect_broker: BROKER_DID, organization: ORGANISATION_DID, all_distinct: true },
     configuration: { map_acl: { private: true, contract_id: CONTRACT_NUMERIC_ID, lifecycle_status: mapStatus, acl_metadata_exposed_by_sdk: false, acl_basis: "retained activation evidence" }, delegations: { remediation: { did: REMEDIATION_DID, functions: [RESERVATION_FUNCTION], scopes: [], allowed_hosts: [], version_req: CONTRACT_VERSION }, broker: { did: BROKER_DID, functions: [...BROKER_FUNCTIONS], scopes: [], allowed_hosts: [], version_req: CONTRACT_VERSION } } },
-    quota_readiness: { incident_id: quotaId, success: true, quota_error: false, response: quotaResponse },
+    quota_readiness: { ...quotaReadiness, wait_before_state_run: true, pacing_wait_ms: PACING_MS },
     create: createFile,
     initial_active_readback: initialFile,
     reservation: { response: reserveFile, readback: reservedFile },
@@ -402,7 +533,7 @@ async function main(): Promise<void> {
   const verdict = verifyBundle(bundleFile);
   await persist(path.join(activeRunDirectory, "offline-verifier.json"), verdict);
   if (!verdict.ok) throw new Error(`offline verifier rejected live bundle: ${verdict.errors.join("; ")}`);
-  const passArtifact = { ...bundleFile, status: "C1_R6B_R4D_R1_CONCURRENT_EFFECT_START_PASS", classification: "LIVE_TWO_PROCESS_CONFIRMED_EFFECT_START_OWNER_PASS", source: { r4d: "single-start live proof", r4d_r1: "two-physical-contender concurrency proof" }, new_live_calls: { t3n_reads: "recorded in this proof", t3n_writes: "recorded in this proof", provider_operations: 0 }, credential_safety: { t3n_api_keys: false, github_tokens: false, jwt: false, authorization_headers: false, private_keys: false }, next_gate: "C1-R6B-R4E-R1 — FRESH TARGET + PROVIDER-BACKED V2.0.4 CONFIRMED-OWNER EXECUTION" };
+  const passArtifact = { ...bundleFile, status: "C1_R6B_R4D_R1_CONCURRENT_EFFECT_START_PASS", classification: "LIVE_TWO_PROCESS_CONFIRMED_EFFECT_START_OWNER_PASS", readiness_probe_id: readinessProbeId, readiness_result_file: relativeEvidence(readiness.resultFile), readiness_classification: "R4D_R1_READINESS_PASS", source: { r4d: "single-start live proof", r4d_r1: "two-physical-contender concurrency proof" }, new_live_calls: { t3n_reads: "recorded in this proof", t3n_writes: "recorded in this proof", provider_operations: 0 }, credential_safety: { t3n_api_keys: false, github_tokens: false, jwt: false, authorization_headers: false, private_keys: false }, next_gate: "C1-R6B-R4E-R1 — FRESH TARGET + PROVIDER-BACKED V2.0.4 CONFIRMED-OWNER EXECUTION" };
   await writeAtomicJson(path.join(root, "winner", "evidence", "C1-R6B-R4D-R1-CONCURRENT-EFFECT-START-PROOF.json"), passArtifact);
   console.log(JSON.stringify({ status: passArtifact.status, classification: passArtifact.classification, run_id: runId, incident_id: incidentId, confirmed_start_id: confirmedStartId, provider_operations: 0 }, null, 2));
 }
@@ -410,7 +541,7 @@ async function main(): Promise<void> {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch(async (error) => {
     const failure = { phase: "C1-R6B-R4D-R1 live concurrent effect-start proof", status: "C1_R6B_R4D_R1_FAILURE", stage: currentStage, incident_id: activeIncidentId, run_directory: activeRunDirectory ? path.relative(root, activeRunDirectory).replaceAll("\\", "/") : null, state_changing_request_may_have_been_sent: activeIncidentId !== null, last_known_authority: lastKnownAuthority, error: redact(error), no_automatic_retry: true, provider_counters: { github_api_calls: 0, installation_tokens: 0, deploy_key_creates: 0, deploy_key_deletes: 0, provider_mutations: 0 }, historical_incidents_untouched: true };
-    await writeAtomicJson(path.join(root, "winner", "evidence", "C1-R6B-R4D-R1-STATE-FAILURE.json"), failure);
+    if (!readinessFailureWritten) await writeAtomicJson(path.join(root, "winner", "evidence", "C1-R6B-R4D-R1-Q1-STATE-FAILURE.json"), failure);
     console.error(JSON.stringify({ status: failure.status, stage: failure.stage, incident_id: failure.incident_id, error: failure.error }, null, 2));
     process.exitCode = 1;
   });

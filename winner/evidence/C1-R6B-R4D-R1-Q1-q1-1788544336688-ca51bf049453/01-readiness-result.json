@@ -1,0 +1,21 @@
+{
+  "phase": "C1-R6B-R4D-R1-Q1 readiness observability",
+  "probe_id": "q1-1788544336688-ca51bf049453",
+  "incident_id": "C1-R6B-R4D-R1-Q1-1788544336688-9d17ead814887a96",
+  "outcome_kind": "RETURNED_RESPONSE",
+  "request_sent": true,
+  "sanitized_response": {
+    "detail": {},
+    "effect_attempts": null,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-R4D-R1-Q1-1788544336688-9d17ead814887a96",
+    "note": "incident authority does not exist",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": null
+  },
+  "completed_at_unix_ms": 1788544337828
+}

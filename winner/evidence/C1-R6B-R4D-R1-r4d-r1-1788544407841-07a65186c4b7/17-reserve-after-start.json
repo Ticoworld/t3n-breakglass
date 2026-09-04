@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "reserve-incident",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "effect budget is not exactly one",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "EFFECT_STARTED"
+  },
+  "function": "reserve-incident",
+  "input_keys": [
+    "incident_id"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "ok": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "claim-effect",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "another committed state transition already won",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "LOST",
+    "state": "EFFECT_STARTED"
+  },
+  "function": "claim-effect",
+  "input_keys": [
+    "incident_id",
+    "expected_claim_version",
+    "contender_nonce"
+  ]
+}

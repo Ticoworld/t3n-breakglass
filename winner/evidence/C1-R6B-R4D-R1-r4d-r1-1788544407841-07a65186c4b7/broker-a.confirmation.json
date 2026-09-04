@@ -1,0 +1,18 @@
+{
+  "label": "broker-a",
+  "effect_start_id": "start-1-f360fc27eca8664772551a877ee66619",
+  "called_after_complete_marker": true,
+  "response": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "confirm-effect-start",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "persisted effect-start ownership confirmed",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "CONFIRMED",
+    "state": "EFFECT_STARTED"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "detail": {
+    "action": "revoke_github_deploy_key",
+    "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+    "claim_version": 1,
+    "deploy_key_id": 1,
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox"
+  },
+  "effect_attempts": 0,
+  "function": "confirm-claim",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "note": "persisted claim ownership confirmed",
+  "provider_http": {
+    "attempted": false,
+    "count": 0
+  },
+  "result": "CONFIRMED",
+  "state": "EFFECT_CLAIMED"
+}

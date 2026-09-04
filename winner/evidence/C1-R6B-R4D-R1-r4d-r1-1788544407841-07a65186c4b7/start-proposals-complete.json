@@ -1,0 +1,56 @@
+{
+  "phase": "both begin-effect proposals complete",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+  "pids": [
+    25456,
+    27028
+  ],
+  "nonces": [
+    "f360fc27eca8664772551a877ee66619",
+    "49827509133eae4f2c094e40bd1f1ab4"
+  ],
+  "result_file_hashes": [
+    "1b2877d0ab5b3d064be7ceb117a6d3f97b6d3f755a40fed659882d51fc69c61a",
+    "1e266a608049980219f222b65f845e30277dc72ad2da7fd8f0c5e83a83af8be1"
+  ],
+  "raw_begin_results": [
+    {
+      "detail": {
+        "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+        "claim_version": 1,
+        "effect_start_id": "start-1-f360fc27eca8664772551a877ee66619"
+      },
+      "effect_attempts": 1,
+      "function": "begin-effect",
+      "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "EFFECT_STARTED"
+    },
+    {
+      "detail": {
+        "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+        "claim_version": 1,
+        "effect_start_id": "start-1-49827509133eae4f2c094e40bd1f1ab4"
+      },
+      "effect_attempts": 1,
+      "function": "begin-effect",
+      "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+      "note": "state transition committed in this transaction",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "WON",
+      "state": "EFFECT_STARTED"
+    }
+  ],
+  "all_completed": true,
+  "confirmations_allowed_after_marker": true,
+  "completed_at_unix_ms": 1788544419771
+}

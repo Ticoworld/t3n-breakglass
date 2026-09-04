@@ -1,0 +1,38 @@
+{
+  "phase": "C1-R6B-R4D-R1 start contender",
+  "contender": "broker-a",
+  "pid": 25456,
+  "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+  "start_nonce": "f360fc27eca8664772551a877ee66619",
+  "ready_at_unix_ms": 1788544416302,
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "version": "2.0.4",
+  "started_at_unix_ms": 1788544417136,
+  "function": "begin-effect",
+  "provider_operations": 0,
+  "token_minted": false,
+  "destructive_call_count": 0,
+  "barrier_released_at_unix_ms": 1788544417127,
+  "response": {
+    "detail": {
+      "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+      "claim_version": 1,
+      "effect_start_id": "start-1-f360fc27eca8664772551a877ee66619"
+    },
+    "effect_attempts": 1,
+    "function": "begin-effect",
+    "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "EFFECT_STARTED"
+  },
+  "raw_result": "WON",
+  "effect_start_id": "start-1-f360fc27eca8664772551a877ee66619",
+  "finished_at_unix_ms": 1788544419456
+}

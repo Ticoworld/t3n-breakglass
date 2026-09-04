@@ -1,0 +1,19 @@
+{
+  "phase": "start contender barrier",
+  "incident_id": "C1-R6B-R4D-R1-1788544407841-399edfc94898159f",
+  "claim_id": "claim-1-264ce35c32eec18842de38b74fa4de5f",
+  "both_ready": true,
+  "identities_valid": true,
+  "ready_file_hash_a": "823f7e49a61621112200f410c3f7f966f735511c51e90f83051d4723e958b909",
+  "ready_file_hash_b": "0f652392a465a1b56c9cef117d898a000ef1b34504b058190d43866f2f8c955c",
+  "pids": [
+    25456,
+    27028
+  ],
+  "nonces": [
+    "f360fc27eca8664772551a877ee66619",
+    "49827509133eae4f2c094e40bd1f1ab4"
+  ],
+  "released_once": true,
+  "released_at_unix_ms": 1788544417127
+}
