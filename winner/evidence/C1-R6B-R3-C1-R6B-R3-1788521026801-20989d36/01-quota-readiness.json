@@ -1,0 +1,27 @@
+{
+  "phase": "C1-R6B-R3 primary operator observation",
+  "transport": "authenticated-operator-session",
+  "function": "get-incident",
+  "incident_id": "C1-R6B-R3-STATE-quota-readiness-1788521026808-0599f879",
+  "request_fields": [
+    "incident_id"
+  ],
+  "input": {
+    "incident_id": "C1-R6B-R3-STATE-quota-readiness-1788521026808-0599f879"
+  },
+  "observed_at_unix_ms": 1788521027552,
+  "response": {
+    "detail": {},
+    "effect_attempts": null,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-R3-STATE-quota-readiness-1788521026808-0599f879",
+    "note": "incident authority does not exist",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": null
+  },
+  "provider_operations": 0
+}

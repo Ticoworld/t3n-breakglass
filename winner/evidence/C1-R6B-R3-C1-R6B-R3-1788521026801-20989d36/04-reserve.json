@@ -1,0 +1,34 @@
+{
+  "role": "remediation",
+  "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "function": "reserve-incident",
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "version": "2.0.3",
+  "request_fields": [
+    "incident_id"
+  ],
+  "response": {
+    "detail": {},
+    "effect_attempts": 0,
+    "function": "reserve-incident",
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "RESERVED"
+  },
+  "provider_operations": 0,
+  "state_mutation_expected": false,
+  "credentials_in_output": false,
+  "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+  "routing_recognized": true,
+  "guest_reached": true,
+  "application_result": "WON",
+  "application_note": "state transition committed in this transaction",
+  "label": "reservation",
+  "exit_code": 0,
+  "stderr_present": false
+}

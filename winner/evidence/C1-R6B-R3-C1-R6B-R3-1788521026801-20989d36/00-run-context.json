@@ -1,0 +1,71 @@
+{
+  "phase": "C1-R6B-R3",
+  "run_id": "C1-R6B-R3-1788521026801-20989d36",
+  "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+  "branch": "winner-v2-core",
+  "starting_sha": "0e78cf60f54bea7c47b9dd9b50cfa30cef2bb1cb",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "environment": "testnet",
+  "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+  "sdk": "@terminal3/t3n-sdk 5.2.0",
+  "contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.3",
+    "numeric_contract_id": 877
+  },
+  "principals": {
+    "operator": "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f",
+    "remediation_agent": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "all_distinct": true
+  },
+  "provider_counters": {
+    "github_api_calls": 0,
+    "github_installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "provider_helpers_imported": false,
+  "created_at_local": "2026-09-04T11:23:46.802Z",
+  "persisted_before_create": true,
+  "pacing": [
+    {
+      "label": "after_quota_readiness",
+      "started_at_unix_ms": 1788521027560,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788521097568
+    },
+    {
+      "label": "after_reservation",
+      "started_at_unix_ms": 1788521107026,
+      "wait_ms": 70000,
+      "completed_at_unix_ms": 1788521177027
+    }
+  ],
+  "no_historical_incident_touched": true,
+  "credentials_in_evidence": false,
+  "last_primary_file": "05-reserved-read.json",
+  "request_sent": false,
+  "quota_readiness": true,
+  "stage": "get-incident",
+  "last_durable_authority": {
+    "action": "revoke_github_deploy_key",
+    "created_at": 1788521098,
+    "deploy_key_id": 1,
+    "effect_attempts": 0,
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "effect_claim_id": null,
+    "effect_claim_version": 0,
+    "expires_at": 1788521998,
+    "final_result_classification": null,
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "max_effects": 1,
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "reservation_id": "reservation-C1-R6B-R3-STATE-incident-1788521026801-11dd392e-1",
+    "reservation_version": 1,
+    "status": "RESERVED"
+  }
+}

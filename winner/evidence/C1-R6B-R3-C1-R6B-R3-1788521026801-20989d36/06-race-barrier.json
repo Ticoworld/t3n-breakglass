@@ -1,0 +1,21 @@
+{
+  "phase": "C1-R6B-R3 race barrier",
+  "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+  "contenders": [
+    {
+      "name": "broker-a",
+      "pid": 32904,
+      "ready_at_unix_ms": 1788521179066,
+      "expected_claim_version": 0
+    },
+    {
+      "name": "broker-b",
+      "pid": 27848,
+      "ready_at_unix_ms": 1788521179486,
+      "expected_claim_version": 0
+    }
+  ],
+  "common_barrier_ready": true,
+  "released_at_unix_ms": 1788521179503,
+  "provider_operations": 0
+}

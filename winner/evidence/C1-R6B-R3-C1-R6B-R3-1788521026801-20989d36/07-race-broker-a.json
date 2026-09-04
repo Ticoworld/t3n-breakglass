@@ -1,0 +1,39 @@
+{
+  "phase": "R6B state-only claim contender",
+  "contender": "broker-a",
+  "pid": 32904,
+  "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+  "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+  "expected_claim_version": 0,
+  "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+  "version": "2.0.3",
+  "provider_operations": 0,
+  "ready_at_unix_ms": 1788521179066,
+  "started_at_unix_ms": 1788521179515,
+  "response": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "claim_id": "claim-C1-R6B-R3-STATE-incident-1788521026801-11dd392e-1",
+      "claim_version": 1,
+      "deploy_key_id": 1,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox"
+    },
+    "effect_attempts": 0,
+    "function": "claim-effect",
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "EFFECT_CLAIMED"
+  },
+  "claim_outcome": "CLAIM_WON",
+  "claim_id": "claim-C1-R6B-R3-STATE-incident-1788521026801-11dd392e-1",
+  "claim_version": 1,
+  "token_minted": false,
+  "destructive_call_count": 0,
+  "finished_at_unix_ms": 1788521180176
+}

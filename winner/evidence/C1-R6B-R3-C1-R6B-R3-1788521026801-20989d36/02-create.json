@@ -1,0 +1,53 @@
+{
+  "phase": "C1-R6B-R3 primary operator observation",
+  "transport": "authenticated-operator-session",
+  "function": "create-incident",
+  "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+  "request_fields": [
+    "deploy_key_id",
+    "effect_broker_did",
+    "incident_id",
+    "remediation_agent_did",
+    "ttl_secs"
+  ],
+  "input": {
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "deploy_key_id": 1,
+    "ttl_secs": 900
+  },
+  "observed_at_unix_ms": 1788521098874,
+  "response": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788521098,
+      "deploy_key_id": 1,
+      "effect_attempts": 0,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": null,
+      "effect_claim_version": 0,
+      "expires_at": 1788521998,
+      "final_result_classification": null,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": null,
+      "reservation_version": 0,
+      "status": "ACTIVE"
+    },
+    "effect_attempts": 0,
+    "function": "create-incident",
+    "incident_id": "C1-R6B-R3-STATE-incident-1788521026801-11dd392e",
+    "note": "incident authority created in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "ACTIVE"
+  },
+  "provider_operations": 0
+}
