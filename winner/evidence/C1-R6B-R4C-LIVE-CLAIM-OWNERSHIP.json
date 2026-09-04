@@ -1,0 +1,179 @@
+{
+  "phase": "C1-R6B-R4C registered live claim-ownership race",
+  "status": "PASS_REGISTERED_2_0_4_LIVE_CLAIM_OWNERSHIP_PROVEN",
+  "evidence_tier": "LIVE_T3N_TESTNET",
+  "environment": "testnet",
+  "t3n": {
+    "node": "https://cn-api.sg.testnet.t3n.terminal3.io",
+    "contract": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "contract_id": 878,
+    "version": "2.0.4",
+    "inventory_readback": {
+      "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.4",
+      "status": "active"
+    },
+    "invocation_identifiers": "The current SDK invoke surface returned response documents but no separate invocation IDs; complete raw response documents are retained below."
+  },
+  "configuration_changes": {
+    "purpose": "minimum live configuration required to invoke registered 2.0.4 only",
+    "delegation": {
+      "remediation_agent": {
+        "did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+        "before_version_req": "2.0.3",
+        "after_version_req": "2.0.4",
+        "functions": ["reserve-incident"],
+        "scopes": [],
+        "allowed_hosts": []
+      },
+      "effect_broker": {
+        "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+        "before_version_req": "2.0.3",
+        "after_version_req": "2.0.4",
+        "before_functions": ["claim-effect", "release-not-attempted", "begin-effect", "finalize-effect", "reconcile-effect"],
+        "after_functions": ["claim-effect", "confirm-claim", "release-not-attempted", "begin-effect", "confirm-effect-start", "finalize-effect", "reconcile-effect"],
+        "scopes": [],
+        "allowed_hosts": []
+      },
+      "egress": {"remediation": null, "effect_broker": null},
+      "delegation_transaction_ids": "not exposed by current SDK"
+    },
+    "incident_map": {
+      "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:winner-incidents",
+      "visibility": "private",
+      "writers_contract_id": 878,
+      "readers_contract_id": 878,
+      "previous_contract_id": 877,
+      "map_update_transaction_id": "not exposed by current SDK"
+    },
+    "unrelated_mappings_changed": false
+  },
+  "incident": {
+    "incident_id": "C1-R6B-R4C-1788530006054-8c6491a9b7130381",
+    "synthetic_deploy_key_id": 1,
+    "ttl_secs": 900,
+    "create_request": {
+      "incident_id": "C1-R6B-R4C-1788530006054-8c6491a9b7130381",
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "deploy_key_id": 1,
+      "ttl_secs": 900
+    },
+    "post_race_state": {
+      "status": "EFFECT_CLAIMED",
+      "effect_attempts": 0,
+      "effect_claim_version": 1,
+      "effect_claim_id": "claim-1-4fe79f546d9b0723e75194bf4ef9d6b0",
+      "effect_start_id": null,
+      "final_result_classification": null,
+      "reservation_version": 1
+    }
+  },
+  "contenders": [
+    {
+      "contender": "broker-a",
+      "pid": 28392,
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "contender_nonce": "4fe79f546d9b0723e75194bf4ef9d6b0",
+      "ready_at_unix_ms": 1788530014061,
+      "started_at_unix_ms": 1788530014488,
+      "finished_at_unix_ms": 1788530015679,
+      "claim_id": "claim-1-4fe79f546d9b0723e75194bf4ef9d6b0",
+      "claim_version": 1,
+      "claim_response": {
+        "result": "PROPOSED",
+        "function": "claim-effect",
+        "state": "EFFECT_CLAIMED",
+        "effect_attempts": 0,
+        "detail": {
+          "claim_id": "claim-1-4fe79f546d9b0723e75194bf4ef9d6b0",
+          "claim_version": 1
+        },
+        "provider_http": {"attempted": false, "count": 0}
+      },
+      "provider_operations": 0
+    },
+    {
+      "contender": "broker-b",
+      "pid": 12100,
+      "did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "contender_nonce": "0f7bcd9a9f053d39f0b656c2adbda8c7",
+      "ready_at_unix_ms": 1788530014455,
+      "started_at_unix_ms": 1788530014488,
+      "finished_at_unix_ms": 1788530016804,
+      "claim_id_returned": null,
+      "claim_response": {
+        "result": "LOST",
+        "function": "claim-effect",
+        "state": "EFFECT_CLAIMED",
+        "effect_attempts": 0,
+        "detail": {},
+        "provider_http": {"attempted": false, "count": 0}
+      },
+      "provider_operations": 0
+    }
+  ],
+  "nonce_barrier": {
+    "both_ready": true,
+    "nonces_distinct": true,
+    "parent_duplicate_check": "harness hygiene only"
+  },
+  "confirmations": {
+    "winner_claim_id": "claim-1-4fe79f546d9b0723e75194bf4ef9d6b0",
+    "loser_attempted_identity": "claim-1-0f7bcd9a9f053d39f0b656c2adbda8c7",
+    "winner": {
+      "result": "CONFIRMED",
+      "function": "confirm-claim",
+      "state": "EFFECT_CLAIMED",
+      "effect_attempts": 0,
+      "detail": {
+        "action": "revoke_github_deploy_key",
+        "claim_id": "claim-1-4fe79f546d9b0723e75194bf4ef9d6b0",
+        "claim_version": 1,
+        "deploy_key_id": 1,
+        "github_owner": "Ticoworld",
+        "github_repo": "t3n-breakglass-sandbox"
+      },
+      "provider_http": {"attempted": false, "count": 0}
+    },
+    "loser": {
+      "result": "NOT_OWNER",
+      "function": "confirm-claim",
+      "state": "EFFECT_CLAIMED",
+      "effect_attempts": 0,
+      "detail": {},
+      "provider_http": {"attempted": false, "count": 0}
+    },
+    "stable_winner_reconfirmation": "CONFIRMED",
+    "stable_loser_reconfirmation": "NOT_OWNER",
+    "exactly_one_target_bearing_confirmation": true,
+    "loser_targetless": true
+  },
+  "stale_contender": {
+    "contender_nonce": "30f44875c5594ea8d25aabade8f3d30d",
+    "expected_claim_version": 0,
+    "response": {
+      "result": "LOST",
+      "function": "claim-effect",
+      "state": "EFFECT_CLAIMED",
+      "effect_attempts": 0,
+      "detail": {},
+      "provider_http": {"attempted": false, "count": 0}
+    }
+  },
+  "forbidden_operations": {
+    "begin_effect": 0,
+    "confirm_effect_start": 0,
+    "finalize_effect": 0,
+    "reconcile_effect": 0,
+    "provider_operations": 0,
+    "github_api_calls": 0
+  },
+  "historical_preservation": {
+    "contract_id_877": "untouched",
+    "historical_r3_incident": "untouched",
+    "historical_evidence": "preserved"
+  },
+  "harness_note": "The first run stopped after all ownership checks because its final assertion read effect_claim_version from the response envelope instead of detail. The live race, confirmations, stale rejection, and final readback were then independently verified read-only (plus one additional safe stale claim call); no effect or provider action was attempted.",
+  "credentials_in_evidence": false
+}
