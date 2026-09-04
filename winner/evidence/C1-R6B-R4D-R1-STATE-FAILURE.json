@@ -1,0 +1,19 @@
+{
+  "phase": "C1-R6B-R4D-R1 live concurrent effect-start proof",
+  "status": "C1_R6B_R4D_R1_FAILURE",
+  "stage": "quota readiness",
+  "incident_id": null,
+  "run_directory": null,
+  "state_changing_request_may_have_been_sent": false,
+  "last_known_authority": null,
+  "error": "quota readiness did not return a normal application denial",
+  "no_automatic_retry": true,
+  "provider_counters": {
+    "github_api_calls": 0,
+    "installation_tokens": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "provider_mutations": 0
+  },
+  "historical_incidents_untouched": true
+}
