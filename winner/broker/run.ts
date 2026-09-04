@@ -135,6 +135,7 @@ async function main() {
 
   if (!claimTargetMatchesConfiguredRepository(target, config.owner, config.repository)) {
     evidence.claim_target_mismatch = true;
+    evidence.claim_error = { message: "CLAIM_TARGET_MISMATCH: committed incident target differs from broker fixed repository configuration", category: "ConfigurationError" };
     try {
       await releaseClaim();
       evidence.classification = "NOT_ATTEMPTED";
