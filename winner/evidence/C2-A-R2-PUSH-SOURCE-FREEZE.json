@@ -1,0 +1,324 @@
+{
+  "artifact": "C2-A-R2-PUSH-SOURCE-FREEZE",
+  "phase": "C2-A-R2",
+  "classification": "C2_PUSH_SOURCE_ARCHITECTURE_PASS",
+  "starting_sha": "2803636d57ab13ac33942f13202419b800857005",
+  "branch": "winner-v2-core",
+  "origin_winner_sha_at_start": "2803636d57ab13ac33942f13202419b800857005",
+  "origin_main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "working_tree_clean_at_start": true,
+  "secret_scanning_live_source": {
+    "disposition": "C2_SOURCE_ARCHITECTURE_VALID_BUT_LIVE_BLOCKED",
+    "selected_source_in_r1": "secret_scanning_alert(created), secret_type=openssh_private_key",
+    "reason_for_pivot": "current private user-owned repository eligibility was not established, the installed App lacked Secret scanning alerts:read, and the App had no subscribed events",
+    "preserved": [
+      "winner/c2/github-source.ts HMAC and raw-body verification",
+      "winner/c2/dedupe.ts durable identity/digest model",
+      "C2-A policy provenance repair",
+      "C2-A C1 request derivation",
+      "C2-A historical source research and evidence"
+    ],
+    "not_invalid_in_general": true,
+    "prior_artifacts_rewritten": false
+  },
+  "repository_vertical": {
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "secret_path": ".breakglass-c2/exposed-deploy-key",
+    "path_and_ref_source": "pre-existing policy only",
+    "event_target_parameters_accepted": false,
+    "wrong_branch": "NO_MATCH",
+    "other_file": "NO_AUTHORITY"
+  },
+  "official_push_source": {
+    "event": "push",
+    "availability": ["repositories", "organizations", "GitHub Apps"],
+    "app_minimum_permission": "Contents: read",
+    "payload_facts_supported_by_docs": [
+      "ref",
+      "before",
+      "after",
+      "created",
+      "deleted",
+      "forced",
+      "repository",
+      "sender"
+    ],
+    "delivery_identity": "X-GitHub-Delivery is a globally unique delivery GUID",
+    "authentication": "X-Hub-Signature-256 using HMAC-SHA-256 over the exact request body",
+    "official_sources": [
+      {
+        "url": "https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+        "supports": "push availability, Contents read requirement, payload fields, and delivery identity"
+      },
+      {
+        "url": "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+        "supports": "raw-body HMAC-SHA-256 verification and timing-safe comparison guidance"
+      },
+      {
+        "url": "https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28",
+        "supports": "read repository content at an explicitly supplied ref"
+      }
+    ]
+  },
+  "source_authentication_contract": {
+    "raw_bytes_retained_until_verification": true,
+    "signature_header": "X-Hub-Signature-256",
+    "algorithm": "HMAC-SHA-256",
+    "timing_safe_comparison": true,
+    "missing_signature": "deny",
+    "malformed_signature": "deny",
+    "wrong_secret": "deny",
+    "body_mutation": "deny",
+    "json_parse_before_authority": false,
+    "event_allowlist": ["push"],
+    "repository_and_ref_allowlist": true,
+    "implementation": "winner/c2/push-source.ts uses the shared C2-A raw-byte verifier and a distinct push normalizer"
+  },
+  "normalized_push_facts": [
+    "delivery_id",
+    "event_type",
+    "repository_id",
+    "repository_full_name",
+    "ref",
+    "before",
+    "after",
+    "deleted",
+    "forced",
+    "created",
+    "sender_login",
+    "raw_body_sha256"
+  ],
+  "normalization_exclusions": [
+    "commit messages",
+    "arbitrary file names",
+    "event-selected repository",
+    "event-selected secret path",
+    "event-selected action",
+    "event-selected C1 parameters"
+  ],
+  "dedupe": {
+    "identity_material": "delivery_id + event_type + repository_id + repository_full_name",
+    "identity_digest": "SHA-256 of the identity material",
+    "payload_digest": "SHA-256 of exact authenticated raw webhook bytes",
+    "semantics": {
+      "NEW": "reserve durable record and continue",
+      "DUPLICATE_SAME": "return existing terminal request/decision; do not create a second authority plan",
+      "CONFLICT": "same delivery identity with different authenticated body digest; fail closed"
+    },
+    "secret_hygiene": "normalized event and durable record contain digest/metadata only; no fetched file bytes"
+  },
+  "selected_github_app_architecture": {
+    "choice": "A",
+    "app": "reuse existing breakglass-c0r-jit-probe registration",
+    "future_source_token": "fresh repository-scoped installation token requested with Contents:read only",
+    "security_boundary": "source reader has read-only Contents scope and no provider mutation capability",
+    "standing_root_limitation": "the standing App registration still has administration:write for the existing C1 effect path; the future source-reader token must be narrowed and must never be used for Administration or deploy-key mutation",
+    "why_selected": [
+      "no second App private key or standing root is introduced",
+      "lower implementation and approval burden",
+      "clear separation between source-reader token scope and existing effect path"
+    ],
+    "current_read_only_app_observation": {
+      "app_id": 4793116,
+      "slug": "breakglass-c0r-jit-probe",
+      "permissions": {"administration": "write", "metadata": "read"},
+      "events": [],
+      "installation_id": 158227303,
+      "installation_permissions": {"administration": "write", "metadata": "read"},
+      "installation_events": [],
+      "repository_selection": "selected"
+    }
+  },
+  "required_future_configuration": {
+    "app_permission_update": "Contents:read",
+    "installation_owner_approval_and_readback": true,
+    "event_subscription": "Push",
+    "active_webhook_url": "required but not supplied or configured in R2",
+    "webhook_secret": "required but not supplied or configured in R2",
+    "writes_performed_in_r2": 0,
+    "permission_state_must_be_reverified_after_update": true
+  },
+  "immutable_read_plan": {
+    "operation_count": 2,
+    "operations": [
+      {
+        "method": "GET",
+        "repository": "Ticoworld/t3n-breakglass-sandbox",
+        "path": ".breakglass-c2/exposed-deploy-key",
+        "ref": "authenticated_push.before"
+      },
+      {
+        "method": "GET",
+        "repository": "Ticoworld/t3n-breakglass-sandbox",
+        "path": ".breakglass-c2/exposed-deploy-key",
+        "ref": "authenticated_push.after"
+      }
+    ],
+    "mutable_branch_head_read": false,
+    "observation_commit_binding": "transition verifier rejects observations whose commit_sha values do not equal the authenticated before/after SHAs",
+    "source_reader_interface": "winner/c2/push-source-reader.ts",
+    "token_request": {
+      "repositories": ["Ticoworld/t3n-breakglass-sandbox"],
+      "permissions": {"contents": "read"}
+    }
+  },
+  "secret_transition": {
+    "required_pass_classification": "CAUSAL_SECRET_INTRODUCED",
+    "rule": "before status is 404 or before digest differs from expected_private_material_sha256, and after status is 200 with after digest equal to expected_private_material_sha256",
+    "preferred_demo": "before=404 and after=200 with exact digest",
+    "classifications": [
+      "CAUSAL_SECRET_INTRODUCED",
+      "NO_SECRET_TRANSITION",
+      "SECRET_ALREADY_PRESENT_BEFORE",
+      "AFTER_MISSING",
+      "AFTER_DIGEST_MISMATCH",
+      "TARGET_POLICY_MISMATCH"
+    ],
+    "implementation": "winner/c2/push-transition.ts compares statuses and digests only"
+  },
+  "key_pair_provenance": {
+    "required_order": [
+      "generate one fresh disposable SSH key pair",
+      "derive public half from private half",
+      "install that exact public half as one fresh read-only deploy key",
+      "independently read and verify the installed deploy key",
+      "derive and store the public-key fingerprint",
+      "hash the exact private bytes that will later be exposed",
+      "create and durably attest policy v2 with target ID, public fingerprint, and private-material digest",
+      "destroy unnecessary copies",
+      "only then induce the designated push"
+    ],
+    "private_material_in_policy": false,
+    "private_material_parser_in_ingress": false,
+    "r2_execution": "none"
+  },
+  "policy_v2": {
+    "implementation": "winner/c2/push-policy.ts",
+    "required_fields": [
+      "policy_id",
+      "policy_version",
+      "repository_id",
+      "repository_full_name",
+      "ref",
+      "secret_path",
+      "deploy_key_id",
+      "expected_deploy_key_title",
+      "expected_read_only",
+      "expected_public_key_fingerprint",
+      "expected_private_material_sha256",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "ttl_secs",
+      "enabled",
+      "actual_creation_timestamp",
+      "creation_commit_or_registry_identity",
+      "creation_evidence",
+      "enabled_before_event_proof"
+    ],
+    "target_defaults": false,
+    "live_boundary": "live lookup requires LIVE_PROVENANCE; local fixtures require explicit allowLocalFixture mode",
+    "pre_event_requirement": "policy must be durably created, enabled, and attested before the future trigger push; the push payload is not treated as carrying creation-time authority",
+    "timestamp_limitation": "push payload facts do not supply a trusted event timestamp; C2-B must preserve the attested policy-before-trigger ordering and record the delivery/readback evidence"
+  },
+  "c1_derivation_boundary": {
+    "implementation": "winner/c2/push-c1.ts and winner/c2/push-ingress.ts",
+    "preconditions": [
+      "authenticated push",
+      "durable dedupe",
+      "live-proven policy or explicit local-test mode",
+      "exact repository/ref/path policy binding",
+      "CAUSAL_SECRET_INTRODUCED",
+      "exact policy target"
+    ],
+    "request_fields_only": [
+      "incident_id",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "deploy_key_id",
+      "ttl_secs"
+    ],
+    "untrusted_text_to_authority": false,
+    "private_material_to_request": false
+  },
+  "secret_handling": {
+    "webhook_body_persistence": "raw body is not persisted by default; only raw_body_sha256 is retained",
+    "source_reader_body": "hash file content in memory and return status/digest metadata only",
+    "forbidden_destinations": ["logs", "evidence", "dedupe records", "T3N input", "LLM input", "policy records"],
+    "buffer_disposal": "dedicated digest helper overwrites its working buffer and the supplied Buffer where possible"
+  },
+  "local_tests": {
+    "commands": [
+      "npx tsc --noEmit --types node --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck <C2 files and tests>",
+      "node --import tsx --test <C2 tests>",
+      "npm test"
+    ],
+    "c2_tests_passed": 47,
+    "c2_tests_failed": 0,
+    "product_tests_passed": 7,
+    "product_tests_failed": 0,
+    "coverage": [
+      "valid signed push",
+      "missing/wrong signature and body mutation",
+      "wrong event/delivery/repository/ref/deletion/SHA",
+      "wrong repository and alternate path substitution",
+      "NEW, DUPLICATE_SAME, and CONFLICT",
+      "before absent plus after matching digest",
+      "before different plus after matching digest",
+      "secret already present before",
+      "after missing",
+      "after digest mismatch",
+      "prompt-injection commit message ignored",
+      "malicious file name ignored",
+      "exact read-only token/request plan",
+      "secret absent from normalized event, dedupe, and C1 request",
+      "private digest buffer overwritten",
+      "local fixture cannot pass live provenance boundary"
+    ]
+  },
+  "mutation_counters": {
+    "app_permission_writes": 0,
+    "app_event_subscription_writes": 0,
+    "webhook_configuration_writes": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "secret_commits": 0,
+    "provider_mutations": 0,
+    "valid_c2_incidents": 0,
+    "c1_create_calls": 0,
+    "t3n_writes": 0,
+    "live_webhooks_received": 0,
+    "secrets_exposed": 0
+  },
+  "claims_earned": [
+    "The prior secret-scanning source remains a valid local architecture but is live-blocked on the current setup.",
+    "GitHub push is an officially supported repository/App event with Contents:read as the App minimum.",
+    "The exact repository, branch, and secret path are policy-bound and cannot be selected by the event.",
+    "Immutable before/after reads and digest comparison provide a deterministic exact secret transition rule.",
+    "Policy v2 has no default target and requires actual target, digest, and provenance inputs.",
+    "The exact C1 request boundary and secret-hygiene rules are implemented locally.",
+    "The architecture is ready for the separately gated C2-B0 configuration/delivery-ping phase."
+  ],
+  "claims_forbidden": [
+    "a live push webhook was received",
+    "the App currently has Contents:read or Push subscription",
+    "a webhook URL or secret was configured",
+    "a fresh deploy key or live policy v2 was created",
+    "a private secret was exposed in GitHub",
+    "a live causal C1 request was created",
+    "C2-B or full C2 is complete",
+    "provider remediation was performed"
+  ],
+  "next_gate": {
+    "name": "C2-B0 - LIVE INGRESS CONFIGURATION + DELIVERY PING",
+    "requirements": [
+      "authorized Contents:read App permission update",
+      "installation owner approval/readback",
+      "Push event subscription",
+      "active webhook URL and secret",
+      "one real harmless authenticated delivery",
+      "stop before private-key exposure"
+    ]
+  }
+}

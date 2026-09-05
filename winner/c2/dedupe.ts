@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import { mkdir, open, readFile } from "node:fs/promises";
 import path from "node:path";
 import { writeAtomicJson } from "../scripts/result-file.js";
-import type { C1CreateRequest, DedupeRecord, DedupeResult, NormalizedGithubEvent } from "./types.js";
+import type { C1CreateRequest, DedupeRecord, DedupeResult, NormalizedSourceEvent } from "./types.js";
 
-export function dedupeKey(event: NormalizedGithubEvent): string {
+export function dedupeKey(event: NormalizedSourceEvent): string {
   const identity = `${event.delivery_id}\n${event.event_type}\n${event.repository_id}\n${event.repository_full_name}`;
   return createHash("sha256").update(identity, "utf8").digest("hex");
 }
@@ -13,7 +13,7 @@ function recordPath(directory: string, key: string): string {
   return path.join(directory, `${key}.json`);
 }
 
-function newRecord(event: NormalizedGithubEvent, key: string): DedupeRecord {
+function newRecord(event: NormalizedSourceEvent, key: string): DedupeRecord {
   return {
     dedupe_key: key,
     source_event_id: `${event.delivery_id}:${event.event_type}:${event.repository_id}:${event.repository_full_name}`,
@@ -31,7 +31,7 @@ function newRecord(event: NormalizedGithubEvent, key: string): DedupeRecord {
 
 export async function reserveDedupe(
   directory: string,
-  event: NormalizedGithubEvent,
+  event: NormalizedSourceEvent,
 ): Promise<DedupeResult> {
   await mkdir(directory, { recursive: true });
   const key = dedupeKey(event);

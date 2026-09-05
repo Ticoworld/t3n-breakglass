@@ -11,7 +11,16 @@ export interface RawGithubRequest {
   body: Uint8Array;
 }
 
-export interface NormalizedGithubEvent {
+export interface NormalizedSourceEvent {
+  provider: typeof C2_SOURCE_PROVIDER;
+  event_type: string;
+  delivery_id: string;
+  repository_id: number;
+  repository_full_name: string;
+  raw_body_sha256: string;
+}
+
+export interface NormalizedGithubEvent extends NormalizedSourceEvent {
   provider: typeof C2_SOURCE_PROVIDER;
   event_type: typeof C2_SOURCE_EVENT_TYPE;
   action: typeof C2_SOURCE_ACTION;
@@ -22,7 +31,20 @@ export interface NormalizedGithubEvent {
   secret_type: typeof C2_SIGNAL_SECRET_TYPE;
   alert_state: "open";
   source_event_time: string;
-  raw_body_sha256: string;
+}
+
+export interface NormalizedPushEvent extends NormalizedSourceEvent {
+  event_type: "push";
+  action: "push";
+  repository_id: 1350596128;
+  repository_full_name: "Ticoworld/t3n-breakglass-sandbox";
+  ref: "refs/heads/c2-breakglass-demo";
+  before: string;
+  after: string;
+  deleted: false;
+  forced: boolean;
+  created: boolean;
+  sender_login: string;
 }
 
 export interface TargetReference {
@@ -88,7 +110,7 @@ export interface DedupeRecord {
     repository_full_name: string;
   };
   source_event_digest: string;
-  normalized_event: NormalizedGithubEvent;
+  normalized_event: NormalizedSourceEvent;
   state: "RESERVED" | "ACCEPTED" | "REJECTED";
   decision?: string;
   reason?: string;
