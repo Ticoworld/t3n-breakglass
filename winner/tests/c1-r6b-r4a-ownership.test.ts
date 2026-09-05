@@ -50,10 +50,10 @@ test("distinct contender proposals have one persisted confirmation owner", () =>
 test("ownership and effect-start confirmations precede provider authority and DELETE", () => {
   const proposal = broker.indexOf('"claim-effect"');
   const confirmClaim = broker.indexOf('"confirm-claim"');
-  const appJwt = broker.indexOf("appJwt(config)");
+  const appJwt = broker.indexOf("const jwt = await appJwt(config)", confirmClaim);
   const begin = broker.indexOf('"begin-effect"');
   const confirmStart = broker.indexOf('"confirm-effect-start"');
-  const deleteCall = broker.indexOf("deleteKey(token");
+  const deleteCall = broker.indexOf("deleteKey(effectToken");
   const finalize = broker.indexOf("finalize(broker");
   assert.ok(proposal >= 0 && confirmClaim > proposal && appJwt > confirmClaim);
   assert.ok(begin > appJwt && confirmStart > begin && deleteCall > confirmStart && finalize > deleteCall);
@@ -66,23 +66,20 @@ test("ownership and effect-start confirmations precede provider authority and DE
 });
 
 test("the live parent publishes proposal completion before children are allowed to finish", () => {
-  const release = live.indexOf("await writeFile(barrier");
+  const release = live.indexOf("writeAtomicJson(barrier");
   const durable = live.indexOf("brokerAResultFile", release);
-  const proposalRelease = live.indexOf("await writeFile(proposalsComplete", durable);
+  const proposalRelease = live.indexOf("writeAtomicJson(proposalsComplete", durable);
   const children = live.indexOf("await Promise.all([aPromise, bPromise])", proposalRelease);
   assert.ok(release >= 0 && durable > release && proposalRelease > durable && children > proposalRelease);
   assert.match(live, /ownership_confirmation === "CONFIRMED"/);
   assert.match(live, /ownership_confirmation === "NOT_OWNER"/);
 });
 
-test("the live race validates contender nonces and aborts before claim calls on collision", () => {
-  assert.match(live, /readyNonce\(readyA, "broker-a"\)/);
-  assert.match(live, /readyNonce\(readyB, "broker-b"\)/);
-  assert.match(live, /nonceA === nonceB/);
-  assert.match(live, /reason: "duplicate_contender_nonce"/);
-  assert.match(live, /reason: "invalid_contender_nonce"/);
+test("the live race validates distinct physical contender identities before claim calls", () => {
+  assert.match(live, /new Set\(pids\)\.size !== 2/);
+  assert.match(live, /new Set\(nonces\)\.size !== 2/);
+  assert.match(live, /invalid_or_duplicate_contender_identity/);
   assert.match(broker, /barrierAborted\(barrier\)/);
-  assert.match(broker, /DUPLICATE_NONCE_ABORT/);
   assert.match(broker, /contender_nonce: contenderNonce/);
 });
 

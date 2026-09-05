@@ -57,8 +57,11 @@ export function parseClaim(raw: unknown): { won: boolean; claim?: Required<Claim
 
 export function classifyProviderOutcome(deleteStatus: number | null, deleteTransportFailed: boolean, exactGetStatus: number | null, listContainsTarget: boolean, listGetStatus: number | null, listBodyValid: boolean): ProviderClassification {
   if (deleteStatus === null && !deleteTransportFailed) return "NOT_ATTEMPTED";
-  if (exactGetStatus === 404 && listGetStatus === 200 && listBodyValid && !listContainsTarget) return "VERIFIED_ABSENT";
+  // A transport failure means the provider may have accepted the destructive
+  // request.  Later reads are reconciliation evidence only; they must never
+  // turn an uncertain DELETE into a happy-path classification.
   if (deleteTransportFailed) return "ATTEMPTED_OUTCOME_UNKNOWN";
+  if (exactGetStatus === 404 && listGetStatus === 200 && listBodyValid && !listContainsTarget) return "VERIFIED_ABSENT";
   if (deleteStatus === 204) return "PROVIDER_ACKNOWLEDGED";
   return "VERIFIED_PRESENT";
 }

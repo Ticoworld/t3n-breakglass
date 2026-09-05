@@ -16,17 +16,16 @@ const t3nSource = await readFile(new URL("../scripts/t3n.ts", import.meta.url), 
 test("claim-before-effect ordering is source-enforced", () => {
   const claim = runSource.indexOf('"claim-effect"');
   const committed = runSource.indexOf('evidence.claim_outcome = "CLAIM_WON"');
-  const jwt = runSource.indexOf("const jwt = await appJwt");
-  const token = runSource.indexOf("mintInstallationToken(config, jwt)");
-  const providerGet = runSource.indexOf("exactKey(token");
-  const providerDelete = runSource.indexOf("deleteKey(token");
+  const jwt = runSource.indexOf("const jwt = await appJwt(config)", committed);
+  const token = runSource.indexOf("mintEffectInstallationToken(config, jwt)");
+  const providerGet = runSource.indexOf("const beforeGet = await exactKey(effectToken", token);
+  const providerDelete = runSource.indexOf("deleteKey(effectToken");
   assert.ok(claim >= 0 && committed > claim && jwt > committed && token > jwt && providerGet > token && providerDelete > providerGet);
   assert.equal(runSource.includes("Promise.all"), false, "broker must not start provider work concurrently with claim");
-  const release = runSource.indexOf("const releaseClaim");
   const begin = runSource.indexOf('"begin-effect"');
   const deleteBoundary = runSource.indexOf("deleteMayHaveBeenInitiated = true");
-  const catchRelease = runSource.indexOf("if (!beginEffectSent && !deleteMayHaveBeenInitiated && !releaseAttempted)");
-  assert.ok(release >= 0 && begin > providerGet && deleteBoundary > begin && catchRelease > deleteBoundary);
+  const cleanup = runSource.indexOf("const effectCleanup = await revokeAndRefuse");
+  assert.ok(begin > providerGet && deleteBoundary > begin && cleanup > deleteBoundary);
   assert.match(runSource, /begin-effect did not return a committed EFFECT_STARTED result/);
 });
 
@@ -46,7 +45,7 @@ test("provider ambiguity never authorizes blind retry or inconsistent closure", 
   assert.equal(classifyProviderOutcome(204, false, 404, false, 200, false), "PROVIDER_ACKNOWLEDGED");
   assert.equal(classifyProviderOutcome(204, false, 404, true, 200, true), "PROVIDER_ACKNOWLEDGED");
   assert.equal(classifyProviderOutcome(204, false, 200, false, 200, true), "PROVIDER_ACKNOWLEDGED");
-  assert.equal(classifyProviderOutcome(null, true, 404, false, 200, true), "VERIFIED_ABSENT");
+  assert.equal(classifyProviderOutcome(null, true, 404, false, 200, true), "ATTEMPTED_OUTCOME_UNKNOWN");
   for (const classification of ["PROVIDER_ACKNOWLEDGED", "ATTEMPTED_OUTCOME_UNKNOWN", "VERIFIED_PRESENT"] as const) assert.equal(destructiveRetryAllowed(classification), false);
   assert.equal(repositoryListIsWellFormed([{ id: 7, name: "key" }]), true);
   assert.equal(repositoryListIsWellFormed({ repositories: [] }), false);
@@ -57,7 +56,7 @@ test("fake provider adapter covers destructive and verification failure matrix",
   type Scenario = { name: string; precheck?: "404" | "500"; deleteStatus: number | null; deleteTransportFailed: boolean; exactAfter: number | null; listAfter: boolean; listStatus: number | null; listBodyValid: boolean; expected: string; deletes: number };
   const scenarios: Scenario[] = [
     { name: "DROP_BEFORE_EFFECT", deleteStatus: null, deleteTransportFailed: true, exactAfter: 200, listAfter: true, listStatus: 200, listBodyValid: true, expected: "ATTEMPTED_OUTCOME_UNKNOWN", deletes: 1 },
-    { name: "DROP_AFTER_EFFECT", deleteStatus: null, deleteTransportFailed: true, exactAfter: 404, listAfter: false, listStatus: 200, listBodyValid: true, expected: "VERIFIED_ABSENT", deletes: 1 },
+    { name: "DROP_AFTER_EFFECT", deleteStatus: null, deleteTransportFailed: true, exactAfter: 404, listAfter: false, listStatus: 200, listBodyValid: true, expected: "ATTEMPTED_OUTCOME_UNKNOWN", deletes: 1 },
     { name: "204_SUCCESS", deleteStatus: 204, deleteTransportFailed: false, exactAfter: 404, listAfter: false, listStatus: 200, listBodyValid: true, expected: "VERIFIED_ABSENT", deletes: 1 },
     { name: "404_PRECHECK", precheck: "404", deleteStatus: null, deleteTransportFailed: false, exactAfter: null, listAfter: false, listStatus: null, listBodyValid: false, expected: "NOT_ATTEMPTED", deletes: 0 },
     { name: "500_PRECHECK", precheck: "500", deleteStatus: null, deleteTransportFailed: false, exactAfter: null, listAfter: false, listStatus: null, listBodyValid: false, expected: "NOT_ATTEMPTED", deletes: 0 },
@@ -132,11 +131,11 @@ test("GitHub App authority uses repository-selected administration write only", 
 });
 
 test("live proof cannot be written before replay and pass criteria", () => {
-  const replay = liveSource.indexOf("replayObservation.claim_outcome");
-  const writeProof = liveSource.indexOf('C1-live-proof.json');
-  const pass = liveSource.lastIndexOf('status: "C1_PASS"');
+  const replay = liveSource.indexOf("const replayObservation");
+  const writeProof = liveSource.indexOf('C1-R6B-R4E-R1-PROVIDER-PROOF.json');
+  const pass = liveSource.lastIndexOf('status: "C1_R6B_R4E_R1_PROVIDER_BACKED_PASS"');
   assert.ok(replay >= 0 && writeProof > replay && pass > writeProof);
-  assert.match(liveSource, /replay broker did not reach the common barrier/);
+  assert.match(liveSource, /replay broker failed/);
   assert.match(liveSource, /replayObservation\.token_minted !== false/);
   const configCheck = liveSource.indexOf("live identity/configuration does not match");
   const targetSetup = liveSource.indexOf("target setup failed");

@@ -65,8 +65,8 @@ test("only the operator path receives create/get and agents retain lifecycle-onl
   const delegationTargets = configureSource.slice(configureSource.indexOf("const targets"), configureSource.indexOf("const { t3n"));
   assert.equal(delegationTargets.includes('"create-incident"'), false);
   assert.equal(delegationTargets.includes('"get-incident"'), false);
-  assert.match(liveSource, /invokeC1OperatorSession\(t3n, contractId, "create-incident"/);
-  assert.match(liveSource, /invokeC1OperatorSession\(t3n, contractId, "get-incident"/);
+  assert.match(liveSource, /invokeC1OperatorSession\(t3n, CONTRACT_ID, "create-incident"/);
+  assert.match(liveSource, /invokeC1OperatorSession\(t3n, CONTRACT_ID, "get-incident"/);
   assert.match(reserveSource, /input: \{ incident_id: incidentId \}/);
   assert.match(brokerSource, /expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce/);
 });
@@ -77,7 +77,7 @@ test("TTL and overflow constraints are explicit and live readback is mediated", 
   assert.match(modelSource, /ttl_secs < MIN_INCIDENT_TTL_SECS/);
   assert.match(modelSource, /ttl_secs > MAX_INCIDENT_TTL_SECS/);
   assert.match(modelSource, /ttl_secs overflows cluster time/);
-  assert.match(liveSource, /requireActiveAuthority\(initialAuthority\)/);
-  assert.match(liveSource, /C1 initial authority is not the exact ACTIVE shape/);
-  assert.match(liveSource, /preReplayReadbackResponse = await invokeC1OperatorSession/);
+  assert.match(liveSource, /const active = requireResponse/);
+  assert.match(liveSource, /ACTIVE readback mismatch/);
+  assert.match(liveSource, /terminalBeforeReplay = requireResponse/);
 });

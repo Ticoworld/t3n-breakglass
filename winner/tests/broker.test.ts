@@ -25,7 +25,7 @@ test("provider response loss is classified without permitting retry", () => {
 });
 
 test("provider inconsistencies never become verified absence", () => {
-  assert.equal(classifyProviderOutcome(null, true, 404, false, 200, true), "VERIFIED_ABSENT");
+  assert.equal(classifyProviderOutcome(null, true, 404, false, 200, true), "ATTEMPTED_OUTCOME_UNKNOWN");
   assert.equal(classifyProviderOutcome(500, false, 404, false, 200, true), "VERIFIED_ABSENT");
   assert.equal(classifyProviderOutcome(204, false, 404, false, 200, false), "PROVIDER_ACKNOWLEDGED");
   assert.equal(classifyProviderOutcome(204, false, 404, true, 200, true), "PROVIDER_ACKNOWLEDGED");

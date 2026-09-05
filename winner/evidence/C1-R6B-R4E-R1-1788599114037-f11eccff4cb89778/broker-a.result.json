@@ -1,0 +1,280 @@
+{
+  "contender": "broker-a",
+  "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+  "process_id": 4912,
+  "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+  "input": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "expected_claim_version": 0,
+    "contender_nonce": "d6b949ba34c921af54273777bb624dce"
+  },
+  "ready": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "contender": "broker-a",
+    "contender_nonce": "d6b949ba34c921af54273777bb624dce",
+    "ready_at_unix_ms": 1788599152192,
+    "process_id": 4912
+  },
+  "contender_nonce": "d6b949ba34c921af54273777bb624dce",
+  "t3n_contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.4"
+  },
+  "token_minted": true,
+  "destructive_call_count": 1,
+  "delete_attempted": true,
+  "provider_credential_mint_count": 1,
+  "provider_calls_after_ownership_loss": 0,
+  "started_at_unix_ms": 1788599152225,
+  "claim": {
+    "detail": {
+      "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+      "claim_version": 1
+    },
+    "effect_attempts": 0,
+    "function": "claim-effect",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "claim proposal committed; ownership requires confirm-claim",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "PROPOSED",
+    "state": "EFFECT_CLAIMED"
+  },
+  "claim_outcome": "CLAIM_WON",
+  "claim_proposal": {
+    "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+    "claim_version": 1
+  },
+  "finished_at_unix_ms": 1788599211340,
+  "claim_confirmation": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+      "claim_version": 1,
+      "deploy_key_id": 162351194,
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox"
+    },
+    "effect_attempts": 0,
+    "function": "confirm-claim",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "persisted claim ownership confirmed",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "CONFIRMED",
+    "state": "EFFECT_CLAIMED"
+  },
+  "ownership_confirmation": "CONFIRMED",
+  "authority_loaded_target": {
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 162351194,
+    "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+    "claim_version": 1
+  },
+  "installation_validation": {
+    "http_status": 200,
+    "provider_request_id": "E4D8:1DDCE0:4809D9B:462D60D:6A9BDB72"
+  },
+  "effect_token": {
+    "issued": true,
+    "purpose": "effect",
+    "requested_permissions": {
+      "administration": "write"
+    },
+    "expires_at": "2026-09-05T10:05:56Z",
+    "repository_selection": "selected",
+    "permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "repositories": [
+      {
+        "name": "t3n-breakglass-sandbox",
+        "full_name": "Ticoworld/t3n-breakglass-sandbox",
+        "private": true
+      }
+    ],
+    "exchange_http_status": 201,
+    "mutation_count": 0
+  },
+  "effect_token_scope": {
+    "repository_selection": "selected",
+    "requested_permissions": {
+      "administration": "write"
+    },
+    "actual_permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "expires_at": "2026-09-05T10:05:56Z",
+    "repository_access_http_status": 200,
+    "target_repository": {
+      "full_name": "Ticoworld/t3n-breakglass-sandbox",
+      "private": true
+    }
+  },
+  "before": {
+    "exact_get_http_status": 200,
+    "list_http_status": 200,
+    "target_id": 162351194,
+    "title": "breakglass-r4e-disposable-20260904",
+    "read_only": true,
+    "target_present": true,
+    "list_contains_target": true,
+    "list_body_valid": true
+  },
+  "effect_start_input": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+    "start_nonce": "b936eb1291fffc0583c8c60c65141032"
+  },
+  "effect_start": {
+    "detail": {
+      "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+      "claim_version": 1,
+      "effect_start_id": "start-1-b936eb1291fffc0583c8c60c65141032"
+    },
+    "effect_attempts": 1,
+    "function": "begin-effect",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "EFFECT_STARTED"
+  },
+  "effect_start_confirmation": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "confirm-effect-start",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "persisted effect-start ownership confirmed",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "CONFIRMED",
+    "state": "EFFECT_STARTED"
+  },
+  "effect_start_confirmed": true,
+  "delete": {
+    "attempt_number": 1,
+    "method": "DELETE",
+    "owner": "Ticoworld",
+    "repository": "t3n-breakglass-sandbox",
+    "target_id": 162351194,
+    "http_status": 204,
+    "provider_request_id": "E4DE:37E3E8:48BB628:46EBBFD:6A9BDB8A",
+    "provider_acknowledged": true
+  },
+  "after": {
+    "exact_get_http_status": 404,
+    "list_http_status": 200,
+    "target_absent": true,
+    "list_contains_target": false,
+    "list_body_valid": true
+  },
+  "classification": "VERIFIED_ABSENT",
+  "provider_observation": {
+    "delete_contract_action": "broker-issued-one-DELETE",
+    "delete_count": 1,
+    "transport_ambiguity_precedence": false,
+    "retry_allowed": false
+  },
+  "effect_token_cleanup": {
+    "revoke": {
+      "http_status": 204,
+      "success": true
+    },
+    "probe": {
+      "http_status": 401,
+      "refused": true
+    },
+    "ok": true
+  },
+  "target_id": 162351194,
+  "verifier_token": {
+    "issued": true,
+    "purpose": "verifier",
+    "requested_permissions": {
+      "administration": "read"
+    },
+    "expires_at": "2026-09-05T10:06:26Z",
+    "repository_selection": "selected",
+    "permissions": {
+      "administration": "read",
+      "metadata": "read"
+    },
+    "repositories": [
+      {
+        "name": "t3n-breakglass-sandbox",
+        "full_name": "Ticoworld/t3n-breakglass-sandbox",
+        "private": true
+      }
+    ],
+    "distinct_from_effect_token": true,
+    "distinct_from_target_preflight_token": true,
+    "exchange_http_status": 201,
+    "mutation_count": 0
+  },
+  "independent_provider_verification": {
+    "repository_scope_http_status": 200,
+    "target_repository": {
+      "full_name": "Ticoworld/t3n-breakglass-sandbox",
+      "private": true
+    },
+    "exact_get_http_status": 404,
+    "list_get_http_status": 200,
+    "list_body_valid": true,
+    "target_absent": true,
+    "list_contains_target": false,
+    "mutation_count": 0
+  },
+  "verifier_token_cleanup": {
+    "revoke": {
+      "http_status": 204,
+      "success": true
+    },
+    "probe": {
+      "http_status": 401,
+      "refused": true
+    },
+    "ok": true
+  },
+  "finalize_request": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+    "effect_start_id": "start-1-b936eb1291fffc0583c8c60c65141032",
+    "classification": "VERIFIED_ABSENT"
+  },
+  "finalize": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "finalize-effect",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "CLOSED"
+  },
+  "terminal_success_gate": {
+    "effect_token_revoked": true,
+    "same_effect_token_refused": true,
+    "verifier_absent": true,
+    "verifier_token_revoked": true
+  },
+  "effect_started": true,
+  "effect_start_id": "start-1-b936eb1291fffc0583c8c60c65141032"
+}

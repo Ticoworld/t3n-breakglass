@@ -44,14 +44,13 @@
       "confirm-claim",
       "release-not-attempted",
       "begin-effect",
-      "confirm-effect-start"
-    ],
-    "node_routing_unverified_functions": [
+      "confirm-effect-start",
       "finalize-effect",
       "reconcile-effect"
     ],
-    "node_routing_observed_via": "retained R4C and R4D live state-only evidence; finalize-effect and reconcile-effect were not re-run during checkpoint reconciliation",
-    "node_routing_observed_at_utc": null,
+    "node_routing_unverified_functions": [],
+    "node_routing_observed_via": "R4E-R1 harmless nonexistent-incident probes for finalize-effect and reconcile-effect",
+    "node_routing_observed_at_utc": "2026-09-05T09:04:01.630Z",
     "surface_probe_evidence": [
       "C1-R6B-R4B-REGISTRATION.json",
       "C1-R6B-R4C-LIVE-CLAIM-OWNERSHIP.json",

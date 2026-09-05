@@ -1,0 +1,25 @@
+{
+  "function": "finalize-effect",
+  "request": {
+    "incident_id": "C1-R6B-R4E-R1-NONEXISTENT-F-ce9cec222a4ff907",
+    "claim_id": "claim-1-00000000000000000000000000000000",
+    "effect_start_id": "start-1-00000000000000000000000000000000",
+    "classification": "VERIFIED_ABSENT"
+  },
+  "response": {
+    "detail": {},
+    "effect_attempts": null,
+    "function": "finalize-effect",
+    "incident_id": "C1-R6B-R4E-R1-NONEXISTENT-F-ce9cec222a4ff907",
+    "note": "incident authority does not exist",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": null
+  },
+  "routing_recognized": true,
+  "state_mutation": false,
+  "provider_action": false
+}

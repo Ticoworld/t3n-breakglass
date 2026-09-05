@@ -1,0 +1,19 @@
+{
+  "function": "get-incident",
+  "incident_id": "C1-R6B-R4E-R1-READINESS-1788599041646-90ab4146c6ba",
+  "outcome_kind": "RETURNED_RESPONSE",
+  "request_sent": true,
+  "sanitized_response": {
+    "detail": {},
+    "effect_attempts": null,
+    "function": "get-incident",
+    "incident_id": "C1-R6B-R4E-R1-READINESS-1788599041646-90ab4146c6ba",
+    "note": "incident authority does not exist",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": null
+  }
+}

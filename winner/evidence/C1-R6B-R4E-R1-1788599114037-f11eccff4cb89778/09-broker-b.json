@@ -1,0 +1,66 @@
+{
+  "contender": "broker-b",
+  "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+  "process_id": 27684,
+  "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+  "input": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "expected_claim_version": 0,
+    "contender_nonce": "c90cebeeef93d063f62cb6ae57927673"
+  },
+  "ready": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "contender": "broker-b",
+    "contender_nonce": "c90cebeeef93d063f62cb6ae57927673",
+    "ready_at_unix_ms": 1788599149832,
+    "process_id": 27684
+  },
+  "contender_nonce": "c90cebeeef93d063f62cb6ae57927673",
+  "t3n_contract": {
+    "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+    "version": "2.0.4"
+  },
+  "token_minted": false,
+  "destructive_call_count": 0,
+  "delete_attempted": false,
+  "provider_credential_mint_count": 0,
+  "provider_calls_after_ownership_loss": 0,
+  "started_at_unix_ms": 1788599152225,
+  "claim": {
+    "detail": {
+      "claim_id": "claim-1-c90cebeeef93d063f62cb6ae57927673",
+      "claim_version": 1
+    },
+    "effect_attempts": 0,
+    "function": "claim-effect",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "claim proposal committed; ownership requires confirm-claim",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "PROPOSED",
+    "state": "EFFECT_CLAIMED"
+  },
+  "claim_outcome": "CLAIM_LOST",
+  "claim_proposal": {
+    "claim_id": "claim-1-c90cebeeef93d063f62cb6ae57927673",
+    "claim_version": 1
+  },
+  "finished_at_unix_ms": 1788599155022,
+  "claim_confirmation": {
+    "detail": {},
+    "effect_attempts": 0,
+    "function": "confirm-claim",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "persisted authority is owned by another claim identity",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "NOT_OWNER",
+    "state": "EFFECT_CLAIMED"
+  },
+  "ownership_confirmation": "NOT_OWNER"
+}

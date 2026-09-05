@@ -23,7 +23,7 @@ test("stderr diagnostics do not corrupt the stdout machine document", () => {
 test("malformed child output fails before the incident authority write", () => {
   assert.throws(() => parseChildJson('{"status":"READY"'), /one complete JSON document/);
   const parsedTarget = liveSource.indexOf("targetSetup");
-  const authorityCreate = liveSource.indexOf('invokeC1OperatorSession(t3n, contractId, "create-incident"');
+  const authorityCreate = liveSource.indexOf('invokeC1OperatorSession(t3n, CONTRACT_ID, "create-incident"');
   assert.ok(parsedTarget >= 0 && authorityCreate > parsedTarget);
   assert.equal(liveSource.includes("tenant.maps.entrySet"), false);
   assert.equal(liveSource.includes("tenant.maps.entryGet"), false);
@@ -38,6 +38,6 @@ test("live broker children use durable per-run result files", () => {
   assert.match(liveSource, /broker-a\.result\.json/);
   assert.match(liveSource, /broker-b\.result\.json/);
   assert.match(liveSource, /replay\.result\.json/);
-  assert.match(liveSource, /readJsonFile<Record<string, unknown>>\(brokerAResultFile\)/);
-  assert.match(liveSource, /persistParentFailure/);
+  assert.match(liveSource, /readJsonFile<JsonObject>\(brokerAResultFile\)/);
+  assert.match(liveSource, /C1-R6B-R4E-R1-PROVIDER-FAILURE\.json/);
 });

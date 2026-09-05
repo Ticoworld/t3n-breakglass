@@ -1,0 +1,9 @@
+{
+  "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+  "claim_id": "claim-1-d6b949ba34c921af54273777bb624dce",
+  "effect_start_id": "start-1-b936eb1291fffc0583c8c60c65141032",
+  "state": "EFFECT_STARTED",
+  "effect_attempts": 1,
+  "confirmed": true,
+  "provider_delete_count": 0
+}

@@ -1,0 +1,96 @@
+{
+  "winner": {
+    "before": {
+      "exact_get_http_status": 200,
+      "list_http_status": 200,
+      "target_id": 162351194,
+      "title": "breakglass-r4e-disposable-20260904",
+      "read_only": true,
+      "target_present": true,
+      "list_contains_target": true,
+      "list_body_valid": true
+    },
+    "delete": {
+      "attempt_number": 1,
+      "method": "DELETE",
+      "owner": "Ticoworld",
+      "repository": "t3n-breakglass-sandbox",
+      "target_id": 162351194,
+      "http_status": 204,
+      "provider_request_id": "E4DE:37E3E8:48BB628:46EBBFD:6A9BDB8A",
+      "provider_acknowledged": true
+    },
+    "after": {
+      "exact_get_http_status": 404,
+      "list_http_status": 200,
+      "target_absent": true,
+      "list_contains_target": false,
+      "list_body_valid": true
+    },
+    "classification": "VERIFIED_ABSENT",
+    "effect_token_cleanup": {
+      "revoke": {
+        "http_status": 204,
+        "success": true
+      },
+      "probe": {
+        "http_status": 401,
+        "refused": true
+      },
+      "ok": true
+    },
+    "verifier_token": {
+      "issued": true,
+      "purpose": "verifier",
+      "requested_permissions": {
+        "administration": "read"
+      },
+      "expires_at": "2026-09-05T10:06:26Z",
+      "repository_selection": "selected",
+      "permissions": {
+        "administration": "read",
+        "metadata": "read"
+      },
+      "repositories": [
+        {
+          "name": "t3n-breakglass-sandbox",
+          "full_name": "Ticoworld/t3n-breakglass-sandbox",
+          "private": true
+        }
+      ],
+      "distinct_from_effect_token": true,
+      "distinct_from_target_preflight_token": true,
+      "exchange_http_status": 201,
+      "mutation_count": 0
+    },
+    "verifier_token_cleanup": {
+      "revoke": {
+        "http_status": 204,
+        "success": true
+      },
+      "probe": {
+        "http_status": 401,
+        "refused": true
+      },
+      "ok": true
+    },
+    "independent_provider_verification": {
+      "repository_scope_http_status": 200,
+      "target_repository": {
+        "full_name": "Ticoworld/t3n-breakglass-sandbox",
+        "private": true
+      },
+      "exact_get_http_status": 404,
+      "list_get_http_status": 200,
+      "list_body_valid": true,
+      "target_absent": true,
+      "list_contains_target": false,
+      "mutation_count": 0
+    }
+  },
+  "loser": {
+    "provider_credential_mint_count": 0,
+    "destructive_call_count": 0,
+    "provider_calls_after_ownership_loss": 0
+  }
+}

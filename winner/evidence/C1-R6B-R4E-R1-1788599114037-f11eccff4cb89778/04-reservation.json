@@ -1,0 +1,21 @@
+{
+  "agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+  "input": {
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT"
+  },
+  "result": {
+    "detail": {},
+    "effect_attempts": 0,
+    "function": "reserve-incident",
+    "incident_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778-INCIDENT",
+    "note": "state transition committed in this transaction",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "WON",
+    "state": "RESERVED"
+  },
+  "provider_mutations": 0,
+  "target_fields_supplied": false
+}

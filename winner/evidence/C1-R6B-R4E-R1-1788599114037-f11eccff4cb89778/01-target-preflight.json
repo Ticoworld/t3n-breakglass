@@ -1,0 +1,108 @@
+{
+  "experiment": "C1 provider target preflight",
+  "mode": "existing",
+  "status": "FRESH_TARGET_READY",
+  "github_api_version": "2022-11-28",
+  "app": {
+    "app_id": "4793116",
+    "installation_id": "158227303"
+  },
+  "repository": {
+    "owner": "Ticoworld",
+    "name": "t3n-breakglass-sandbox",
+    "full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "private": true
+  },
+  "expected_target": {
+    "id": 162351194,
+    "title": "breakglass-r4e-disposable-20260904",
+    "read_only": true
+  },
+  "provider_mutations": {
+    "deploy_key_create_count": 0,
+    "deploy_key_delete_count": 0
+  },
+  "credentials_in_evidence": false,
+  "installation": {
+    "http_status": 200,
+    "response_headers": {
+      "x-github-request-id": "E4D6:1C43B5:47E9673:461BB7F:6A9BDB4C"
+    },
+    "body_metadata": {
+      "id": 158227303,
+      "title": null,
+      "read_only": null,
+      "private": null,
+      "full_name": null,
+      "message": null
+    }
+  },
+  "setup_token": {
+    "minted": true,
+    "purpose": "target-preflight",
+    "requested_permissions": {
+      "administration": "read"
+    },
+    "expires_at": "2026-09-05T10:05:18Z",
+    "repository_selection": "selected",
+    "permissions": {
+      "administration": "read",
+      "metadata": "read"
+    },
+    "repositories": [
+      {
+        "name": "t3n-breakglass-sandbox",
+        "full_name": "Ticoworld/t3n-breakglass-sandbox",
+        "private": true
+      }
+    ],
+    "exchange_http_status": 201
+  },
+  "repository_scope": {
+    "http_status": 200,
+    "target_repository": {
+      "full_name": "Ticoworld/t3n-breakglass-sandbox",
+      "private": true
+    }
+  },
+  "target": {
+    "id": 162351194,
+    "title": "breakglass-r4e-disposable-20260904",
+    "read_only": true,
+    "repository": "Ticoworld/t3n-breakglass-sandbox"
+  },
+  "target_preflight": {
+    "exact_get": {
+      "http_status": 200,
+      "response_headers": {
+        "x-github-request-id": "E4D6:1C43B5:47EC439:461E753:6A9BDB4F",
+        "x-ratelimit-remaining": "4999"
+      },
+      "body_metadata": {
+        "id": 162351194,
+        "title": "breakglass-r4e-disposable-20260904",
+        "read_only": true,
+        "private": null,
+        "full_name": null,
+        "message": null
+      }
+    },
+    "list_get": {
+      "http_status": 200,
+      "response_headers": {
+        "x-github-request-id": "E4D6:1C43B5:47EC93C:461EBF9:6A9BDB53",
+        "x-ratelimit-remaining": "4998"
+      },
+      "body_metadata": null
+    },
+    "list_body_valid": true,
+    "list_contains_target": true,
+    "target_present": true
+  },
+  "token_cleanup": {
+    "revoke_http_status": 204,
+    "revoked": true,
+    "same_token_probe_http_status": 401,
+    "same_token_refused": true
+  }
+}

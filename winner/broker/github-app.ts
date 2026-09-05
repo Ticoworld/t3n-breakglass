@@ -7,7 +7,9 @@ const API = "https://api.github.com";
 const API_VERSION = "2022-11-28";
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, "../..");
 
-type GithubResponse = { status: number; body: unknown; responseHeaders: Record<string, string> };
+export type GithubResponse = { status: number; body: unknown; responseHeaders: Record<string, string> };
+export type InstallationTokenPermission = "read" | "write";
+export type InstallationTokenPurpose = "target-preflight" | "effect" | "verifier";
 
 function b64url(value: string | Uint8Array): string {
   return Buffer.from(value).toString("base64url");
@@ -49,9 +51,12 @@ export function appConfigFromEnvironment(env: NodeJS.ProcessEnv): AppConfig {
   const appId = env.GITHUB_APP_ID;
   const installationId = env.GITHUB_APP_INSTALLATION_ID;
   const privateKeyPath = env.GITHUB_APP_PRIVATE_KEY_PATH;
-  const owner = env.GITHUB_OWNER;
-  const repository = env.GITHUB_REPO;
-  if (!appId || !installationId || !privateKeyPath || !owner || !repository) throw new Error("GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, GITHUB_APP_PRIVATE_KEY_PATH, GITHUB_OWNER, and GITHUB_REPO are required");
+  // The provider target is compile/config-fixed.  Owner/repository may be
+  // repeated by an operator environment for audit visibility, but the broker
+  // can operate without receiving either value as process/model input.
+  const owner = env.GITHUB_OWNER ?? "Ticoworld";
+  const repository = env.GITHUB_REPO ?? "t3n-breakglass-sandbox";
+  if (!appId || !installationId || !privateKeyPath) throw new Error("GITHUB_APP_ID, GITHUB_APP_INSTALLATION_ID, and GITHUB_APP_PRIVATE_KEY_PATH are required");
   if (owner !== "Ticoworld" || repository !== "t3n-breakglass-sandbox") throw new Error("C1 refuses an unexpected GitHub target");
   if (!/^\d+$/.test(appId) || !/^\d+$/.test(installationId)) throw new Error("GitHub App identifiers are invalid");
   const relativeKeyPath = path.relative(REPOSITORY_ROOT, path.resolve(privateKeyPath));
@@ -75,13 +80,23 @@ export async function validateInstallation(config: AppConfig, jwt: string): Prom
   return request("GET", `/app/installations/${config.installationId}`, jwt);
 }
 
-export async function mintInstallationToken(config: AppConfig, jwt: string): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
-  const response = await request("POST", `/app/installations/${config.installationId}/access_tokens`, jwt, { repositories: [config.repository], permissions: { administration: "write" } });
+export async function mintInstallationToken(config: AppConfig, jwt: string, permission: InstallationTokenPermission = "write", purpose: InstallationTokenPurpose = "effect"): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  const response = await request("POST", `/app/installations/${config.installationId}/access_tokens`, jwt, { repositories: [config.repository], permissions: { administration: permission } });
   if (response.status < 200 || response.status >= 300 || !response.body || typeof response.body !== "object") return { response, token: null, metadata: {} };
   const body = response.body as Record<string, unknown>;
   const token = typeof body.token === "string" ? body.token : null;
   const repositories = Array.isArray(body.repositories) ? body.repositories.filter((repo) => repo && typeof repo === "object").map((repo) => ({ name: (repo as Record<string, unknown>).name, full_name: (repo as Record<string, unknown>).full_name, private: (repo as Record<string, unknown>).private })) : [];
-  return { response, token, metadata: { expires_at: body.expires_at ?? null, repository_selection: body.repository_selection ?? null, permissions: body.permissions ?? null, repositories } };
+  return { response, token, metadata: { purpose, requested_permissions: { administration: permission }, expires_at: body.expires_at ?? null, repository_selection: body.repository_selection ?? null, permissions: body.permissions ?? null, repositories } };
+}
+
+/** The target preflight and independent reconciliation paths can only mint read authority. */
+export async function mintReadOnlyInstallationToken(config: AppConfig, jwt: string, purpose: "target-preflight" | "verifier"): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  return mintInstallationToken(config, jwt, "read", purpose);
+}
+
+/** The destructive path is the only path that requests administration write. */
+export async function mintEffectInstallationToken(config: AppConfig, jwt: string): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  return mintInstallationToken(config, jwt, "write", "effect");
 }
 
 export async function listInstallationRepositories(token: string): Promise<GithubResponse> { return request("GET", "/installation/repositories?per_page=100", token); }

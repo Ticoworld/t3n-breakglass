@@ -1,0 +1,8 @@
+{
+  "pass_commit": "390acdf6d6aaeaaa145a68deb102e453be040fd5",
+  "actual_parent": "009c07204432e41cc7487ac244972195dc48765f",
+  "historical_recorded_starting_sha": "06a050d7a5b32ed1cf6e228e06c2d62e6ddd4f4d",
+  "classification": "STALE_RUNNER_STARTING_SHA_FIELD",
+  "protocol_observations_affected": false,
+  "historical_evidence_modified": false
+}

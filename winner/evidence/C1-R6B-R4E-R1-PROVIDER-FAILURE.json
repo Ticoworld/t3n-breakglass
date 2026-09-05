@@ -1,0 +1,13 @@
+{
+  "status": "C1_R6B_R4E_R1_PROVIDER_BACKED_FAILURE",
+  "phase": "PRE_LIVE_CREDENTIAL_GUARD",
+  "full_live_attempt_started": false,
+  "provider_calls": 0,
+  "incident_created": false,
+  "classification": "PROVIDER_BACKED_C1_REMAINS_UNPROVEN",
+  "run_id": null,
+  "incident_id": null,
+  "error": "C1 live runner refuses a GitHub PAT",
+  "no_automatic_second_full_execution": true,
+  "historical_evidence_modified": false
+}

@@ -1,0 +1,25 @@
+{
+  "status": "C1_R6B_R4E_R1_PROVIDER_BACKED_PASS",
+  "classification": "LIVE_EXISTING_FRESH_TARGET_CONFIRMED_OWNER_PROVIDER_EXECUTION_PASS",
+  "target_id": 162351194,
+  "run_id": "C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778",
+  "bundle": "winner/evidence/C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778/bundle.json",
+  "offline_verifier": "winner/evidence/C1-R6B-R4E-R1-1788599114037-f11eccff4cb89778/offline-verifier.json",
+  "exact_claims_earned": [
+    "one fresh existing GitHub target was verified before one private incident",
+    "one persisted confirmed broker owner",
+    "one committed effect-start preceded exactly one observed GitHub DELETE",
+    "independent provider reads verified absence",
+    "effect and verifier credentials were revoked and refused",
+    "terminal replay produced zero provider authority or mutation"
+  ],
+  "exact_claims_forbidden": [
+    "GitHub globally guarantees exactly-once",
+    "atomic T3N/GitHub transaction",
+    "zero-standing GitHub trust root",
+    "GitHub App private key is ephemeral",
+    "real causal webhook ingress",
+    "C2 completion",
+    "winner/submission readiness"
+  ]
+}

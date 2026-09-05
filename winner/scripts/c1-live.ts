@@ -1,224 +1,356 @@
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import os from "node:os";
 import path from "node:path";
+import { SessionOrgDataClient } from "@terminal3/t3n-sdk";
 import { connectTenant, redactError } from "../../scripts/lib.js";
-import { trustedNodeTimeSeconds } from "../../scripts/product.js";
-import { ACTION, BROKER_FUNCTIONS, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, RESERVATION_FUNCTION, contractName } from "./constants.js";
+import { ACTION, BROKER_FUNCTIONS, CONTRACT_TAIL, CONTRACT_VERSION, GITHUB_OWNER, GITHUB_REPOSITORY, INCIDENT_MAP_TAIL, ORGANISATION_DID, RESERVATION_FUNCTION, contractName } from "./constants.js";
 import { parseChildJson } from "./child-protocol.js";
-import { invokeC1, invokeC1OperatorSession, requireValue, redact } from "./t3n.js";
-import { readChildResultBundle, readJsonFile, writeAtomicJson } from "./result-file.js";
+import { invokeC1, invokeC1OperatorSession, requireValue, redact, connectC1Principal } from "./t3n.js";
+import { readJsonFile, writeAtomicJson } from "./result-file.js";
+import { verifyBundle } from "./c1-r6b-r4e-r1-evidence-verify.js";
 
 const root = path.resolve(import.meta.dirname, "../..");
-let liveRunContext: { runDir: string; incidentId: string } | undefined;
+const OPERATOR_DID = "did:t3n:adb9365ee986cc6d0cb4006580782fe6fc7a431f";
+const REMEDIATION_DID = "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019";
+const BROKER_DID = "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57";
+const CONTRACT_NUMERIC_ID = 878;
+const WASM_BYTES = 227011;
+const WASM_SHA256 = "ca7032b112b837b06e4334c10bca8820447f6ea1756b74db9bccd3181ad4d5d0";
+const TARGET_ID = 162351194;
+const TARGET_TITLE = "breakglass-r4e-disposable-20260904";
+const HISTORICAL_TARGET_ID = 162181065;
+const CONTRACT_ID = contractName(OPERATOR_DID);
+const EVIDENCE_ROOT = path.join(root, "winner", "evidence");
+const PACING_MS = 70_000;
 
-function envValue(contents: string, name: string): string { const value = contents.split(/\r?\n/).find((line) => line.startsWith(`${name}=`))?.slice(name.length + 1).trim(); if (!value) throw new Error(`${name} missing from environment file`); return value; }
-async function readEnvFile(file: string, name: string): Promise<string> { return envValue(await readFile(path.join(root, file), "utf8"), name); }
-async function persistParentFailure(error: unknown): Promise<void> {
-  if (!liveRunContext) return;
-  const runDir = liveRunContext.runDir;
-  const childResults = await readChildResultBundle(runDir);
-  await writeAtomicJson(path.join(root, "winner", "evidence", "C1-live-run-failure.json"), { status: "C1_FAIL", incident_id: liveRunContext.incidentId, failure: redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""]), persisted_child_results: childResults, child_result_directory: runDir, credentials_in_evidence: false, provider_mutations: "not_inferred_from_missing_parent_state" });
+type JsonObject = Record<string, any>;
+
+let activeRunDirectory: string | null = null;
+let activeIncidentId: string | null = null;
+let activeEvidence: JsonObject | null = null;
+
+function parseObject(value: unknown): JsonObject {
+  const parsed = typeof value === "string" ? JSON.parse(value) : value;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Terminal 3 response was not an object");
+  return parsed as JsonObject;
 }
-function objectResult(raw: unknown): Record<string, unknown> {
-  const value = typeof raw === "string" ? JSON.parse(raw) : raw;
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("C1 contract result was not a JSON object");
-  return value as Record<string, unknown>;
-}
-function readyNonce(raw: unknown, label: string): string {
-  const value = objectResult(raw).contender_nonce;
-  if (typeof value !== "string" || !/^[0-9a-f]{32}$/.test(value)) throw new Error(`${label} did not publish a valid contender nonce before the claim barrier`);
+
+function valueFromEnvFile(contents: string, name: string): string {
+  const line = contents.split(/\r?\n/).find((entry) => entry.startsWith(`${name}=`));
+  if (!line) throw new Error(`${name} missing from environment file`);
+  const value = line.slice(name.length + 1).trim().replace(/^['"]|['"]$/g, "");
+  if (!value) throw new Error(`${name} is empty`);
   return value;
 }
-function authorityFromResult(raw: unknown, expectedResult: string, functionName: string, incidentId: string): Record<string, unknown> {
-  const response = objectResult(raw);
-  if (response.result !== expectedResult || response.function !== functionName) throw new Error(`C1 ${functionName} returned an unexpected result`);
-  const detail = response.detail;
-  if (!detail || typeof detail !== "object" || Array.isArray(detail)) throw new Error(`C1 ${functionName} did not return authority detail`);
-  const authority = detail as Record<string, unknown>;
-  if (authority.incident_id !== incidentId || authority.action !== ACTION || authority.github_owner !== GITHUB_OWNER || authority.github_repo !== GITHUB_REPOSITORY || authority.max_effects !== 1) throw new Error(`C1 ${functionName} returned an unexpected authority target`);
-  return authority;
+
+async function envFileValue(file: string, name: string): Promise<string> {
+  return valueFromEnvFile(await readFile(path.join(root, file), "utf8"), name);
 }
-function requireActiveAuthority(authority: Record<string, unknown>): void {
-  if (authority.effect_attempts !== 0 || authority.status !== "ACTIVE" || authority.reservation_id !== null || authority.reservation_version !== 0 || authority.effect_claim_id !== null || authority.effect_claim_version !== 0 || authority.final_result_classification !== null) throw new Error("C1 initial authority is not the exact ACTIVE shape");
+
+function childEnvironment(additions: Record<string, string>, remove: string[] = []): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of remove) delete env[key];
+  Object.assign(env, additions);
+  return env;
 }
-function requireReplayTerminal(authority: Record<string, unknown>): void {
-  if (authority.status !== "CLOSED" || authority.effect_attempts !== 1 || authority.final_result_classification !== "VERIFIED_ABSENT") throw new Error("replay is forbidden before independently verified CLOSED authority");
+
+function runChild(script: string, args: string[], env: NodeJS.ProcessEnv): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, ["--import", "tsx", script, ...args], { cwd: root, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => { stdout += String(chunk); });
+    child.stderr.on("data", (chunk) => { stderr += String(chunk); });
+    child.on("close", (code) => resolve({ code: code ?? 1, stdout, stderr }));
+  });
 }
-function isPlatformRefusal(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return /\b(401|403)\b|forbidden|unauthori[sz]ed|delegat|permission|capabilit|not allowed/i.test(message);
-}
-async function wrongRoleProbe(apiKey: string, nodeUrl: string, contractId: string, functionName: string, input: Record<string, unknown>, expectedNote: string): Promise<Record<string, unknown>> {
-  try {
-    const raw = await invokeC1(apiKey, nodeUrl, contractId, functionName, input);
-    const response = objectResult(raw);
-    if (response.result !== "DENIED" || response.function !== functionName || response.note !== expectedNote) throw new Error(`unexpected wrong-role response for ${functionName}`);
-    return { transport_refusal: false, routing_recognized: true, guest_reached: true, application_result: response.result, application_note: response.note, response: raw, state_mutation: false, provider_operation: false };
-  } catch (error) {
-    if (!isPlatformRefusal(error)) throw error;
-    return { transport_refusal: true, routing_recognized: true, guest_reached: false, refusal: redactError(error, [apiKey]), state_mutation: false, provider_operation: false };
+
+async function waitFor(file: string, timeoutMs = 120_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!existsSync(file)) {
+    if (Date.now() > deadline) throw new Error(`timed out waiting for ${path.basename(file)}`);
+    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 }
-function exactGrantEvidence(grant: unknown, functions: readonly string[]): boolean {
-  if (!grant || typeof grant !== "object" || Array.isArray(grant)) return false;
-  const value = grant as Record<string, unknown>;
-  return Array.isArray(value.functions) && value.functions.length === functions.length && functions.every((name) => value.functions?.includes(name)) && Array.isArray(value.scopes) && value.scopes.length === 0 && Array.isArray(value.allowed_hosts) && value.allowed_hosts.length === 0 && value.version_req === CONTRACT_VERSION && value.provider_http === false;
-}
-function run(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<{ stdout: string; stderr: string; code: number }> {
-  return new Promise((resolve) => { const child = spawn(command, args, { cwd: root, env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] }); let stdout = ""; let stderr = ""; child.stdout.on("data", (chunk) => { stdout += String(chunk); }); child.stderr.on("data", (chunk) => { stderr += String(chunk); }); child.on("close", (code) => resolve({ stdout, stderr, code: code ?? 1 })); });
-}
-function childEnv(base: NodeJS.ProcessEnv, additions: Record<string, string>, remove: string[]): NodeJS.ProcessEnv { const env = { ...base }; for (const name of remove) delete env[name]; Object.assign(env, additions); return env; }
 
-async function main() {
+function sanitize(value: unknown, secrets: string[] = [], seen = new WeakSet<object>()): unknown {
+  if (value === null || value === undefined || typeof value === "boolean" || typeof value === "number") return value;
+  if (typeof value === "string") return redact(value, secrets);
+  if (typeof value !== "object") return String(value);
+  if (seen.has(value)) return "[CIRCULAR]";
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((entry) => sanitize(entry, secrets, seen));
+  const output: JsonObject = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const lower = key.toLowerCase();
+    output[key] = lower === "token" || lower.endsWith("_token") || lower.includes("authorization") || lower.includes("api_key") || lower.includes("private_key") || lower.includes("jwt") || lower.includes("pem") || lower.includes("password") || lower === "pat" || lower.endsWith("_pat") ? "[REDACTED]" : sanitize(entry, secrets, seen);
+  }
+  return output;
+}
+
+function relative(file: string): string { return path.relative(root, file).replaceAll("\\", "/"); }
+
+function requireResponse(value: unknown, functionName: string, result?: string): JsonObject {
+  const response = parseObject(value);
+  if (response.function !== functionName) throw new Error(`${functionName} returned an unexpected function label`);
+  if (result !== undefined && response.result !== result) throw new Error(`${functionName} expected ${result}, got ${String(response.result)}`);
+  return response;
+}
+
+function exactGrant(value: unknown, did: string, functions: string[]): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const grant = value as JsonObject;
+  const actual = Array.isArray(grant.functions) ? [...grant.functions].sort() : [];
+  return grant.grantee === did && grant.contract_id === CONTRACT_ID && JSON.stringify(actual) === JSON.stringify([...functions].sort()) && (grant.scopes === undefined || grant.scopes === null || (Array.isArray(grant.scopes) && grant.scopes.length === 0)) && (grant.allowed_hosts === undefined || grant.allowed_hosts === null || (Array.isArray(grant.allowed_hosts) && grant.allowed_hosts.length === 0)) && grant.version_req === CONTRACT_VERSION;
+}
+
+async function persist(file: string, value: unknown): Promise<JsonObject> {
+  await writeAtomicJson(file, value);
+  return readJsonFile<JsonObject>(file);
+}
+
+async function routeProbe(apiKey: string, nodeUrl: string, functionName: string, input: JsonObject): Promise<JsonObject> {
+  const response = requireResponse(await invokeC1(apiKey, nodeUrl, CONTRACT_ID, functionName, input), functionName, "DENIED");
+  if (response.note !== "incident authority does not exist") throw new Error(`${functionName} routing probe did not return the expected harmless application denial`);
+  return { function: functionName, request: input, response, routing_recognized: true, state_mutation: false, provider_action: false };
+}
+
+async function captureReadiness(t3n: Awaited<ReturnType<typeof connectTenant>>["t3n"], operatorKey: string, probeDir: string): Promise<JsonObject> {
+  const incidentId = `C1-R6B-R4E-R1-READINESS-${Date.now()}-${randomBytes(6).toString("hex")}`;
+  const context = await persist(path.join(probeDir, "00-readiness-context.json"), { function: "get-incident", incident_id: incidentId, request_sent: false, provider_counters: { github_api_calls: 0, installation_tokens: 0, deploy_key_creates: 0, deploy_key_deletes: 0, provider_mutations: 0 }, persisted_before_classification: true });
+  let result: JsonObject;
+  try {
+    const response = await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId });
+    result = { function: "get-incident", incident_id: incidentId, outcome_kind: "RETURNED_RESPONSE", request_sent: true, sanitized_response: sanitize(response, [operatorKey]) };
+  } catch (error) {
+    result = { function: "get-incident", incident_id: incidentId, outcome_kind: "THROWN_ERROR", request_sent: true, sanitized_error_message: redactError(error, [operatorKey]) };
+  }
+  const resultFile = await persist(path.join(probeDir, "01-readiness-result.json"), result);
+  const response = resultFile.sanitized_response as JsonObject | undefined;
+  if (resultFile.outcome_kind !== "RETURNED_RESPONSE" || response?.function !== "get-incident" || response.result !== "DENIED" || response.note !== "incident authority does not exist") throw new Error("readiness did not prove a normal nonexistent-incident denial");
+  if (/fuel_per_minute|quota|credit[_ -]?exhausted|insufficient[_ -]?credit/i.test(JSON.stringify(resultFile))) throw new Error("readiness exposed an explicit quota or credit failure");
+  return { context, result: resultFile, classification: "R4E_R1_READINESS_PASS", result_file: relative(path.join(probeDir, "01-readiness-result.json")) };
+}
+
+function safeProviderActivity(value: unknown): JsonObject {
+  const rows = Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as JsonObject).entries) ? (value as JsonObject).entries : [];
+  return { classification: "HOST_ACTIVITY_SUPPORTING_METADATA", entries: rows.map((entry: unknown) => { const row = entry && typeof entry === "object" && !Array.isArray(entry) ? entry as JsonObject : {}; const safe: JsonObject = {}; for (const key of ["seq_no", "sequence", "hash", "timestamp_ms", "timestamp", "actor", "caller", "on_behalf_of", "org", "contract", "function", "function_name", "outcome", "result"]) if (row[key] !== undefined) safe[key] = row[key]; return safe; }) };
+}
+
+async function sleepPacing(): Promise<void> { await new Promise((resolve) => setTimeout(resolve, PACING_MS)); }
+
+async function main(): Promise<void> {
   if (process.env.GITHUB_PAT) throw new Error("C1 live runner refuses a GitHub PAT");
-  const operatorDid = requireValue("C1_OPERATOR_DID");
-  const remediationKey = await readEnvFile(".env.replacement-agent", "REPLACEMENT_AGENT_T3N_API_KEY");
-  const remediationDid = await readEnvFile(".env.replacement-agent", "REPLACEMENT_AGENT_DID");
-  const brokerKey = await readEnvFile(".env.effect-broker", "EFFECT_BROKER_T3N_API_KEY");
-  const brokerDid = await readEnvFile(".env.effect-broker", "EFFECT_BROKER_DID");
-  const actualBarrierDir = path.join(os.tmpdir(), `breakglass-c1-${Date.now()}`);
-  await mkdir(actualBarrierDir, { recursive: true });
-  const barrier = path.join(actualBarrierDir, "release");
-  const proposalsComplete = path.join(actualBarrierDir, "proposals-complete");
-  const { tenantDid, nodeUrl, t3n } = await connectTenant();
-  if (tenantDid !== operatorDid) throw new Error("live runner authenticated as unexpected operator");
-  const incidentId = `C1-${Date.now()}`;
-  liveRunContext = { runDir: actualBarrierDir, incidentId };
-  const registration = JSON.parse(await readFile(path.join(root, "winner", "evidence", "contract-registration.json"), "utf8")) as { operator_did?: string; contract?: { name?: string; version?: string; contract_id?: number; expected_functions_from_local_component?: string[]; locally_verified_component_exports?: string[]; node_routing_verified_functions?: string[] }; map?: { private?: boolean; acl_contract_id?: number } };
-  const config = JSON.parse(await readFile(path.join(root, "winner", "evidence", "delegation-configuration.json"), "utf8")) as { status?: string; operator_did?: string; contract?: string; contract_version?: string; contract_id?: number; remediation_agent_did?: string; effect_broker_did?: string; exact_authority?: { remediation?: unknown; broker?: unknown } };
-  const contractId = contractName(operatorDid);
-  const requiredFunctions = ["create-incident", "get-incident", RESERVATION_FUNCTION, ...BROKER_FUNCTIONS];
-  if (registration.operator_did !== operatorDid || registration.contract?.name !== contractId || registration.contract.version !== CONTRACT_VERSION || !Number.isSafeInteger(registration.contract.contract_id) || registration.contract.contract_id <= 0 || registration.map?.private !== true || registration.map.acl_contract_id !== registration.contract.contract_id) throw new Error("live registration evidence does not match the repaired C1 contract");
-  if (config.status !== "CONFIGURED_VERIFIED" || config.operator_did !== operatorDid || config.contract !== contractId || config.contract_version !== CONTRACT_VERSION || config.contract_id !== registration.contract.contract_id || config.remediation_agent_did !== remediationDid || config.effect_broker_did !== brokerDid || new Set([operatorDid, remediationDid, brokerDid]).size !== 3 || !Array.isArray(registration.contract.node_routing_verified_functions) || registration.contract.node_routing_verified_functions.length !== requiredFunctions.length || !requiredFunctions.every((name) => registration.contract?.node_routing_verified_functions?.includes(name)) || !exactGrantEvidence(config.exact_authority?.remediation, [RESERVATION_FUNCTION]) || !exactGrantEvidence(config.exact_authority?.broker, BROKER_FUNCTIONS)) throw new Error("live identity/configuration does not match the registered C1 contract");
-  const trustedTimeBeforeCreate = await trustedNodeTimeSeconds(nodeUrl);
-  const targetChildEnv = childEnv(process.env, {}, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "EFFECT_BROKER_T3N_API_KEY", "GITHUB_PAT"]);
-  const targetRun = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "prepare-target.ts")], targetChildEnv);
-  if (targetRun.code !== 0) throw new Error(`target setup failed: ${redact(targetRun.stderr, [brokerKey])}`);
-  const targetSetup = parseChildJson(targetRun.stdout);
-  const target = targetSetup.target as { id: number; title: string; read_only: boolean; repository?: string };
-  if (!Number.isSafeInteger(target.id) || target.id <= 0 || target.read_only !== true || target.repository !== `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`) throw new Error("target setup did not prove the exact private read-only repository target");
-  const createResponse = await invokeC1OperatorSession(t3n, contractId, "create-incident", { incident_id: incidentId, remediation_agent_did: remediationDid, effect_broker_did: brokerDid, deploy_key_id: target.id, ttl_secs: 900 });
-  const createdAuthority = authorityFromResult(createResponse, "WON", "create-incident", incidentId);
-  requireActiveAuthority(createdAuthority);
-  if (createdAuthority.remediation_agent_did !== remediationDid || createdAuthority.effect_broker_did !== brokerDid || createdAuthority.deploy_key_id !== target.id) throw new Error("create-incident returned unexpected effect principals or target");
-  const initialReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
-  const initialAuthority = authorityFromResult(initialReadbackResponse, "FOUND", "get-incident", incidentId);
-  requireActiveAuthority(initialAuthority);
-  if (JSON.stringify(initialAuthority) !== JSON.stringify(createdAuthority)) throw new Error("contract-mediated authority readback mismatch");
-  const wrongRoleChecks: Record<string, unknown> = {};
-  wrongRoleChecks.broker_attempts_reserve = await wrongRoleProbe(brokerKey, nodeUrl, contractId, RESERVATION_FUNCTION, { incident_id: incidentId }, "caller is not the remediation agent");
-  const afterBrokerWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
-  requireActiveAuthority(afterBrokerWrongRole);
-  if (JSON.stringify(afterBrokerWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("broker wrong-role reserve changed the ACTIVE authority");
-  wrongRoleChecks.after_broker_readback = afterBrokerWrongRole;
-  wrongRoleChecks.remediation_attempts_claim = await wrongRoleProbe(remediationKey, nodeUrl, contractId, "claim-effect", { incident_id: incidentId, expected_claim_version: 0, contender_nonce: "00000000000000000000000000000000" }, "caller is not the effect broker");
-  const afterRemediationWrongRole = authorityFromResult(await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId }), "FOUND", "get-incident", incidentId);
-  requireActiveAuthority(afterRemediationWrongRole);
-  if (JSON.stringify(afterRemediationWrongRole) !== JSON.stringify(initialAuthority)) throw new Error("remediation wrong-role claim changed the ACTIVE authority");
-  wrongRoleChecks.after_remediation_readback = afterRemediationWrongRole;
-  const reserveEnv = childEnv(process.env, { AGENT_T3N_API_KEY: remediationKey, AGENT_DID: remediationDid, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId }, ["T3N_API_KEY", "GITHUB_PAT", "EFFECT_BROKER_T3N_API_KEY"]);
-  const reserveChild = await run(process.execPath, ["--import", "tsx", path.join(root, "winner", "scripts", "reserve-agent.ts")], reserveEnv);
+  if (process.env.C1_OPERATOR_DID && process.env.C1_OPERATOR_DID !== OPERATOR_DID) throw new Error("operator DID override mismatch");
+  if (new Set([OPERATOR_DID, REMEDIATION_DID, BROKER_DID]).size !== 3) throw new Error("C1 principals are not three distinct DIDs");
+
+  const operatorKey = requireValue("T3N_API_KEY");
+  const remediationKey = await envFileValue(".env.replacement-agent", "REPLACEMENT_AGENT_T3N_API_KEY");
+  const brokerKey = await envFileValue(".env.effect-broker", "EFFECT_BROKER_T3N_API_KEY");
+  const remediationDid = await envFileValue(".env.replacement-agent", "REPLACEMENT_AGENT_DID");
+  const brokerDid = await envFileValue(".env.effect-broker", "EFFECT_BROKER_DID");
+  if (remediationDid !== REMEDIATION_DID || brokerDid !== BROKER_DID) throw new Error("credential-bound DID metadata does not match fixed C1 principals");
+
+  const { t3n, tenant, tenantDid, nodeUrl } = await connectTenant();
+  if (tenantDid !== OPERATOR_DID) throw new Error("authenticated operator DID mismatch");
+  const inventory = (await tenant.contracts.listDetailed()).contracts.find((item) => item.name === CONTRACT_ID && item.version === CONTRACT_VERSION);
+  const mapStatus = await tenant.maps.getStatus(INCIDENT_MAP_TAIL);
+  if (!inventory || inventory.status !== "active" || mapStatus !== "active") throw new Error("2.0.4 contract or winner-incidents map is not active");
+  const orgData = new SessionOrgDataClient(t3n, nodeUrl);
+  if (!(await orgData.amIAdmin({ orgDid: ORGANISATION_DID }))) throw new Error("operator is not admin of the expected organization");
+  const delegationDocument = await t3n.getMemberDelegation();
+  const remediationGrant = delegationDocument.grants.find((grant) => grant.grantee === REMEDIATION_DID && grant.contract_id === CONTRACT_ID);
+  const brokerGrant = delegationDocument.grants.find((grant) => grant.grantee === BROKER_DID && grant.contract_id === CONTRACT_ID);
+  const remEgress = await orgData.getAgentEgress({ orgDid: ORGANISATION_DID, agentDid: REMEDIATION_DID, contractId: CONTRACT_ID });
+  const brokerEgress = await orgData.getAgentEgress({ orgDid: ORGANISATION_DID, agentDid: BROKER_DID, contractId: CONTRACT_ID });
+  if (!exactGrant(remediationGrant, REMEDIATION_DID, [RESERVATION_FUNCTION]) || !exactGrant(brokerGrant, BROKER_DID, [...BROKER_FUNCTIONS]) || remEgress.egress || brokerEgress.egress) throw new Error("live identity/configuration does not match the frozen C1 delegation");
+
+  const routeDirectory = path.join(EVIDENCE_ROOT, `C1-R6B-R4E-R1-routing-${Date.now()}-${randomBytes(4).toString("hex")}`);
+  await mkdir(routeDirectory, { recursive: true });
+  const routeFinalize = await routeProbe(brokerKey, nodeUrl, "finalize-effect", { incident_id: `C1-R6B-R4E-R1-NONEXISTENT-F-${randomBytes(8).toString("hex")}`, claim_id: "claim-1-00000000000000000000000000000000", effect_start_id: "start-1-00000000000000000000000000000000", classification: "VERIFIED_ABSENT" });
+  const routeReconcile = await routeProbe(brokerKey, nodeUrl, "reconcile-effect", { incident_id: `C1-R6B-R4E-R1-NONEXISTENT-R-${randomBytes(8).toString("hex")}`, claim_id: "claim-1-00000000000000000000000000000000", effect_start_id: "start-1-00000000000000000000000000000000", classification: "VERIFIED_ABSENT" });
+  await persist(path.join(routeDirectory, "finalize-effect-routing.json"), routeFinalize);
+  await persist(path.join(routeDirectory, "reconcile-effect-routing.json"), routeReconcile);
+  const canonicalRegistrationFile = path.join(EVIDENCE_ROOT, "contract-registration.json");
+  const canonicalRegistration = JSON.parse(await readFile(canonicalRegistrationFile, "utf8")) as JsonObject;
+  canonicalRegistration.contract.node_routing_verified_functions = ["create-incident", "get-incident", RESERVATION_FUNCTION, ...BROKER_FUNCTIONS];
+  canonicalRegistration.contract.node_routing_unverified_functions = [];
+  canonicalRegistration.contract.node_routing_observed_via = "R4E-R1 harmless nonexistent-incident probes for finalize-effect and reconcile-effect";
+  canonicalRegistration.contract.node_routing_observed_at_utc = new Date().toISOString();
+  await writeAtomicJson(canonicalRegistrationFile, canonicalRegistration);
+
+  const readinessDirectory = path.join(EVIDENCE_ROOT, `C1-R6B-R4E-R1-readiness-${Date.now()}-${randomBytes(4).toString("hex")}`);
+  await mkdir(readinessDirectory, { recursive: true });
+  const readiness = await captureReadiness(t3n, operatorKey, readinessDirectory);
+  await sleepPacing();
+
+  const runId = `C1-R6B-R4E-R1-${Date.now()}-${randomBytes(8).toString("hex")}`;
+  const runDirectory = path.join(EVIDENCE_ROOT, runId);
+  const incidentId = `${runId}-INCIDENT`;
+  activeRunDirectory = runDirectory;
+  activeIncidentId = incidentId;
+  await mkdir(runDirectory, { recursive: true });
+  const evidence: JsonObject = {
+    kind: "C1_R6B_R4E_R1_PROVIDER_BUNDLE",
+    status: "IN_PROGRESS",
+    run_id: runId,
+    incident_id: null,
+    starting_sha: "390acdf6d6aaeaaa145a68deb102e453be040fd5",
+    main_sha: "4a077035474337b7a1ad16204820e68ed3020477",
+    contract: { name: CONTRACT_ID, version: CONTRACT_VERSION, numeric_id: CONTRACT_NUMERIC_ID, wasm_bytes: WASM_BYTES, wasm_sha256: WASM_SHA256, status: inventory.status },
+    principals: { operator: OPERATOR_DID, remediation_agent: REMEDIATION_DID, effect_broker: BROKER_DID, organization: ORGANISATION_DID, all_distinct: true },
+    configuration: { map: { name: `z:${OPERATOR_DID.slice("did:t3n:".length)}:${INCIDENT_MAP_TAIL}`, status: mapStatus, private: true, acl_basis: CONTRACT_NUMERIC_ID }, delegations: { remediation: { did: REMEDIATION_DID, functions: [RESERVATION_FUNCTION], scopes: [], allowed_hosts: [], version_req: CONTRACT_VERSION }, broker: { did: BROKER_DID, functions: [...BROKER_FUNCTIONS], scopes: [], allowed_hosts: [], version_req: CONTRACT_VERSION } } },
+    incident_count: 1,
+    readiness,
+    routing: { finalize: routeFinalize, reconcile: routeReconcile, all_ten_verified: true },
+    target: { id: TARGET_ID, title: TARGET_TITLE, read_only: true, repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`, historical_target_forbidden: HISTORICAL_TARGET_ID },
+    provider_counters: { preflight_token_mints: 0, effect_token_mints: 0, verifier_token_mints: 0, deploy_key_posts: 0, deploy_key_deletes: 0, provider_mutations: 0 },
+    credentials_in_evidence: false,
+  };
+  activeEvidence = evidence;
+  await persist(path.join(runDirectory, "00-run-context.json"), { phase: "C1-R6B-R4E-R1 existing fresh target provider-backed execution", run_id: runId, starting_sha: evidence.starting_sha, main_sha: evidence.main_sha, contract: evidence.contract, principals: evidence.principals, repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`, expected_target_id: TARGET_ID, expected_target_title: TARGET_TITLE, expected_read_only: true, historical_target_forbidden: HISTORICAL_TARGET_ID, provider_counters: evidence.provider_counters, incident_id: null, persisted_before_provider_preflight: true });
+
+  const appFile = await readFile(path.join(root, ".env.c0r-github-app"), "utf8");
+  const appEnvironment: Record<string, string> = {};
+  for (const name of ["GITHUB_APP_ID", "GITHUB_APP_INSTALLATION_ID", "GITHUB_APP_PRIVATE_KEY_PATH"]) appEnvironment[name] = valueFromEnvFile(appFile, name);
+  const inheritedProviderKeys = Object.keys(process.env).filter((key) => key.startsWith("GITHUB_"));
+  const targetEvidenceFile = path.join(runDirectory, "01-target-preflight.json");
+  const targetChild = await runChild(path.join(root, "winner", "broker", "prepare-target.ts"), [], childEnvironment({ ...appEnvironment, C1_TARGET_MODE: "existing", C1_EXISTING_TARGET_ID: String(TARGET_ID), C1_EXISTING_TARGET_TITLE: TARGET_TITLE, C1_TARGET_EVIDENCE_FILE: targetEvidenceFile }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "EFFECT_BROKER_T3N_API_KEY", "GITHUB_PAT", ...inheritedProviderKeys]));
+  if (targetChild.code !== 0) throw new Error(`target setup failed: ${redact(targetChild.stderr, [brokerKey])}`);
+  const targetSetup = parseChildJson(targetChild.stdout);
+  const target = targetSetup.target as JsonObject;
+  if (Number(target?.id) !== TARGET_ID || target?.title !== TARGET_TITLE || target?.read_only !== true || target?.repository !== `${GITHUB_OWNER}/${GITHUB_REPOSITORY}` || targetSetup.mode !== "existing" || (targetSetup.provider_mutations as JsonObject)?.deploy_key_create_count !== 0) throw new Error("existing target preflight did not prove the exact frozen target without POST");
+  evidence.target_preflight = targetSetup;
+  evidence.provider_counters.preflight_token_mints = 1;
+  await persist(targetEvidenceFile, targetSetup);
+
+  evidence.incident_id = incidentId;
+  const verifiedTargetId = Number(target.id);
+  const create = requireResponse(await invokeC1OperatorSession(t3n, CONTRACT_ID, "create-incident", { incident_id: incidentId, remediation_agent_did: REMEDIATION_DID, effect_broker_did: BROKER_DID, deploy_key_id: verifiedTargetId, ttl_secs: 900 }), "create-incident", "WON");
+  if (create.detail?.action !== ACTION || create.detail?.github_owner !== GITHUB_OWNER || create.detail?.github_repo !== GITHUB_REPOSITORY || create.detail?.deploy_key_id !== TARGET_ID || create.detail?.effect_attempts !== 0 || create.state !== "ACTIVE") throw new Error("incident authority did not bind the exact preflight target");
+  const active = requireResponse(await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId }), "get-incident", "FOUND");
+  if (active.state !== "ACTIVE" || active.detail?.deploy_key_id !== TARGET_ID || active.detail?.effect_attempts !== 0) throw new Error("ACTIVE readback mismatch");
+  evidence.incident = { create, active_readback: active, target_fields_supplied_to_create_from_frozen_preflight: true };
+  await persist(path.join(runDirectory, "02-create.json"), create);
+  await persist(path.join(runDirectory, "03-active-readback.json"), active);
+
+  const reserveEnv = childEnvironment({ AGENT_T3N_API_KEY: remediationKey, AGENT_DID: REMEDIATION_DID, C1_OPERATOR_DID: OPERATOR_DID, C1_INCIDENT_ID: incidentId }, ["T3N_API_KEY", "EFFECT_BROKER_T3N_API_KEY", "GITHUB_PAT"]);
+  const reserveChild = await runChild(path.join(root, "winner", "scripts", "reserve-agent.ts"), [], reserveEnv);
   if (reserveChild.code !== 0) throw new Error(`reserve failed: ${reserveChild.stderr.slice(0, 500)}`);
   const reserveResult = parseChildJson(reserveChild.stdout);
-  const reserveResponse = objectResult(reserveResult.result);
-  if (reserveResponse.result !== "WON" || reserveResponse.function !== RESERVATION_FUNCTION) throw new Error("remediation agent did not commit the expected reservation");
-  const childA = path.join(actualBarrierDir, "broker-a.ready");
-  const childB = path.join(actualBarrierDir, "broker-b.ready");
-  const common = { C1_BARRIER_FILE: barrier, C1_PROPOSALS_COMPLETE_FILE: proposalsComplete, C1_OPERATOR_DID: operatorDid, C1_INCIDENT_ID: incidentId, C1_EXPECTED_CLAIM_VERSION: "0" };
-  const brokerBase = childEnv(process.env, { EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: brokerDid, ...common }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT"]);
-  const brokerAResultFile = path.join(actualBarrierDir, "broker-a.result.json");
-  const brokerBResultFile = path.join(actualBarrierDir, "broker-b.result.json");
-  const aPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childA, C1_RESULT_FILE: brokerAResultFile, C1_CONTENDER_ID: "broker-a" });
-  const bPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], { ...brokerBase, C1_READY_FILE: childB, C1_RESULT_FILE: brokerBResultFile, C1_CONTENDER_ID: "broker-b" });
-  const deadline = Date.now() + 120_000;
-  while ((!existsSync(childA) || !existsSync(childB)) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 25));
-  if (!existsSync(childA) || !existsSync(childB)) throw new Error("broker race children did not reach the common barrier");
-  const readyA = await readJsonFile<Record<string, unknown>>(childA);
-  const readyB = await readJsonFile<Record<string, unknown>>(childB);
-  let nonceA: string;
-  let nonceB: string;
-  try {
-    nonceA = readyNonce(readyA, "broker-a");
-    nonceB = readyNonce(readyB, "broker-b");
-  } catch (error) {
-    await writeFile(barrier, JSON.stringify({ abort: true, reason: "invalid_contender_nonce", incident_id: incidentId }));
+  const reserve = requireResponse(reserveResult.result, RESERVATION_FUNCTION, "WON");
+  if (reserve.state !== "RESERVED") throw new Error("reservation did not reach RESERVED");
+  evidence.reservation = { response: reserve, provider_mutations: 0, target_fields_supplied: false };
+  await persist(path.join(runDirectory, "04-reservation.json"), reserveResult);
+  const reserved = requireResponse(await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId }), "get-incident", "FOUND");
+  if (reserved.state !== "RESERVED" || reserved.detail?.effect_attempts !== 0) throw new Error("RESERVED readback mismatch");
+  evidence.reservation.readback = reserved;
+  await persist(path.join(runDirectory, "05-reserved-readback.json"), reserved);
+
+  const barrier = path.join(runDirectory, "claim-release.json");
+  const proposalsComplete = path.join(runDirectory, "claim-proposals-complete.json");
+  const effectStartReady = path.join(runDirectory, "effect-start-ready.json");
+  const preDeleteRelease = path.join(runDirectory, "pre-delete-release.json");
+  const brokerBase = childEnvironment({ EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: BROKER_DID, C1_BARRIER_FILE: barrier, C1_PROPOSALS_COMPLETE_FILE: proposalsComplete, C1_OPERATOR_DID: OPERATOR_DID, C1_EXPECTED_CLAIM_VERSION: "0", C1_EXPECTED_TARGET_TITLE: TARGET_TITLE, C1_EFFECT_START_READY_FILE: effectStartReady, C1_PRE_DELETE_RELEASE_FILE: preDeleteRelease, ...appEnvironment }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT", ...inheritedProviderKeys]);
+  const brokerAResultFile = path.join(runDirectory, "broker-a.result.json");
+  const brokerBResultFile = path.join(runDirectory, "broker-b.result.json");
+  const brokerAReadyFile = path.join(runDirectory, "broker-a.ready.json");
+  const brokerBReadyFile = path.join(runDirectory, "broker-b.ready.json");
+  const aPromise = runChild(path.join(root, "winner", "broker", "run.ts"), [incidentId], { ...brokerBase, C1_READY_FILE: brokerAReadyFile, C1_RESULT_FILE: brokerAResultFile, C1_CONTENDER_ID: "broker-a" });
+  const bPromise = runChild(path.join(root, "winner", "broker", "run.ts"), [incidentId], { ...brokerBase, C1_READY_FILE: brokerBReadyFile, C1_RESULT_FILE: brokerBResultFile, C1_CONTENDER_ID: "broker-b" });
+  await Promise.all([waitFor(brokerAReadyFile), waitFor(brokerBReadyFile)]);
+  const readyA = await readJsonFile<JsonObject>(brokerAReadyFile);
+  const readyB = await readJsonFile<JsonObject>(brokerBReadyFile);
+  const readyDocs = [readyA, readyB];
+  const pids = readyDocs.map((doc) => doc.process_id);
+  const nonces = readyDocs.map((doc) => doc.contender_nonce);
+  if (!readyDocs.every((doc, index) => doc.incident_id === incidentId && doc.broker_did === BROKER_DID && doc.contender === `broker-${index === 0 ? "a" : "b"}` && typeof doc.contender_nonce === "string" && /^[0-9a-f]{32}$/.test(doc.contender_nonce) && Number.isSafeInteger(doc.process_id) && doc.process_id > 0 && Number.isSafeInteger(doc.ready_at_unix_ms) && doc.ready_at_unix_ms > 0) || new Set(pids).size !== 2 || new Set(nonces).size !== 2) {
+    await writeFile(barrier, JSON.stringify({ abort: true, reason: "invalid_or_duplicate_contender_identity", incident_id: incidentId }));
     await Promise.all([aPromise, bPromise]);
-    throw error;
+    throw new Error("broker identity barrier failed before claim calls");
   }
-  if (nonceA === nonceB) {
-    await writeFile(barrier, JSON.stringify({ abort: true, reason: "duplicate_contender_nonce", incident_id: incidentId }));
-    await Promise.all([aPromise, bPromise]);
-    throw new Error("duplicate contender nonce detected before claim calls; race aborted safely");
-  }
-  await writeFile(barrier, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
-  const proposalDeadline = Date.now() + 120_000;
-  while ((!existsSync(brokerAResultFile) || !existsSync(brokerBResultFile)) && Date.now() < proposalDeadline) await new Promise((resolve) => setTimeout(resolve, 25));
-  if (!existsSync(brokerAResultFile) || !existsSync(brokerBResultFile)) throw new Error("broker proposals were not durably persisted");
-  await writeFile(proposalsComplete, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
+  evidence.broker_race = { contenders: readyDocs, distinct_pids: true, distinct_nonces: true, claim_release_once: true };
+  await writeAtomicJson(barrier, { incident_id: incidentId, released_once: true, released_at_unix_ms: Date.now() });
+  await Promise.all([waitFor(brokerAResultFile), waitFor(brokerBResultFile)]);
+  await writeAtomicJson(proposalsComplete, { incident_id: incidentId, phase: "claim proposals complete", both_results_persisted: true, confirmation_allowed_after_marker: true, completed_at_unix_ms: Date.now() });
+  const effectReadyDeadline = Date.now() + 120_000;
+  while (!existsSync(effectStartReady) && Date.now() < effectReadyDeadline) await new Promise((resolve) => setTimeout(resolve, 10));
+  if (!existsSync(effectStartReady)) throw new Error("confirmed winner did not reach pre-delete effect-start gate");
+  const effectReady = await readJsonFile<JsonObject>(effectStartReady);
+  const preDelete = requireResponse(await invokeC1OperatorSession(t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId }), "get-incident", "FOUND");
+  if (preDelete.state !== "EFFECT_STARTED" || preDelete.detail?.effect_attempts !== 1 || preDelete.detail?.effect_start_id !== effectReady.effect_start_id || preDelete.detail?.final_result_classification !== null) throw new Error("pre-DELETE T3N authority is not confirmed EFFECT_STARTED");
+  evidence.claim_proposals_complete = await readJsonFile<JsonObject>(proposalsComplete);
+  evidence.pre_delete_authority = { effect_ready: effectReady, operator_readback: preDelete, delete_allowed_after_this_read: true };
+  await persist(path.join(runDirectory, "06-claim-proposals-complete.json"), evidence.claim_proposals_complete);
+  await persist(path.join(runDirectory, "07-pre-delete-authority.json"), evidence.pre_delete_authority);
+  await writeAtomicJson(preDeleteRelease, { incident_id: incidentId, released_once: true, operator_authority_verified: true, released_at_unix_ms: Date.now() });
+
   const [a, b] = await Promise.all([aPromise, bPromise]);
-  const brokers = [await readJsonFile<Record<string, unknown>>(brokerAResultFile), await readJsonFile<Record<string, unknown>>(brokerBResultFile)];
+  const brokers = [await readJsonFile<JsonObject>(brokerAResultFile), await readJsonFile<JsonObject>(brokerBResultFile)];
   if (a.code !== 0 || b.code !== 0) throw new Error(`broker child failed after durable result capture: ${a.stderr.slice(0, 500)} ${b.stderr.slice(0, 500)}`);
-  const preReplayReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
-  const preReplayAuthority = authorityFromResult(preReplayReadbackResponse, "FOUND", "get-incident", incidentId);
-  requireReplayTerminal(preReplayAuthority);
-  const replayProposalComplete = path.join(actualBarrierDir, "replay.proposals-complete");
-  const replayEnv = childEnv(process.env, { EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: brokerDid, C1_OPERATOR_DID: operatorDid, C1_EXPECTED_CLAIM_VERSION: String(preReplayAuthority.effect_claim_version), C1_PROPOSALS_COMPLETE_FILE: replayProposalComplete, C1_RESULT_FILE: path.join(actualBarrierDir, "replay.result.json"), C1_READY_FILE: path.join(actualBarrierDir, "replay.ready"), C1_BARRIER_FILE: path.join(actualBarrierDir, "replay.release"), C1_CONTENDER_ID: "replay" }, ["T3N_API_KEY", "AGENT_T3N_API_KEY", "GITHUB_PAT"]);
-  const replayReady = path.join(actualBarrierDir, "replay.ready");
-  const replayRelease = path.join(actualBarrierDir, "replay.release");
-  const replayPromise = run(process.execPath, ["--import", "tsx", path.join(root, "winner", "broker", "run.ts"), incidentId], replayEnv);
-  const replayDeadline = Date.now() + 60_000;
-  while (!existsSync(replayReady) && Date.now() < replayDeadline) await new Promise((resolve) => setTimeout(resolve, 25));
-  if (!existsSync(replayReady)) throw new Error("replay broker did not reach the common barrier");
-  await writeFile(replayRelease, "release");
-  await writeFile(replayProposalComplete, JSON.stringify({ released_at_unix_ms: Date.now(), incident_id: incidentId }));
-  const replay = await replayPromise;
-  if (replay.code !== 0) throw new Error(`replay broker failed: ${redact(replay.stderr, [brokerKey])}`);
-  const replayObservation = await readJsonFile<Record<string, unknown>>(path.join(actualBarrierDir, "replay.result.json"));
-  const postReplayReadbackResponse = await invokeC1OperatorSession(t3n, contractId, "get-incident", { incident_id: incidentId });
-  const finalAuthority = authorityFromResult(postReplayReadbackResponse, "FOUND", "get-incident", incidentId);
-  requireReplayTerminal(finalAuthority);
-  let activity: unknown;
-  try { activity = await t3n.getActivityLog({ contract: CONTRACT_TAIL, limit: 100 }); } catch (error) { activity = { error: redactError(error, [process.env.T3N_API_KEY ?? ""]) }; }
-  const totalDelete = brokers.reduce((sum, item) => sum + Number(item.destructive_call_count ?? 0), 0);
-  const totalTokens = brokers.filter((item) => item.token_minted === true).length;
-  const statuses = brokers.map((item) => item.claim_outcome);
   const winner = brokers.find((item) => item.ownership_confirmation === "CONFIRMED");
   const loser = brokers.find((item) => item.ownership_confirmation === "NOT_OWNER");
-  if (statuses.filter((status) => status === "CLAIM_WON").length !== 1 || statuses.filter((status) => status === "CLAIM_LOST").length !== 1 || brokers.filter((item) => item.ownership_confirmation === "CONFIRMED").length !== 1 || brokers.filter((item) => item.ownership_confirmation === "NOT_OWNER").length !== 1 || totalDelete !== 1 || totalTokens !== 1 || !winner || !loser || loser.token_minted !== false || Number(loser.destructive_call_count ?? -1) !== 0 || loser.delete_attempted !== false || Object.hasOwn(loser, "installation_validation") || Object.hasOwn(loser, "token_scope") || Object.hasOwn(loser, "before") || Object.hasOwn(loser, "delete") || Object.hasOwn(loser, "after") || finalAuthority.status !== "CLOSED" || finalAuthority.effect_attempts !== 1 || finalAuthority.final_result_classification !== "VERIFIED_ABSENT" || replayObservation.claim_outcome !== "CLAIM_LOST" || replayObservation.token_minted !== false || Number(replayObservation.destructive_call_count ?? -1) !== 0 || replayObservation.delete_attempted !== false || winner.token_minted !== true || Number(winner.destructive_call_count ?? -1) !== 1 || winner.delete_attempted !== true || winner.classification !== "VERIFIED_ABSENT" || (winner.revoke as Record<string, unknown> | undefined)?.success !== true || (winner.revoked_token_probe as Record<string, unknown> | undefined)?.refused !== true) throw new Error("C1 kill condition: effect-safe race or replay did not meet the brutal pass criteria");
-  const evidence = { experiment: "C1 effect-safe T3N reservation + JIT GitHub remediation", status: "C1_PASS", date_utc: new Date().toISOString(), branch: "winner-v2-core", tested_git_head: process.env.C1_TESTED_GIT_HEAD ?? null, main_sha: process.env.C1_MAIN_SHA ?? null, t3n: { environment: "testnet", node: nodeUrl, sdk: "@terminal3/t3n-sdk 5.2.0", contract: registration.contract.name, version: registration.contract.version, contract_id: registration.contract.contract_id, trusted_time_before_create: trustedTimeBeforeCreate }, principals: { remediation_agent_did: remediationDid, effect_broker_did: brokerDid, operator_did: operatorDid }, incident_id: incidentId, operator_direct_map_access: false, creation: { request_fields: ["incident_id", "remediation_agent_did", "effect_broker_did", "deploy_key_id", "ttl_secs"], result: createResponse, operator_readback: initialReadbackResponse, exact_readback: true, provider_mutations: 0 }, target: { owner: GITHUB_OWNER, repository: GITHUB_REPOSITORY, deploy_key_id: target.id, title: target.title, read_only: target.read_only, private: true }, initial_authority: initialAuthority, wrong_role_checks: wrongRoleChecks, reservation: { result: reserveResult, provider_mutations: 0 }, broker_race: { common_barrier: { both_ready: true, released: true }, contenders: brokers, winner: winner.contender, loser: loser.contender, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, github_before_after: { independent_provider_observation: brokers.map((item) => ({ contender: item.contender, before: item.before, delete: item.delete, after: item.after, classification: item.classification })) }, final_t3n_authority: finalAuthority, replay: replayObservation, activity, credential_safety: { pat_used: false, jwt_in_evidence: false, installation_token_in_evidence: false, authorization_header_in_evidence: false, private_key_in_evidence: false, ssh_private_key_in_evidence: false, t3n_api_key_in_evidence: false }, classifications: { t3n_contract_claims: "LIVE_T3N", github_state: "LIVE_GITHUB independent-provider-GET/list", token_scope: "GitHub-response metadata", activity: "host-stamped activity metadata" }, allowed_claims: ["one committed C1 effect-claim winner under the demonstrated two-process race", "non-winner performed no provider credential mint or mutation in this run", "one broker-issued GitHub DELETE in this run", "independent provider reads verified final absence", "installation token was repository/permission scoped and explicitly revoked", "replay did not regain effect authority"], limitations: ["No real GitHub webhook ingress was used in C1.", "The GitHub App private key remains a standing trust root.", "The one-effect result is an observed C1 architecture/run property, not a provider-side exactly-once guarantee.", "This is not an atomic GitHub plus T3N transaction or a complete causal/Merkle receipt."] };
-  const setupToken = targetSetup.setup_token && typeof targetSetup.setup_token === "object" ? targetSetup.setup_token as Record<string, unknown> : {};
-  const setupMutations = targetSetup.provider_mutations && typeof targetSetup.provider_mutations === "object" ? targetSetup.provider_mutations as Record<string, unknown> : {};
-  Object.assign(evidence, {
-    fixture_setup: {
-      repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`,
-      deploy_key_create_count: Number(setupMutations.deploy_key_create_count ?? 1),
-      setup_installation_token_count: setupToken.minted === true ? 1 : 0,
-      setup_token_revoked: true,
-      token_scope: { repository_selection: setupToken.repository_selection ?? null, permissions: setupToken.permissions ?? null, expires_at: setupToken.expires_at ?? null },
-    },
-    effect_authority: {
-      winner_installation_token_count: winner.token_minted === true ? 1 : 0,
-      loser_installation_token_count: loser.token_minted === true ? 1 : 0,
-      replay_installation_token_count: replayObservation.token_minted === true ? 1 : 0,
-      repository: `${GITHUB_OWNER}/${GITHUB_REPOSITORY}`,
-      requested_permissions: { administration: "write" },
-    },
-    provider_effect: {
-      winner_delete_count: Number(winner.destructive_call_count ?? 0),
-      loser_delete_count: Number(loser.destructive_call_count ?? 0),
-      replay_delete_count: Number(replayObservation.destructive_call_count ?? 0),
-      total_broker_delete_count: totalDelete,
-    },
-    token_revocation: {
-      winner_effect_token_revoked: (winner.revoke as Record<string, unknown> | undefined)?.success === true,
-      same_token_probe_refused: (winner.revoked_token_probe as Record<string, unknown> | undefined)?.refused === true,
-    },
-  });
-  await mkdir(path.join(root, "winner", "evidence"), { recursive: true });
-  await writeFile(path.join(root, "winner", "evidence", "C1-live-proof.json"), JSON.stringify(evidence, null, 2) + "\n");
-  console.log(JSON.stringify({ status: "C1_PASS", incident_id: incidentId, deploy_key_id: target.id, broker_race: { statuses, token_minted_total: totalTokens, destructive_delete_total: totalDelete }, evidence: "winner/evidence/C1-live-proof.json" }, null, 2));
+  if (!winner || !loser || brokers.filter((item) => item.ownership_confirmation === "CONFIRMED").length !== 1 || brokers.filter((item) => item.ownership_confirmation === "NOT_OWNER").length !== 1) throw new Error("claim confirmation did not produce exactly one owner");
+  if (loser.token_minted !== false || loser.provider_credential_mint_count !== 0 || loser.destructive_call_count !== 0 || loser.delete_attempted !== false || loser.provider_calls_after_ownership_loss !== 0 || Object.keys(loser).some((key) => ["installation_validation", "effect_token", "effect_token_scope", "before", "delete", "after", "verifier_token"].includes(key))) throw new Error("loser crossed the provider hard boundary");
+  evidence.brokers = { broker_a: brokers[0], broker_b: brokers[1], winner: winner.contender, loser: loser.contender, claim_proposals_complete: true, confirmed_owner_count: 1 };
+  evidence.provider_counters.effect_token_mints = winner.provider_credential_mint_count;
+  evidence.provider_counters.verifier_token_mints = winner.verifier_token?.issued === true ? 1 : 0;
+  evidence.provider_counters.deploy_key_deletes = winner.destructive_call_count;
+  evidence.provider_counters.provider_mutations = winner.destructive_call_count;
+  evidence.protocol_order = ["provider_before", "begin-effect", "confirm-effect-start", "pre-delete-authority", "DELETE", "provider_after", "effect_token_revoke", "verifier_issue", "verifier_after", "verifier_revoke", "finalize-effect"];
+  await persist(path.join(runDirectory, "08-broker-a.json"), brokers[0]);
+  await persist(path.join(runDirectory, "09-broker-b.json"), brokers[1]);
+  await persist(path.join(runDirectory, "10-provider-after-and-token-cleanup.json"), { winner: { before: winner.before, delete: winner.delete, after: winner.after, classification: winner.classification, effect_token_cleanup: winner.effect_token_cleanup, verifier_token: winner.verifier_token, verifier_token_cleanup: winner.verifier_token_cleanup, independent_provider_verification: winner.independent_provider_verification }, loser: { provider_credential_mint_count: loser.provider_credential_mint_count, destructive_call_count: loser.destructive_call_count, provider_calls_after_ownership_loss: loser.provider_calls_after_ownership_loss } });
+
+  const terminalBeforeReplay = requireResponse(await invokeC1OperatorSession((await connectTenant()).t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId }), "get-incident", "FOUND");
+  if (terminalBeforeReplay.state !== "CLOSED" || terminalBeforeReplay.detail?.effect_attempts !== 1 || terminalBeforeReplay.detail?.final_result_classification !== "VERIFIED_ABSENT") throw new Error("winner did not finalize CLOSED/VERIFIED_ABSENT");
+  evidence.terminal = terminalBeforeReplay;
+
+  const replayReserveRaw = await invokeC1(remediationKey, nodeUrl, CONTRACT_ID, RESERVATION_FUNCTION, { incident_id: incidentId });
+  const replayReserve = requireResponse(replayReserveRaw, RESERVATION_FUNCTION);
+  if (replayReserve.result === "WON") throw new Error("replay reservation reopened authority");
+  const replayRelease = path.join(runDirectory, "replay-release.json");
+  const replayReady = path.join(runDirectory, "replay.ready.json");
+  const replayResultFile = path.join(runDirectory, "replay.result.json");
+  const replayProposalComplete = path.join(runDirectory, "replay-proposals-complete.json");
+  const replayPromise = runChild(path.join(root, "winner", "broker", "run.ts"), [incidentId], { ...brokerBase, C1_BARRIER_FILE: replayRelease, C1_PROPOSALS_COMPLETE_FILE: replayProposalComplete, C1_READY_FILE: replayReady, C1_RESULT_FILE: replayResultFile, C1_CONTENDER_ID: "replay", C1_EXPECTED_CLAIM_VERSION: String(terminalBeforeReplay.detail?.effect_claim_version ?? 1), C1_EFFECT_START_READY_FILE: "", C1_PRE_DELETE_RELEASE_FILE: "" });
+  await waitFor(replayReady, 60_000);
+  await writeAtomicJson(replayRelease, { incident_id: incidentId, released_once: true });
+  const replay = await replayPromise;
+  if (replay.code !== 0) throw new Error(`replay broker failed: ${redact(replay.stderr, [brokerKey])}`);
+  const replayObservation = await readJsonFile<JsonObject>(replayResultFile);
+  if (replayObservation.token_minted !== false || replayObservation.provider_credential_mint_count !== 0 || replayObservation.destructive_call_count !== 0 || replayObservation.delete_attempted !== false || replayObservation.provider_calls_after_ownership_loss !== 0) throw new Error("terminal replay obtained provider authority");
+  evidence.replay = { remediation_reserve: replayReserve, broker: replayObservation, provider_token_mint_count: 0, destructive_call_count: 0 };
+  await persist(path.join(runDirectory, "11-replay.json"), evidence.replay);
+  const terminalAfterReplay = requireResponse(await invokeC1OperatorSession((await connectTenant()).t3n, CONTRACT_ID, "get-incident", { incident_id: incidentId }), "get-incident", "FOUND");
+  if (JSON.stringify(terminalAfterReplay) !== JSON.stringify(terminalBeforeReplay)) throw new Error("terminal replay changed CLOSED authority");
+  evidence.independent_terminal_reread = terminalAfterReplay;
+  evidence.replay.final_readback = terminalAfterReplay;
+  await persist(path.join(runDirectory, "12-independent-terminal-reread.json"), terminalAfterReplay);
+
+  const activity = safeProviderActivity(await t3n.getActivityLog({ contract: CONTRACT_ID, limit: 200 }));
+  evidence.host_activity = activity;
+  await persist(path.join(runDirectory, "13-host-activity.json"), activity);
+  evidence.status = "C1_R6B_R4E_R1_PROVIDER_BACKED_PASS";
+  evidence.classification = "LIVE_EXISTING_FRESH_TARGET_CONFIRMED_OWNER_PROVIDER_EXECUTION_PASS";
+  evidence.exactly_one_delete = winner.destructive_call_count === 1 && winner.delete?.http_status === 204;
+  evidence.allowed_claims = ["one fresh existing GitHub target was verified before one private incident", "one persisted confirmed broker owner", "one committed effect-start preceded exactly one observed GitHub DELETE", "independent provider reads verified absence", "effect and verifier credentials were revoked and refused", "terminal replay produced zero provider authority or mutation"];
+  evidence.forbidden_claims = ["GitHub globally guarantees exactly-once", "atomic T3N/GitHub transaction", "zero-standing GitHub trust root", "GitHub App private key is ephemeral", "real causal webhook ingress", "C2 completion", "winner/submission readiness"];
+  const bundlePath = path.join(runDirectory, "bundle.json");
+  await persist(bundlePath, evidence);
+  const offline = verifyBundle(bundlePath);
+  await persist(path.join(runDirectory, "offline-verifier.json"), offline);
+  if (!offline.ok) throw new Error(`offline verifier rejected R4E-R1 bundle: ${offline.errors.join("; ")}`);
+  await writeAtomicJson(path.join(EVIDENCE_ROOT, "C1-R6B-R4E-R1-PROVIDER-PROOF.json"), { status: "C1_R6B_R4E_R1_PROVIDER_BACKED_PASS", classification: "LIVE_EXISTING_FRESH_TARGET_CONFIRMED_OWNER_PROVIDER_EXECUTION_PASS", target_id: TARGET_ID, run_id: runId, bundle: relative(bundlePath), offline_verifier: relative(path.join(runDirectory, "offline-verifier.json")), exact_claims_earned: evidence.allowed_claims, exact_claims_forbidden: evidence.forbidden_claims });
+  console.log(JSON.stringify({ status: evidence.status, classification: evidence.classification, run_id: runId, incident_id: incidentId, target_id: TARGET_ID, delete_count: winner.destructive_call_count, evidence: relative(bundlePath) }, null, 2));
 }
 
-main().catch(async (error) => { try { await persistParentFailure(error); } catch { /* retain the original bounded failure below */ } console.error(`C1 live proof failed: ${redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""])}`); process.exitCode = 1; });
+main().catch(async (error) => {
+  const failure = { status: "C1_R6B_R4E_R1_PROVIDER_BACKED_FAILURE", classification: "PROVIDER_BACKED_C1_REMAINS_UNPROVEN", run_id: activeRunDirectory ? path.basename(activeRunDirectory) : null, incident_id: activeIncidentId, error: redactError(error, [process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? "", process.env.GITHUB_PAT ?? ""]), no_automatic_second_full_execution: true, historical_evidence_modified: false };
+  if (activeRunDirectory) await writeAtomicJson(path.join(activeRunDirectory, "failure.json"), { ...failure, partial_evidence: activeEvidence });
+  await writeAtomicJson(path.join(EVIDENCE_ROOT, "C1-R6B-R4E-R1-PROVIDER-FAILURE.json"), failure);
+  console.error(JSON.stringify(failure, null, 2));
+  process.exitCode = 1;
+});

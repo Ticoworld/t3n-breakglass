@@ -17,21 +17,21 @@ test("R6A source exposes the ten-function candidate and committed effect-start b
   assert.match(model, /pub fn begin_effect/);
   assert.match(model, /pub expected_claim_version: u64/);
   const begin = broker.indexOf('"begin-effect"');
-  const deleteCall = broker.indexOf("deleteKey(token");
+  const deleteCall = broker.indexOf("deleteKey(effectToken");
   const finalize = broker.indexOf("evidence.finalize = await finalize");
   assert.ok(begin >= 0 && deleteCall > begin && finalize > deleteCall);
-  assert.match(broker, /effect_attempts !== 1/);
+  assert.match(broker, /effect_attempts: 1/);
   assert.match(broker, /beginEffectSent/);
-  assert.match(broker, /http_status: null, refused: false, transport_error/);
+  assert.match(broker, /effect token cleanup gate failed/);
+  assert.match(broker, /independentVerifier/);
 });
 
 test("R6A replay is gated by a final CLOSED readback", () => {
-  const finalReadback = live.indexOf("preReplayReadbackResponse");
-  const terminalGate = live.indexOf("requireReplayTerminal(preReplayAuthority)");
-  const replay = live.indexOf("const replayEnv");
-  assert.ok(finalReadback >= 0 && terminalGate > finalReadback && replay > terminalGate);
-  assert.match(live, /replay is forbidden before independently verified CLOSED authority/);
-  assert.match(live, /postReplayReadbackResponse/);
+  const finalReadback = live.indexOf("terminalBeforeReplay");
+  const replay = live.indexOf("const replayPromise");
+  assert.ok(finalReadback >= 0 && replay > finalReadback);
+  assert.match(live, /winner did not finalize CLOSED\/VERIFIED_ABSENT/);
+  assert.match(live, /terminalAfterReplay/);
 });
 
 test("R6A child outcomes are atomically durable and parent reads persisted results", async () => {
@@ -43,8 +43,8 @@ test("R6A child outcomes are atomically durable and parent reads persisted resul
     assert.match(broker, /C1_RESULT_FILE/);
     assert.match(broker, /writeAtomicJson\(resultFile, evidence\)/);
     assert.match(broker, /evidenceForFailure/);
-    assert.match(live, /readJsonFile<Record<string, unknown>>\(brokerBResultFile\)/);
-    assert.match(live, /persisted_child_results/);
+    assert.match(live, /readJsonFile<JsonObject>\(brokerBResultFile\)/);
+    assert.match(live, /partial_evidence: activeEvidence/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -113,7 +113,7 @@ test("parent failure evidence consumes durable broker and replay result files", 
 });
 
 test("candidate runner cannot use the old final replay-before-readback order", () => {
-  assert.ok(live.indexOf("const preReplayReadbackResponse") < live.indexOf("const replayPromise"));
+  assert.ok(live.indexOf("const terminalBeforeReplay") < live.indexOf("const replayPromise"));
   assert.equal(live.includes("parseChildJson(a.stdout)"), false);
   assert.equal(live.includes("parseChildJson(b.stdout)"), false);
   assert.equal(live.includes("parseChildJson(replay.stdout)"), false);
