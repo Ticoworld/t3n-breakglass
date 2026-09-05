@@ -1,0 +1,552 @@
+{
+  "artifact": "C2-A-CAUSAL-SOURCE-FREEZE",
+  "status": "C2_A_CAUSAL_SOURCE_AND_INGRESS_CONTRACT_PASS",
+  "phase": "C2-A",
+  "starting_sha": "59067bbec422143305370d3dd945a371777ca337",
+  "starting_branch": "winner-v2-core",
+  "origin_winner_sha_at_start": "59067bbec422143305370d3dd945a371777ca337",
+  "origin_main_sha_at_start": "4a077035474337b7a1ad16204820e68ed3020477",
+  "working_tree_clean_at_start": true,
+  "scope": {
+    "research_and_local_architecture_only": true,
+    "live_webhook_received": false,
+    "valid_live_t3n_incident_created": false,
+    "provider_mutations": 0,
+    "c1_contract_modified": false,
+    "main_modified": false
+  },
+  "repo_archaeology": {
+    "searched_roots": [
+      "winner/",
+      "scripts/",
+      "src/",
+      "tests/",
+      "docs/",
+      "historical evidence"
+    ],
+    "searched_terms": [
+      "webhook",
+      "GitHub event",
+      "delivery ID",
+      "X-GitHub-Event",
+      "X-GitHub-Delivery",
+      "X-Hub-Signature-256",
+      "HMAC",
+      "raw request body",
+      "deduplication",
+      "event digest",
+      "incident source",
+      "security signal",
+      "policy mapping"
+    ],
+    "findings": [
+      "The repository has no pre-existing C2 webhook receiver, GitHub ingress endpoint, durable event store, or policy registry.",
+      "The root src/ directory is absent; current source is split between contract/WIT, root scripts, winner/scripts, and winner/tests.",
+      "The only non-winner webhook search hit is a contract WIT comment describing host webhook dispatch; it is not an ingress implementation.",
+      "winner/scripts/c1-live.ts and historical C1 evidence mention causal webhook ingress only as a future capability or forbidden claim; they do not receive or authenticate GitHub events.",
+      "Existing C1 provider/DID scripts and evidence are execution-plane artifacts and were not promoted into source authentication or C2 authority logic."
+    ],
+    "historical_classification": {
+      "live_real_ingress": [],
+      "local_fixture_only": [],
+      "authentication_logic_only": [],
+      "dedupe_logic_only": [],
+      "stale_not_reusable": [
+        "contract/wit/deps/host-tenant-1.0.0/package.wit webhook-dispatch comment",
+        "C1 future-webhook wording in winner/scripts/c1-live.ts and C1 evidence"
+      ]
+    }
+  },
+  "source_candidates_researched": [
+    {
+      "candidate": "secret_scanning_alert action=created, secret_type=openssh_private_key",
+      "exact_event_or_api": "GitHub webhook event secret_scanning_alert; created action",
+      "delivery": "webhook",
+      "github_authenticates_delivery": "yes, repository webhook HMAC signature",
+      "stable_identifier": "X-GitHub-Delivery GUID, combined with event type and repository identity",
+      "repository_identity": "payload.repository.id and payload.repository.full_name",
+      "exact_deploy_key_id_directly_present": false,
+      "deterministic_exact_target_mapping": "yes, only through a pre-existing policy mapping; never from alert text or an LLM",
+      "semantic_meaning": "GitHub detected a new OpenSSH private-key secret instance in the repository; it does not itself assert that deploy-key X is the credential to revoke",
+      "safe_reproduction": "signed local fixture only in C2-A; no live webhook or provider call",
+      "permissions_and_requirements": "repository Secret scanning alerts read capability for the configured GitHub App/webhook context; Secret Protection/secret scanning must be available for the repository",
+      "current_setup_viability": "viable as the selected future vertical after a real GitHub webhook is configured; not live-ingested in C2-A",
+      "decision": "SELECTED"
+    },
+    {
+      "candidate": "deploy_key action=created",
+      "exact_event_or_api": "GitHub webhook event deploy_key; created action",
+      "delivery": "webhook",
+      "github_authenticates_delivery": "yes when delivered through a configured repository webhook",
+      "stable_identifier": "X-GitHub-Delivery plus event type and repository identity",
+      "repository_identity": "payload.repository and key metadata",
+      "exact_deploy_key_id_directly_present": "the key object identifies the created key, but this is a creation event",
+      "deterministic_exact_target_mapping": "possible for the created key but not a compromise/revocation security signal",
+      "semantic_meaning": "a deploy key was created, not that it is compromised or should be revoked",
+      "safe_reproduction": "not reproduced; a local fixture would not be live evidence",
+      "permissions_and_requirements": "GitHub App read-level Deployments permission according to webhook event documentation",
+      "current_setup_viability": "not viable for the causal revoke vertical",
+      "decision": "REJECTED_SEMANTICS"
+    },
+    {
+      "candidate": "secret scanning REST alerts",
+      "exact_event_or_api": "REST API secret-scanning endpoints for listing/getting repository alerts",
+      "delivery": "API poll",
+      "github_authenticates_delivery": "API token authenticates the caller, but there is no signed event delivery",
+      "stable_identifier": "alert number/ID is stable for an alert",
+      "repository_identity": "repository path in the API route and alert response",
+      "exact_deploy_key_id_directly_present": false,
+      "deterministic_exact_target_mapping": "yes only through pre-existing policy, but polling alone lacks a signed delivery event contract",
+      "semantic_meaning": "current alert state, not an authenticated event stream or exact deploy-key compromise assertion",
+      "safe_reproduction": "not called in C2-A",
+      "permissions_and_requirements": "Secret scanning alerts read permission/token",
+      "current_setup_viability": "possible future reconciliation source, rejected for this webhook ingress vertical",
+      "decision": "REJECTED_NO_SIGNED_EVENT"
+    },
+    {
+      "candidate": "organization or enterprise audit log security-alert events",
+      "exact_event_or_api": "GitHub audit log entries for security/secret-scanning activity",
+      "delivery": "audit log API/stream depending plan and integration",
+      "github_authenticates_delivery": "API access authenticates the reader; audit records are not X-Hub-Signature-256 webhook deliveries",
+      "stable_identifier": "audit log event ID/actor/time fields, subject to audit-log retention and access model",
+      "repository_identity": "some audit records contain repo/repository_id",
+      "exact_deploy_key_id_directly_present": false,
+      "deterministic_exact_target_mapping": "not enough by itself for an exact deploy-key target; would still require pre-existing policy and a different source-auth contract",
+      "semantic_meaning": "an audit record of an action/state change, not necessarily a credential-compromise assertion",
+      "safe_reproduction": "not queried or mutated in C2-A",
+      "permissions_and_requirements": "organization/enterprise audit-log access and applicable GitHub plan",
+      "current_setup_viability": "not the selected repository-webhook vertical",
+      "decision": "REJECTED_SOURCE_CONTRACT"
+    },
+    {
+      "candidate": "secret_scanning_alert_location or secret_scanning_scan",
+      "exact_event_or_api": "GitHub webhook events for an additional alert location or scan completion",
+      "delivery": "webhook",
+      "github_authenticates_delivery": "yes when delivered through a configured webhook",
+      "stable_identifier": "X-GitHub-Delivery plus event type and repository identity",
+      "repository_identity": "payload.repository",
+      "exact_deploy_key_id_directly_present": false,
+      "deterministic_exact_target_mapping": "possible only through policy, but these events are not the selected new-alert trigger",
+      "semantic_meaning": "additional location or scan completion, weaker/different signal than a new alert",
+      "safe_reproduction": "not reproduced",
+      "permissions_and_requirements": "Secret scanning capability and webhook configuration",
+      "current_setup_viability": "rejected for the single selected vertical",
+      "decision": "REJECTED_SIGNAL_SCOPE"
+    }
+  ],
+  "selected_source": {
+    "classification": "C2_SOURCE_SELECTED",
+    "provider": "github",
+    "event_type": "secret_scanning_alert",
+    "action": "created",
+    "signal_match": {
+      "secret_type": "openssh_private_key",
+      "alert_state": "open"
+    },
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "causal_statement": "When authenticated GitHub secret_scanning_alert(created) event X for Ticoworld/t3n-breakglass-sandbox has secret_type openssh_private_key and matches pre-existing policy github-openssh-private-key-revoke-v1, BreakGlass may create exactly the deterministically derived C2 incident authorizing only revoke_github_deploy_key against deploy key 162351194.",
+    "causality_boundary": "The GitHub event proves an authenticated, uniquely identified repository security signal. The pre-existing policy, not the event body, supplies the exact action, target, TTL, agent DID, and broker DID."
+  },
+  "official_source_references": [
+    {
+      "url": "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+      "supports": "X-Hub-Signature-256, HMAC-SHA-256, sha256= format, exact payload bytes, timing-safe comparison, and verify-before-parse handling"
+    },
+    {
+      "url": "https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks",
+      "supports": "X-GitHub-Delivery uniqueness/redelivery behavior, event/action checking, webhook secret, HTTPS, and delivery handling"
+    },
+    {
+      "url": "https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+      "supports": "secret_scanning_alert and deploy_key webhook event families, actions, payload repository identity, alert/key fields, and app permission context"
+    },
+    {
+      "url": "https://github.com/octokit/webhooks/blob/main/payload-types/schema.d.ts",
+      "supports": "GitHub-maintained machine-readable webhook payload variants, including secret-scanning alert created/reopened/resolved/revoked shapes"
+    },
+    {
+      "url": "https://docs.github.com/en/rest/secret-scanning/secret-scanning",
+      "supports": "secret-scanning alert number/state/secret-type API facts and Secret scanning alerts read permission context"
+    },
+    {
+      "url": "https://docs.github.com/en/rest/deploy-keys/deploy-keys",
+      "supports": "deploy-key key_id identity and the administration permissions required to get/list/delete a deploy key"
+    },
+    {
+      "url": "https://docs.github.com/en/code-security/concepts/security-at-scale/audit-security-alerts",
+      "supports": "security-alert lifecycle/webhook behavior and the limitation that API views provide current status rather than a historical event stream"
+    },
+    {
+      "url": "https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/audit-log-events-for-your-organization",
+      "supports": "organization audit-log security event fields and the distinction from signed webhook ingress"
+    }
+  ],
+  "authentication_contract": {
+    "raw_http_bytes_retained_until_verification": true,
+    "signature_header": "X-Hub-Signature-256",
+    "algorithm": "HMAC-SHA-256",
+    "comparison": "timing-safe comparison of the 32-byte digest",
+    "required_prefix": "sha256=",
+    "missing_signature": "deny",
+    "malformed_signature": "deny",
+    "wrong_secret": "deny",
+    "body_mutation_after_signing": "deny because digest is computed over retained exact bytes",
+    "json_parse_before_verification": "forbidden",
+    "event_allowlist": ["secret_scanning_alert"],
+    "action_allowlist": ["created"],
+    "repository_validation": "require positive repository.id and repository.full_name, then exact full_name policy match",
+    "normalized_fields_only": "repository identity, event/action, delivery ID, alert number, secret type, open state, event time, and raw-body digest; natural-language payload fields are discarded"
+  },
+  "stable_event_identity": {
+    "delivery_id_header": "X-GitHub-Delivery",
+    "event_identity": "delivery_id + event_type + repository_id + repository_full_name",
+    "event_digest": "SHA-256 over the exact retained raw request body",
+    "dedupe_key": "SHA-256(delivery_id + newline + event_type + newline + repository_id + newline + repository_full_name)",
+    "durability": "one JSON record per hashed dedupe key, created with exclusive file creation and persisted before policy evaluation"
+  },
+  "normalized_facts": {
+    "provider": "github",
+    "event_type": "secret_scanning_alert",
+    "action": "created",
+    "delivery_id": "GUID from X-GitHub-Delivery",
+    "repository_id": "positive safe integer from payload.repository.id",
+    "repository_full_name": "non-empty string from payload.repository.full_name",
+    "alert_number": "positive safe integer from payload.alert.number",
+    "secret_type": "openssh_private_key",
+    "alert_state": "open",
+    "source_event_time": "normalized ISO timestamp from payload.alert.created_at",
+    "raw_body_sha256": "SHA-256 of exact raw body"
+  },
+  "policy_registry": {
+    "schema": [
+      "policy_id",
+      "source_provider",
+      "source_event_type",
+      "repository_identity",
+      "signal_match",
+      "action",
+      "target_reference",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "ttl_secs",
+      "enabled",
+      "created_at",
+      "policy_version"
+    ],
+    "frozen_local_policy": {
+      "policy_id": "github-openssh-private-key-revoke-v1",
+      "source_provider": "github",
+      "source_event_type": "secret_scanning_alert",
+      "repository_identity": {
+        "full_name": "Ticoworld/t3n-breakglass-sandbox"
+      },
+      "signal_match": {
+        "action": "created",
+        "secret_type": "openssh_private_key",
+        "alert_state": "open"
+      },
+      "action": "revoke_github_deploy_key",
+      "target_reference": {
+        "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+        "deploy_key_id": 162351194,
+        "expected_title": "breakglass-r4e-disposable-20260904",
+        "expected_read_only": true,
+        "availability_rule": "must be verified present by a trusted read-only target preflight before any live C1 create call"
+      },
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "ttl_secs": 900,
+      "enabled": true,
+      "created_at": "2026-09-01T00:00:00.000Z",
+      "policy_version": 1
+    },
+    "operator_and_event_parameters": "action, repository, target deploy-key ID, TTL, max effects, agent DID, and broker DID are not accepted from the event body"
+  },
+  "policy_before_event": {
+    "construction": "the local policy is a source-controlled immutable fixture with created_at 2026-09-01; the accepted signed fixtures have alert.created_at after that timestamp",
+    "runtime_guard": "lookup rejects source_event_time <= policy.created_at",
+    "retroactive_policy_rule": "durable terminal dedupe records are not re-evaluated by a later policy version or newly enabled policy",
+    "claim": "policy creation is required to predate the event; C2-A did not create or register a live policy"
+  },
+  "target_derivation": {
+    "source": "policy.target_reference only",
+    "target": "162351194",
+    "repository_binding": "policy target repository must equal policy repository identity and normalized authenticated repository",
+    "event_target_fields": "ignored; no deploy_key_id or target_reference field is normalized",
+    "llm_inference": false,
+    "missing_or_invalid_target_behavior": "A: do not produce a C1 create request and do not create an incident authority; persist a terminal C2_TARGET_NOT_BOUND decision",
+    "current_c1_lifecycle_note": "C1 proved this disposable target absent after its one deletion; C2-A therefore performs no live target read and C2-B must re-establish a present exact target before any authority call"
+  },
+  "incident_derivation": {
+    "formula": "C2-<policy_id>-<SHA-256(policy_id + newline + policy_version + newline + raw_body_sha256) first 24 hex chars>",
+    "same_event_same_policy": "same incident ID",
+    "different_authenticated_body": "different incident ID",
+    "date_now_only": false,
+    "persisted_linkage": [
+      "source_event_id",
+      "source_event_digest",
+      "policy_id",
+      "policy_version",
+      "derived_incident_id"
+    ],
+    "implementation_mapping": {
+      "source_event_id": "delivery_id + event_type + repository_id + repository_full_name",
+      "source_event_digest": "raw_body_sha256",
+      "derived_incident_id": "record.derived_incident_id"
+    }
+  },
+  "dedupe_semantics": {
+    "NEW": "exclusive durable reservation is created; only then may policy evaluation proceed",
+    "DUPLICATE_SAME": "same dedupe key and same raw-body digest return the existing durable decision/reference; no new authority is produced",
+    "CONFLICT": "same dedupe key but different authenticated raw-body digest fails closed and preserves the original record",
+    "process_memory_only": false,
+    "crash_after_reservation": "retry sees RESERVED and can deterministically complete or terminally reject the same reservation; it cannot reserve a second authority for the delivery identity"
+  },
+  "ordering_and_replay": {
+    "exact_duplicate": "DUPLICATE_SAME, existing decision/reference",
+    "delayed_delivery": "accepted only if the event time is after policy creation and policy is currently enabled/version-consistent",
+    "after_terminal_closed": "durable existing incident/reference is returned; no second C1 request is authorized",
+    "conflicting_duplicate": "CONFLICT, fail closed",
+    "event_older_than_policy": "C2_POLICY_STALE, no request",
+    "policy_disabled": "C2_POLICY_DISABLED, no request",
+    "wrong_repository": "authenticated event is normalized but has no matching policy, no request",
+    "valid_signature_wrong_event_type": "UNEXPECTED_EVENT_TYPE, no normalization for authority",
+    "valid_event_no_matching_policy": "C2_NO_MATCHING_POLICY, durable terminal rejection, no request"
+  },
+  "authority_creation_boundary": {
+    "trusted_component": "a future C2 control-plane component after source verification, durable dedupe, policy lookup, target preflight, and deterministic derivation",
+    "allowed_output": "the exact existing C1 create-incident request object",
+    "local_implementation_behavior": "returns the request plan only; does not invoke T3N",
+    "derived_fields": {
+      "incident_id": "derived from policy/version/raw-body digest",
+      "remediation_agent_did": "policy",
+      "effect_broker_did": "policy",
+      "deploy_key_id": "policy target_reference",
+      "ttl_secs": "bounded policy"
+    }
+  },
+  "crash_recovery": [
+    {
+      "state": "crash after dedupe reservation",
+      "prevention": "exclusive durable reservation before policy evaluation",
+      "detection": "record remains RESERVED and is found on retry",
+      "recovery": "re-run deterministic verification/policy/derivation for that reservation or terminally reject it",
+      "limitation": "a local JSON store is not a distributed transaction log; production C2-B needs durable transactional storage"
+    },
+    {
+      "state": "crash after T3N create but before local receipt",
+      "prevention": "C2-A does not send a valid create call; C2-B must persist the derived request/idempotency linkage before sending",
+      "detection": "T3N lookup by derived incident ID and durable dedupe record",
+      "recovery": "reconcile existing incident before retrying; never issue a different incident ID",
+      "limitation": "without a live T3N idempotency/reconciliation primitive, receipt loss cannot be made an atomic cross-system transaction"
+    },
+    {
+      "state": "T3N create response lost",
+      "prevention": "deterministic incident ID and durable source linkage",
+      "detection": "read-back by derived incident ID",
+      "recovery": "return existing incident or retry the exact same create request only after read-back",
+      "limitation": "C2-A does not test or claim live T3N create behavior"
+    },
+    {
+      "state": "event arrives after target absent",
+      "prevention": "trusted exact-target existence preflight is required before create",
+      "detection": "read-only provider target lookup by policy deploy_key_id",
+      "recovery": "choose A: no incident/create request; terminal C2_TARGET_NOT_BOUND and operator must establish a new pre-existing policy/target",
+      "limitation": "C2-A intentionally performs no provider read or mutation"
+    }
+  ],
+  "threat_model": [
+    {
+      "threat": "forged webhook signature",
+      "prevention": "HMAC-SHA-256 over raw bytes with timing-safe comparison and secret not supplied by request",
+      "detection": "INVALID_SIGNATURE",
+      "recovery": "drop and retain security telemetry only",
+      "limitation": "webhook secret rotation/distribution is outside C2-A"
+    },
+    {
+      "threat": "mutated body",
+      "prevention": "verify exact retained raw body before decoding",
+      "detection": "digest/signature mismatch",
+      "recovery": "deny",
+      "limitation": "upstream proxy must preserve bytes and signature headers"
+    },
+    {
+      "threat": "duplicate delivery",
+      "prevention": "durable X-GitHub-Delivery/event/repository key",
+      "detection": "DUPLICATE_SAME",
+      "recovery": "return stored decision/reference",
+      "limitation": "production store availability must be engineered"
+    },
+    {
+      "threat": "same delivery ID with different body",
+      "prevention": "store raw-body digest with identity reservation",
+      "detection": "CONFLICT",
+      "recovery": "fail closed and preserve original record",
+      "limitation": "conflict investigation remains operational work"
+    },
+    {
+      "threat": "target substitution",
+      "prevention": "normalized event excludes target fields; target comes only from policy",
+      "detection": "fixture proves injected deploy_key_id is absent from normalized authority facts",
+      "recovery": "ignore malicious fields or reject malformed source",
+      "limitation": "policy registry integrity must be protected"
+    },
+    {
+      "threat": "repository substitution",
+      "prevention": "authenticated repository full_name must exactly match policy",
+      "detection": "C2_NO_MATCHING_POLICY",
+      "recovery": "no request",
+      "limitation": "the webhook secret must be scoped to the intended GitHub integration"
+    },
+    {
+      "threat": "policy created after event",
+      "prevention": "event timestamp must be after policy.created_at and source policy is pre-existing",
+      "detection": "C2_POLICY_STALE",
+      "recovery": "terminal rejection; later policy does not re-authorize same delivery",
+      "limitation": "event timestamp trust follows authenticated GitHub payload semantics"
+    },
+    {
+      "threat": "disabled policy",
+      "prevention": "enabled is checked at lookup",
+      "detection": "C2_POLICY_DISABLED",
+      "recovery": "no request; durable rejection",
+      "limitation": "policy administrative controls are not implemented in C2-A"
+    },
+    {
+      "threat": "stale policy version",
+      "prevention": "policy_version is persisted with derived incident and duplicate replay requires same version",
+      "detection": "version mismatch on replay",
+      "recovery": "return existing state, never create a second authority",
+      "limitation": "version publication must be transactional in production"
+    },
+    {
+      "threat": "unknown event type",
+      "prevention": "strict event allowlist after signature verification",
+      "detection": "UNEXPECTED_EVENT_TYPE",
+      "recovery": "deny",
+      "limitation": "future GitHub event additions require explicit review"
+    },
+    {
+      "threat": "prompt-injected event text",
+      "prevention": "no LLM is in the authority path and natural-language fields are discarded",
+      "detection": "fixture includes injection text with unchanged output",
+      "recovery": "ignore text",
+      "limitation": "downstream human review may still see untrusted text"
+    },
+    {
+      "threat": "malicious strings or oversized/unexpected fields",
+      "prevention": "strict primitive validation and narrow normalization",
+      "detection": "malformed payload errors or ignored unrecognized fields",
+      "recovery": "deny or ignore outside normalized schema",
+      "limitation": "production request-size limits remain required"
+    },
+    {
+      "threat": "LLM attempts to choose another target",
+      "prevention": "LLM absent; exact policy target copied mechanically",
+      "detection": "C1 request schema has only policy-derived target",
+      "recovery": "no authority output if policy target invalid",
+      "limitation": "policy authoring remains a privileged control-plane task"
+    },
+    {
+      "threat": "repeated incident creation",
+      "prevention": "deterministic incident ID plus durable dedupe reservation",
+      "detection": "duplicate status or existing incident reference",
+      "recovery": "return original state",
+      "limitation": "cross-system create reconciliation is deferred to C2-B"
+    },
+    {
+      "threat": "ingress crash after dedupe reservation",
+      "prevention": "reservation is durable before policy evaluation",
+      "detection": "RESERVED record",
+      "recovery": "resume or terminally reject same reservation",
+      "limitation": "local file store is not a production HA database"
+    },
+    {
+      "threat": "crash after T3N create before local receipt",
+      "prevention": "C2-A does not create; C2-B must reconcile by deterministic incident ID",
+      "detection": "T3N read-back",
+      "recovery": "read existing state before retry",
+      "limitation": "no claim of live create idempotency in C2-A"
+    },
+    {
+      "threat": "T3N create response lost",
+      "prevention": "persist request/linkage and deterministic incident ID before live call in next gate",
+      "detection": "read-back by incident ID",
+      "recovery": "return existing or retry exact request",
+      "limitation": "next-gate implementation required"
+    },
+    {
+      "threat": "event after target already absent",
+      "prevention": "target existence preflight before create",
+      "detection": "trusted provider read returns absence",
+      "recovery": "A: no incident/create request, terminal target-not-bound state",
+      "limitation": "C2-A does not call provider and cannot prove current target presence"
+    }
+  ],
+  "c1_create_request_derivation": {
+    "exact_schema": [
+      "incident_id",
+      "remediation_agent_did",
+      "effect_broker_did",
+      "deploy_key_id",
+      "ttl_secs"
+    ],
+    "example_local_output_shape": {
+      "incident_id": "C2-github-openssh-private-key-revoke-v1-<24 hex causal digest>",
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "deploy_key_id": 162351194,
+      "ttl_secs": 900
+    },
+    "live_call": false,
+    "c1_contract_version": "2.0.4",
+    "c1_contract_numeric_id": 878,
+    "c1_wasm_bytes": 227011,
+    "c1_wasm_sha256": "ca7032b112b837b06e4334c10bca8820447f6ea1756b74db9bccd3181ad4d5d0"
+  },
+  "local_tests": {
+    "command": "node --import tsx --test winner/tests/c2-ingress.test.ts winner/tests/c2-dedupe.test.ts winner/tests/c2-policy.test.ts winner/tests/c2-causality.test.ts",
+    "typecheck_command": "npx tsc --noEmit --types node --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck <winner/c2 and winner/tests/c2 files>",
+    "tests": 16,
+    "passed": 16,
+    "failed": 0,
+    "coverage": [
+      "valid signed event",
+      "invalid, malformed, missing, and wrong-secret signature denial",
+      "body mutation denial",
+      "wrong event type",
+      "wrong repository",
+      "no policy",
+      "disabled policy",
+      "policy created after event",
+      "duplicate same",
+      "duplicate conflict",
+      "terminal duplicate cannot be re-authorized by later policy",
+      "target substitution attempt",
+      "malicious prompt text ignored",
+      "same event deterministic incident ID",
+      "different event different incident ID",
+      "missing exact target fails closed without an incident",
+      "exact C1 request schema and values"
+    ],
+    "fixture_status": "signed local fixtures only; not live C2 evidence"
+  },
+  "claims_earned": [
+    "A real GitHub-origin webhook event class was selected for a bounded causal vertical.",
+    "The local ingress verifies the raw signed body before parsing and enforces event/action/repository facts.",
+    "Durable delivery dedupe distinguishes NEW, DUPLICATE_SAME, and CONFLICT.",
+    "A pre-existing policy mechanically binds the authenticated signal to one exact deploy-key ID and the existing C1 request schema.",
+    "The generated C1 request cannot be changed by event-body target/action/TTL/DID text.",
+    "The causal incident ID is deterministic and persisted with source digest and policy version."
+  ],
+  "claims_forbidden": [
+    "a live GitHub webhook was received",
+    "a live causal C2 incident exists",
+    "autonomous remediation completed from real ingress",
+    "C2-B or overall C2 PASS",
+    "submission readiness",
+    "current target existence or provider mutation was proved by C2-A"
+  ],
+  "next_gate": "C2-B — REAL AUTHENTICATED EVENT INGESTION",
+  "next_gate_rule": "receive one real selected GitHub event, verify authentication, prove dedupe, bind the pre-existing policy, derive one exact C1 request, and stop before provider effect unless explicitly authorized"
+}
