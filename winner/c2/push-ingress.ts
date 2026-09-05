@@ -2,7 +2,7 @@ import type { C1CreateRequest, DedupeResult, NormalizedPushEvent, RawGithubReque
 import { reserveDedupe, finalizeDedupe } from "./dedupe.js";
 import { normalizeVerifiedPushEvent } from "./push-source.js";
 import { lookupPreExistingPushPolicy, type C2PushPolicyV2 } from "./push-policy.js";
-import { createImmutablePushReadPlan, type ImmutablePushReadPlan } from "./push-read-plan.js";
+import { createImmutablePushReadPlan, PushAuthorityEligibilityError, type ImmutablePushReadPlan } from "./push-read-plan.js";
 import { derivePushC1CreateRequest } from "./push-c1.js";
 import { verifyPushSecretTransition, type ImmutablePathObservation, type PushTransitionClassification } from "./push-transition.js";
 
@@ -18,7 +18,7 @@ export type PushIngressResult =
       replayed: boolean;
     }
   | {
-      classification: "C2_PUSH_REJECTED" | "C2_PUSH_NO_MATCHING_POLICY" | "C2_PUSH_POLICY_DISABLED" | "C2_PUSH_TRANSITION_REJECTED";
+      classification: "C2_PUSH_REJECTED" | "C2_PUSH_NO_MATCHING_POLICY" | "C2_PUSH_POLICY_DISABLED" | "C2_PUSH_TRANSITION_REJECTED" | "C2_PUSH_NOT_AUTHORITY_ELIGIBLE";
       reason: string;
       dedupe: DedupeResult;
       event: NormalizedPushEvent;
@@ -98,6 +98,10 @@ export async function processPushWebhook(
   try {
     readPlan = createImmutablePushReadPlan(event, policy, options);
   } catch (error) {
+    if (error instanceof PushAuthorityEligibilityError) {
+      await finalizeDedupe(dedupeDirectory, dedupe, { state: "REJECTED", decision: error.code, reason: error.message, policy_id: policy.policy_id, policy_version: policy.policy_version });
+      return { classification: "C2_PUSH_NOT_AUTHORITY_ELIGIBLE", reason: error.message, dedupe, event, policy };
+    }
     const reason = error instanceof Error ? error.message : "immutable read plan could not be created";
     await finalizeDedupe(dedupeDirectory, dedupe, { state: "REJECTED", decision: "C2_PUSH_REJECTED", reason, policy_id: policy.policy_id, policy_version: policy.policy_version });
     return { classification: "C2_PUSH_REJECTED", reason, dedupe, event, policy };

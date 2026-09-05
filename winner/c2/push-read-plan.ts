@@ -15,6 +15,28 @@ export class PushPolicyMismatchError extends Error {
   }
 }
 
+export class PushAuthorityEligibilityError extends Error {
+  readonly code = "C2_PUSH_NOT_AUTHORITY_ELIGIBLE" as const;
+
+  constructor(public readonly reasons: string[]) {
+    super(`push is not authority eligible: ${reasons.join(", ")}`);
+    this.name = "PushAuthorityEligibilityError";
+  }
+}
+
+const ZERO_SHA = "0".repeat(40);
+
+export function assertPushAuthorityEligible(event: NormalizedPushEvent): void {
+  const reasons: string[] = [];
+  if (event.created) reasons.push("created push");
+  if (event.forced) reasons.push("forced push");
+  if (event.deleted) reasons.push("deleted push");
+  if (event.before === ZERO_SHA) reasons.push("zero before SHA");
+  if (event.after === ZERO_SHA) reasons.push("zero after SHA");
+  if (event.before === event.after) reasons.push("before and after SHAs are equal");
+  if (reasons.length > 0) throw new PushAuthorityEligibilityError(reasons);
+}
+
 /**
  * Produces only immutable provider reads. The event supplies commit IDs; the
  * policy supplies the repository/ref/path. No event field can select a path.
@@ -24,6 +46,7 @@ export function createImmutablePushReadPlan(
   policy: C2PushPolicyV2,
   options: { allowLocalFixture?: boolean } = {},
 ): ImmutablePushReadPlan {
+  assertPushAuthorityEligible(event);
   const lookup = lookupPreExistingPushPolicy(event, [policy], options);
   if (lookup.kind !== "MATCH") throw new PushPolicyMismatchError(lookup.kind === "DISABLED" ? "push policy is disabled" : lookup.reason);
   if (event.deleted || event.ref !== policy.ref || event.repository_id !== policy.repository_id || event.repository_full_name !== policy.repository_full_name) {

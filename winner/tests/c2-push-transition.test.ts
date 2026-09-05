@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { normalizeVerifiedPushEvent } from "../c2/push-source.js";
-import { createImmutablePushReadPlan } from "../c2/push-read-plan.js";
+import { assertPushAuthorityEligible, createImmutablePushReadPlan, PushAuthorityEligibilityError } from "../c2/push-read-plan.js";
 import { derivePushC1CreateRequest } from "../c2/push-c1.js";
 import { digestPrivateMaterial, verifyPushSecretTransition } from "../c2/push-transition.js";
 import { immutableContentReadOperations, pushSourceReaderTokenRequest } from "../c2/push-source-reader.js";
@@ -18,6 +18,19 @@ import {
 
 const policy = fixturePolicy();
 const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
+
+test("delivery-authenticated branch-creation, forced, zero-before, and same-SHA pushes cannot enter authority", () => {
+  const cases = [
+    normalizeVerifiedPushEvent(signedPush({ created: true, before: "0".repeat(40) }), PUSH_TEST_SECRET),
+    normalizeVerifiedPushEvent(signedPush({ forced: true }), PUSH_TEST_SECRET),
+    normalizeVerifiedPushEvent(signedPush({ before: "0".repeat(40) }), PUSH_TEST_SECRET),
+    normalizeVerifiedPushEvent(signedPush({ after: PUSH_BEFORE_SHA }), PUSH_TEST_SECRET),
+  ];
+  for (const candidate of cases) {
+    assert.throws(() => assertPushAuthorityEligible(candidate), (error: unknown) => error instanceof PushAuthorityEligibilityError && error.code === "C2_PUSH_NOT_AUTHORITY_ELIGIBLE");
+    assert.throws(() => createImmutablePushReadPlan(candidate, policy, { allowLocalFixture: true }), (error: unknown) => error instanceof PushAuthorityEligibilityError && error.code === "C2_PUSH_NOT_AUTHORITY_ELIGIBLE");
+  }
+});
 
 test("policy-bound push creates exactly two immutable read operations", () => {
   const plan = createImmutablePushReadPlan(event, policy, { allowLocalFixture: true });

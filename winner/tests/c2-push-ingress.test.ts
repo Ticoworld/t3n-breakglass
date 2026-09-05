@@ -37,6 +37,25 @@ test("valid local push transition produces one exact C1 request plan", async (t)
   });
 });
 
+test("delivery-only branch creation is rejected before any source-reader observation or C1 derivation", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const forbiddenObservationAccess = {
+    get before(): never { throw new Error("source reader must not be called"); },
+    get after(): never { throw new Error("source reader must not be called"); },
+  };
+  const result = await processPushWebhook(
+    signedPush({ created: true, before: "0".repeat(40) }),
+    PUSH_TEST_SECRET,
+    dedupeDirectory,
+    [fixturePolicy()],
+    forbiddenObservationAccess,
+    { allowLocalFixture: true },
+  );
+  assert.equal(result.classification, "C2_PUSH_NOT_AUTHORITY_ELIGIBLE");
+  assert.equal(JSON.stringify(result).includes("create_request"), false);
+});
+
 test("same push replay returns the durable request without a second read plan", async (t) => {
   const dedupeDirectory = await directory();
   t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
