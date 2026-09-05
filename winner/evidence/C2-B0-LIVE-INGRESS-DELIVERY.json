@@ -1,0 +1,161 @@
+{
+  "artifact": "C2-B0-LIVE-INGRESS-DELIVERY",
+  "phase": "C2-B0-R1",
+  "classification": "C2_B0_REAL_AUTHENTICATED_PUSH_DELIVERY_PASS",
+  "starting_sha": "53513ff06016ce3afd352eaba1e5d46ac10c8e77",
+  "final_sha": "recorded_by_containing_git_commit",
+  "branch": "winner-v2-core",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "working_tree_clean_at_start": true,
+  "app_readback": {
+    "id": 4793116,
+    "slug": "breakglass-c0r-jit-probe",
+    "permissions": {
+      "administration": "write",
+      "contents": "read",
+      "metadata": "read"
+    },
+    "events": ["push"]
+  },
+  "installation_readback": {
+    "id": 158227303,
+    "account": {"login": "Ticoworld", "type": "User"},
+    "repository_selection": "selected",
+    "permissions": {
+      "administration": "write",
+      "contents": "read",
+      "metadata": "read"
+    },
+    "events": ["push"],
+    "selected_repository_verified_by_token_response": "Ticoworld/t3n-breakglass-sandbox"
+  },
+  "webhook": {
+    "configured": true,
+    "active": true,
+    "url": "https://dde7-197-210-70-114.ngrok-free.app/c2-b0/github-push",
+    "secret_present": true,
+    "secret_value_absent": true,
+    "receiver_forward_target": "http://127.0.0.1:8787/c2-b0/github-push",
+    "raw_body_persisted": false
+  },
+  "source_reader_token": {
+    "requested_permissions": {"contents": "read"},
+    "requested_repository": "Ticoworld/t3n-breakglass-sandbox",
+    "issue_http_status": 201,
+    "actual_permissions": {"contents": "read", "metadata": "read"},
+    "administration_write_granted": false,
+    "repository_selection": "selected",
+    "repositories": [{"name": "t3n-breakglass-sandbox", "full_name": "Ticoworld/t3n-breakglass-sandbox", "private": true}],
+    "harmless_repository_read_http_status": 200,
+    "revoke_http_status": 204,
+    "revoked_token_probe_http_status": 401,
+    "revoked_token_refused": true,
+    "token_value_persisted": false,
+    "jwt_value_persisted": false
+  },
+  "real_delivery": {
+    "delivery_id": "c329990a-a941-11f1-85e6-49fddb7a6a7d",
+    "event": "push",
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "before": "0000000000000000000000000000000000000000",
+    "after": "983a95d2e1f6ef44530490bdc4377bb5f3b44514",
+    "created": true,
+    "forced": false,
+    "deleted": false,
+    "sender_login": "Ticoworld",
+    "received_at": "2026-09-05T15:52:15.549Z",
+    "raw_body_sha256": "3b7c27567913ae3a1d26948c90b577724cd7142c6711b4428ddc0ec41f5aa2c4",
+    "signature_verified": true,
+    "raw_body_persisted": false,
+    "webhook_secret_persisted": false,
+    "authority_processing_attempted": false,
+    "authority_eligible": false,
+    "classification": "B0_DELIVERY_ONLY",
+    "reason": "B0_DELIVERY_ONLY",
+    "source_reader_calls": 0,
+    "c1_request_created": false,
+    "dedupe": {
+      "status": "NEW",
+      "key": "6ca077031cb51dc88afdf071325d2b843fe3644ba094902aace0026a6b39b44e"
+    }
+  },
+  "github_delivery_corroboration": {
+    "classification": "GITHUB_DELIVERY_CORROBORATED",
+    "api": "GET /app/hook/deliveries",
+    "delivery_numeric_id": 3841039795071484000,
+    "guid": "c329990a-a941-11f1-85e6-49fddb7a6a7d",
+    "delivered_at": "2026-09-05T15:52:15.612Z",
+    "event": "push",
+    "status": "OK",
+    "status_code": 202,
+    "installation_id": 158227303,
+    "repository_id": 1350596128,
+    "redelivery": false
+  },
+  "b1_before_baseline": {
+    "branch": "c2-breakglass-demo",
+    "branch_head_sha": "983a95d2e1f6ef44530490bdc4377bb5f3b44514",
+    "ping_path": ".breakglass-c2/ping.txt",
+    "ping_http_status": 200,
+    "secret_path": ".breakglass-c2/exposed-deploy-key",
+    "secret_path_http_status": 404,
+    "secret_path_absent": true
+  },
+  "mutation_counters": {
+    "app_permission_writes": 0,
+    "app_subscription_writes": 0,
+    "webhook_configuration_writes": 0,
+    "harmless_pushes": 1,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "ssh_key_generations": 0,
+    "secret_exposures": 0,
+    "live_policy_v2_creates": 0,
+    "valid_c2_incidents": 0,
+    "c1_create_calls": 0,
+    "provider_effects": 0,
+    "t3n_writes": 0
+  },
+  "tests": {
+    "c2_tests": {"passed": 52, "failed": 0},
+    "product_tests": {"passed": 7, "failed": 0},
+    "typescript_check": "passed",
+    "git_diff_check": "passed",
+    "delivery_only_guard": "passed",
+    "dedupe_same_digest": "DUPLICATE_SAME",
+    "dedupe_altered_digest": "CONFLICT"
+  },
+  "official_sources": [
+    "https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+    "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries",
+    "https://docs.github.com/en/rest/apps/webhooks"
+  ],
+  "sensitive_value_hygiene": {
+    "private_key_generated": false,
+    "private_key_exposed": false,
+    "raw_webhook_body_in_evidence": false,
+    "webhook_secret_in_evidence": false,
+    "source_token_in_evidence": false,
+    "commit_message_persisted": false,
+    "authority_fields_from_delivery_body": false
+  },
+  "claims_earned": [
+    "one real authenticated GitHub push delivery was received from the exact sandbox and ref",
+    "the exact raw request bytes were HMAC verified and reduced to a SHA-256 digest",
+    "the delivery was durably sanitized and classified delivery-only",
+    "a Contents-read-only source token was issued, used, revoked, and refused after revocation",
+    "the exact clean branch head is established as the C2-B1 BEFORE state"
+  ],
+  "claims_forbidden": [
+    "CAUSAL_SECRET_INTRODUCED",
+    "C2 authority creation",
+    "C1 create-incident",
+    "provider remediation",
+    "secret exposure",
+    "deploy-key lifecycle",
+    "C2-B1 completion",
+    "C2-C completion"
+  ]
+}
