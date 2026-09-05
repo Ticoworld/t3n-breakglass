@@ -1,0 +1,340 @@
+{
+  "artifact": "C2-A-R1-SOURCE-VIABILITY",
+  "phase": "C2-A-R1",
+  "classification": "C2_SOURCE_LIVE_NOT_VIABLE_CURRENT_SETUP",
+  "starting_sha": "590abfdcd8efafb0e840be1e5bd37baf70ca9d36",
+  "starting_branch": "winner-v2-core",
+  "origin_sha_at_start": "590abfdcd8efafb0e840be1e5bd37baf70ca9d36",
+  "main_sha_at_start": "4a077035474337b7a1ad16204820e68ed3020477",
+  "working_tree_clean_at_start": true,
+  "scope_and_counters": {
+    "provider_mutations": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "valid_c2_incidents": 0,
+    "c1_create_incident_calls": 0,
+    "t3n_configuration_writes": 0,
+    "github_webhook_triggering_secret_commits": 0,
+    "live_security_events_induced": 0,
+    "read_only_github_calls": [
+      "GET /repos/Ticoworld/t3n-breakglass-sandbox",
+      "GET /repos/Ticoworld/t3n-breakglass-sandbox/secret-scanning/alerts?per_page=1",
+      "GET /repos/Ticoworld/t3n-breakglass-sandbox/secret-scanning/scan-history?per_page=1",
+      "GET /repos/Ticoworld/t3n-breakglass-sandbox/hooks?per_page=100",
+      "GET /app",
+      "GET /app/installations/158227303",
+      "GET /user",
+      "GET /user/memberships/orgs?per_page=100"
+    ],
+    "no_write_requests_sent": true
+  },
+  "repository_class": {
+    "endpoint": "GET https://api.github.com/repos/Ticoworld/t3n-breakglass-sandbox",
+    "http_status": 200,
+    "repository_id": 1350596128,
+    "full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "private": true,
+    "visibility": "private",
+    "owner_login": "Ticoworld",
+    "owner_type": "User",
+    "owner_type_interpretation": "owner.type=User does not by itself prove or disprove Enterprise Managed Users status",
+    "repository_permissions_seen_by_read_only_audit_token": {
+      "admin": true,
+      "maintain": true,
+      "push": true,
+      "triage": true,
+      "pull": true
+    }
+  },
+  "official_availability_requirements": {
+    "secret_scanning_private_user_owned": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "GitHub documents user-owned repositories as eligible on GitHub Enterprise Cloud with Enterprise Managed Users, or on GitHub Enterprise Server when the enterprise has GitHub Secret Protection enabled",
+      "current_repo_match": "not proven; current API host is api.github.com and owner.type=User is not an EMU proof"
+    },
+    "generic_secret_scanning_patterns": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "GitHub documents generic-pattern scanning as available for organization-owned repositories on GitHub Team with GitHub Secret Protection enabled",
+      "current_repo_match": "does not match the documented organization-owned repository class"
+    },
+    "openssh_private_key": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "GitHub lists openssh_private_key as a Generic supported pattern for OpenSSH-format private keys used for SSH authentication, with High precision; pattern availability remains subject to repository feature eligibility and enablement",
+      "current_repo_match": "not proven enabled or available"
+    },
+    "secret_scanning_alert_created_webhook": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "GitHub documents the secret_scanning_alert event family and GitHub-maintained schemas include SecretScanningAlertCreatedEvent with action=created",
+      "current_repo_match": "not proven receivable"
+    },
+    "repository_webhook_vs_github_app": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "The event can be configured for repositories, organizations, or GitHub Apps; the App route requires the event-specific repository permission",
+      "current_repo_match": "existing integration is an App installation, but the App has no event subscription"
+    },
+    "secret_scanning_alerts_permission": {
+      "classification": "FEATURE_DOCUMENTED",
+      "requirement": "At least read-level Secret scanning alerts repository permission is required for a GitHub App to subscribe to this webhook",
+      "current_repo_match": "absent from current App installation"
+    }
+  },
+  "actual_current_repository_feature_state": {
+    "repository_security_and_analysis_field": {
+      "observed": "omitted from the 200 repository response despite repository admin=true",
+      "classification": "REQUIRES_UI_CONFIRMATION",
+      "interpretation": "not treated as proof of enabled or disabled"
+    },
+    "secret_scanning_alerts_api": {
+      "endpoint": "GET /repos/Ticoworld/t3n-breakglass-sandbox/secret-scanning/alerts?per_page=1",
+      "http_status": 403,
+      "accepted_permission_header": "secret_scanning_alerts=read",
+      "response_classification": "not accessible with current PAT; does not prove a live alert exists or that feature is enabled"
+    },
+    "secret_scanning_scan_history_api": {
+      "endpoint": "GET /repos/Ticoworld/t3n-breakglass-sandbox/secret-scanning/scan-history?per_page=1",
+      "http_status": 403,
+      "accepted_permission_header": "secret_scanning_alerts=read",
+      "response_classification": "not accessible with current PAT"
+    },
+    "generic_patterns": {
+      "status": "REQUIRES_UI_CONFIRMATION",
+      "exact_setting": "Repository Settings > Advanced Security > Secret Protection > Generic patterns",
+      "current_eligibility_observation": "documented generic-pattern eligibility does not cover this private user-owned repository class"
+    },
+    "secret_scanning": {
+      "status": "REQUIRES_UI_CONFIRMATION",
+      "exact_setting": "Repository Settings > Advanced Security > Secret Protection",
+      "current_eligibility_observation": "private user-owned eligibility/entitlement is not established programmatically"
+    },
+    "repository_hooks_api": {
+      "endpoint": "GET /repos/Ticoworld/t3n-breakglass-sandbox/hooks?per_page=100",
+      "http_status": 403,
+      "accepted_permission_header": "repository_hooks=read",
+      "status": "REQUIRES_UI_CONFIRMATION",
+      "exact_setting": "Repository Settings > Webhooks",
+      "interpretation": "hook existence/event selection was not guessed"
+    }
+  },
+  "current_app_and_webhook_authority": {
+    "app_endpoint": "GET /app",
+    "app_http_status": 200,
+    "app_id": 4793116,
+    "app_slug": "breakglass-c0r-jit-probe",
+    "app_owner": {
+      "login": "Ticoworld",
+      "type": "User"
+    },
+    "app_permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "app_events": [],
+    "installation_endpoint": "GET /app/installations/158227303",
+    "installation_http_status": 200,
+    "installation_account": {
+      "login": "Ticoworld",
+      "type": "User"
+    },
+    "installation_repository_selection": "selected",
+    "installation_permissions": {
+      "administration": "write",
+      "metadata": "read"
+    },
+    "installation_events": [],
+    "provider_remediation_permission": {
+      "required_for_existing_c1_delete": "administration:write",
+      "current_state": "available on the existing App installation",
+      "separate_from_secret_scanning": true
+    },
+    "secret_scanning_webhook_permission": {
+      "required": "Secret scanning alerts: read",
+      "current_state": "absent",
+      "classification": "C2_SOURCE_APP_PERMISSION_NOT_READY"
+    },
+    "selected_event_subscribable_now": false,
+    "app_blocker": "current App has no Secret scanning alerts permission and no subscribed events; no App permission or event mutation was attempted"
+  },
+  "policy_v1_provenance_correction": {
+    "policy_id": "github-openssh-private-key-revoke-v1",
+    "policy_version": 1,
+    "fixture_created_at_field": "2026-09-01T00:00:00.000Z",
+    "policy_code_introduced_commit": "590abfdcd8efafb0e840be1e5bd37baf70ca9d36",
+    "policy_code_introduced_at": "2026-09-05T10:55:14+01:00",
+    "classification": "FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE",
+    "meaning": "created_at is retained as local fixture metadata only; it is not proof that a live policy existed on 2026-09-01",
+    "live_provenance_required_fields": [
+      "policy_id",
+      "policy_version",
+      "exact target identity",
+      "exact target fingerprint",
+      "source Git commit SHA or durable registry identity",
+      "actual creation timestamp",
+      "creation evidence",
+      "enabled-before-event proof"
+    ],
+    "implementation_guard": "checkLivePolicyProvenance rejects fixture-only policy provenance even when created_at is backdated",
+    "live_policy_created_in_r1": false,
+    "history_rewritten": false
+  },
+  "alert_secret_schema_finding": {
+    "source": "GitHub-maintained octokit/webhooks payload-types/schema.d.ts",
+    "created_event": "SecretScanningAlertCreatedEvent has action=created and an alert object",
+    "alert_secret_field": "alert.secret?: string",
+    "optional": true,
+    "exact_consequence": "If alert.secret is absent, live ingress must fail closed; it must never fall back to any OpenSSH alert revoking the policy target",
+    "secret_type_field": "alert.secret_type is present as a string",
+    "alert_created_at_field": "alert.created_at is present as an ISO timestamp",
+    "repository_field": "repository is present and includes repository identity",
+    "actual_secret_observed": false,
+    "actual_live_event_observed": false
+  },
+  "exact_secret_to_target_binding": {
+    "winner_grade_relation": [
+      "generate one fresh disposable SSH key pair",
+      "install public half as one fresh read-only deploy key T",
+      "independently verify T and derive public-key fingerprint F",
+      "create and durably attest a new live policy before the event with T and F",
+      "receive authenticated secret_scanning_alert(created)",
+      "require alert.secret to be present",
+      "parse the detected OpenSSH private key in memory only and derive public-key fingerprint F'",
+      "require F' == F",
+      "only then resolve T and derive the C1 request"
+    ],
+    "policy_target_field_for_future_live_version": "expected_public_key_fingerprint",
+    "event_secret_to_target_rule": "no alert.secret, malformed private key, unrelated key, or fingerprint mismatch produces authority",
+    "current_implementation_status": "not added to the live path because current source eligibility and App permission gates fail; C2-A v1 remains a local fixture and cannot be used as live authority",
+    "no_fallback": true,
+    "llm_inference": false,
+    "cryptographic_feasibility": "deriving a public key and SHA-256 SSH fingerprint from a complete OpenSSH private-key value is mechanically feasible with an audited in-memory parser/library; the repository currently has no such live-safe implementation and must not use a file-backed ssh-keygen path for webhook secrets",
+    "binding_proof_status": "NOT_PROVEN_LIVE"
+  },
+  "secret_handling_contract": {
+    "verify_signature_before_parse": true,
+    "raw_body": "operate on in-memory bytes; do not persist raw webhook body because it may contain alert.secret",
+    "persist_allowed": [
+      "raw_body_sha256",
+      "delivery metadata",
+      "normalized non-secret facts",
+      "derived public-key fingerprint or non-reversible fingerprint hash"
+    ],
+    "persist_forbidden": [
+      "alert.secret",
+      "private-key text",
+      "raw secret-bearing webhook body",
+      "private key in logs",
+      "private key in evidence",
+      "private key in T3N input",
+      "private key in LLM input"
+    ],
+    "memory_minimization": "derive only the minimum fingerprint; zero/overwrite buffers where reasonably possible",
+    "current_c2_a_state": "current local C2-A persists only raw-body digest and never receives a real secret"
+  },
+  "fresh_target_policy_order": {
+    "current_target": {
+      "deploy_key_id": 162351194,
+      "status": "absent after successful C1 deletion",
+      "c2_b_use": "forbidden"
+    },
+    "required_future_order": [
+      "generate fresh disposable SSH key pair",
+      "install public half as fresh read-only deploy key",
+      "independently verify exact key ID/title/read_only/public key",
+      "derive and store public fingerprint without storing private half",
+      "create/freeze new policy version bound to exact target and fingerprint",
+      "durably attest policy creation and enabled-before-event state",
+      "only after policy freeze induce the causal GitHub event"
+    ],
+    "r1_authorized_steps": [],
+    "new_target_created": false,
+    "policy_registered": false
+  },
+  "safe_real_event_trigger_plan": {
+    "execution_status": "DESIGNED_NOT_EXECUTED",
+    "precondition": "source eligibility, generic-pattern availability, App permission, webhook subscription, fresh target, and live policy provenance must all pass",
+    "trigger": "expose the disposable private half only in the designated sandbox security-event fixture/commit after it is treated as compromised",
+    "push_protection": "if push protection blocks the intentionally disposable test secret, use only an explicit narrowly scoped GitHub test bypass for that one disposable key if presented and separately authorized; never disable protections broadly; otherwise stop",
+    "handling": [
+      "never commit the private key to t3n-breakglass",
+      "never use it for production data",
+      "never reuse it",
+      "destroy it after authorized evidence collection"
+    ],
+    "r1_execution": "not authorized"
+  },
+  "local_repairs_and_tests": {
+    "repair_added": "policy-provenance.ts, provenance metadata on C2_POLICY, and an explicit lookupPreExistingLivePolicy boundary",
+    "binding_repair_added": false,
+    "reason_binding_repair_skipped": "Phase 11 is conditional on live architecture viability; current source and App gates fail, so no fingerprint implementation is promoted",
+    "tests": [
+      "backdated fixture metadata is classified FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE",
+      "live provenance check rejects missing independent creation evidence",
+      "live provenance check rejects missing exact target fingerprint",
+      "existing C2 signed ingress tests remain local-only and do not send network calls"
+    ],
+    "test_command": "node --import tsx --test winner/tests/c2-ingress.test.ts winner/tests/c2-dedupe.test.ts winner/tests/c2-policy.test.ts winner/tests/c2-causality.test.ts",
+    "future_binding_tests_required_before_viable": [
+      "matching private key resolves exact target",
+      "unrelated OpenSSH private key produces no authority",
+      "missing alert.secret produces no authority",
+      "malformed private key produces no authority",
+      "wrong fingerprint produces no authority",
+      "prompt-injection text is irrelevant",
+      "secret absent from logs, evidence, T3N input, and durable dedupe record"
+    ]
+  },
+  "official_sources": [
+    {
+      "url": "https://docs.github.com/en/code-security/concepts/secret-security/secret-scanning",
+      "supports": "private/user-owned repository eligibility requirements"
+    },
+    {
+      "url": "https://docs.github.com/en/code-security/how-tos/secure-your-secrets/detect-secret-leaks/enable-secret-scanning",
+      "supports": "Secret Protection enablement and repository eligibility"
+    },
+    {
+      "url": "https://docs.github.com/en/code-security/how-tos/secure-your-secrets/detect-secret-leaks/enabling-secret-scanning-for-generic-patterns",
+      "supports": "generic-pattern availability and enablement requirement"
+    },
+    {
+      "url": "https://docs.github.com/en/code-security/reference/secret-security/supported-secret-scanning-patterns",
+      "supports": "openssh_private_key generic pattern and precision"
+    },
+    {
+      "url": "https://docs.github.com/en/webhooks/webhook-events-and-payloads",
+      "supports": "secret_scanning_alert event, App subscription permission, repository/App availability"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/octokit/webhooks/main/payload-types/schema.d.ts",
+      "supports": "SecretScanningAlertCreatedEvent and optional alert.secret field"
+    },
+    {
+      "url": "https://docs.github.com/en/rest/authentication/permissions-required-for-github-apps",
+      "supports": "Secret scanning alerts read permission for relevant API operations"
+    },
+    {
+      "url": "https://docs.github.com/en/rest/secret-scanning/secret-scanning",
+      "supports": "secret-scanning alert API behavior and required token permission"
+    }
+  ],
+  "claims_earned": [
+    "The current repository is mechanically private and user-owned with owner login Ticoworld and owner.type User.",
+    "The current App installation has administration:write and metadata:read but lacks Secret scanning alerts read and has no subscribed events.",
+    "GitHub's maintained schema makes alert.secret optional, so exact binding must fail closed when it is absent.",
+    "Policy v1 is explicitly corrected to fixture-only provenance; its backdated created_at is not live provenance.",
+    "A fresh-target, pre-existing-policy, fingerprint-matched future order is frozen without executing it."
+  ],
+  "claims_forbidden": [
+    "secret scanning is enabled on this repository",
+    "openssh_private_key detection is enabled on this repository",
+    "a secret_scanning_alert(created) webhook can currently be received by the installed App",
+    "the current App has Secret scanning alerts permission",
+    "a live policy existed on 2026-09-01",
+    "the exact secret-to-deploy-key fingerprint binding has been live-proven",
+    "a live security event was received or induced",
+    "C2-B readiness or C2 completion"
+  ],
+  "next_gate": {
+    "name": "C2-B — FRESH TARGET + LIVE AUTHENTICATED SECRET-SCANNING EVENT INGESTION",
+    "prerequisite": "do not start until source is classified C2_SOURCE_LIVE_VIABLE after entitlement/UI confirmation and App permission/subscription are separately made ready"
+  }
+}

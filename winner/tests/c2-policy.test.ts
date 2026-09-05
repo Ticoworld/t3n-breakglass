@@ -5,7 +5,8 @@ import path from "node:path";
 import { test } from "node:test";
 import { normalizeVerifiedGithubEvent } from "../c2/github-source.js";
 import { processGithubWebhook } from "../c2/ingress.js";
-import { C2_POLICY, lookupPreExistingPolicy } from "../c2/policy.js";
+import { C2_POLICY, lookupPreExistingLivePolicy, lookupPreExistingPolicy } from "../c2/policy.js";
+import { checkLivePolicyProvenance } from "../c2/policy-provenance.js";
 import { TEST_SECRET, signedFixture } from "./c2-fixture.js";
 
 test("no matching and disabled policies cannot create a C1 request", async (t) => {
@@ -24,6 +25,18 @@ test("a policy created at or after the event is stale", async () => {
   const event = normalizeVerifiedGithubEvent(signedFixture(), TEST_SECRET);
   const result = lookupPreExistingPolicy(event, [{ ...C2_POLICY, created_at: "2026-09-06T00:00:00.000Z" }]);
   assert.equal(result.kind, "STALE");
+});
+
+test("backdated fixture metadata cannot claim live policy provenance", () => {
+  const event = normalizeVerifiedGithubEvent(signedFixture(), TEST_SECRET);
+  const check = checkLivePolicyProvenance(C2_POLICY);
+  assert.equal(C2_POLICY.created_at, "2026-09-01T00:00:00.000Z");
+  assert.equal(C2_POLICY.provenance.classification, "FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE");
+  assert.equal(check.live, false);
+  assert.match(check.reasons.join("; "), /fixture-only/);
+  assert.match(check.reasons.join("; "), /creation evidence/);
+  assert.match(check.reasons.join("; "), /fingerprint/);
+  assert.equal(lookupPreExistingLivePolicy(event, [C2_POLICY]).kind, "NO_MATCH");
 });
 
 test("policy target remains fixed when signed body contains substitution text", async (t) => {

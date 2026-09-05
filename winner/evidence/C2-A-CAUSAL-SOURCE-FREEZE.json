@@ -263,10 +263,11 @@
     "operator_and_event_parameters": "action, repository, target deploy-key ID, TTL, max effects, agent DID, and broker DID are not accepted from the event body"
   },
   "policy_before_event": {
-    "construction": "the local policy is a source-controlled immutable fixture with created_at 2026-09-01; the accepted signed fixtures have alert.created_at after that timestamp",
+    "construction": "the local policy is a source-controlled immutable fixture with created_at 2026-09-01; this timestamp is fixture metadata only and is not live policy provenance",
     "runtime_guard": "lookup rejects source_event_time <= policy.created_at",
     "retroactive_policy_rule": "durable terminal dedupe records are not re-evaluated by a later policy version or newly enabled policy",
-    "claim": "policy creation is required to predate the event; C2-A did not create or register a live policy"
+    "claim": "policy creation is required to predate the event; C2-A did not create or register a live policy",
+    "provenance_classification": "FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE"
   },
   "target_derivation": {
     "source": "policy.target_reference only",
@@ -507,8 +508,8 @@
   "local_tests": {
     "command": "node --import tsx --test winner/tests/c2-ingress.test.ts winner/tests/c2-dedupe.test.ts winner/tests/c2-policy.test.ts winner/tests/c2-causality.test.ts",
     "typecheck_command": "npx tsc --noEmit --types node --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck <winner/c2 and winner/tests/c2 files>",
-    "tests": 16,
-    "passed": 16,
+    "tests": 17,
+    "passed": 17,
     "failed": 0,
     "coverage": [
       "valid signed event",

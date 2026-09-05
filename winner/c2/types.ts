@@ -30,6 +30,20 @@ export interface TargetReference {
   deploy_key_id: number;
   expected_title: string;
   expected_read_only: true;
+  expected_public_key_fingerprint?: string;
+}
+
+export type PolicyProvenanceClassification =
+  | "FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE"
+  | "LIVE_PROVENANCE";
+
+export interface PolicyProvenance {
+  classification: PolicyProvenanceClassification;
+  source_commit_sha: string;
+  durable_registry_identity: string | null;
+  actual_creation_timestamp: string | null;
+  creation_evidence: string | null;
+  enabled_before_event_proof: boolean;
 }
 
 export interface C2Policy {
@@ -52,6 +66,7 @@ export interface C2Policy {
   enabled: boolean;
   created_at: string;
   policy_version: number;
+  provenance: PolicyProvenance;
 }
 
 export interface C1CreateRequest {

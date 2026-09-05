@@ -1,4 +1,5 @@
 import type { C2Policy, NormalizedGithubEvent } from "./types.js";
+import { checkLivePolicyProvenance } from "./policy-provenance.js";
 import {
   C2_ACTION,
   C2_SIGNAL_SECRET_TYPE,
@@ -32,6 +33,14 @@ export const C2_POLICY = {
   // Deliberately fixed before this C2-A local fixture/event date.
   created_at: "2026-09-01T00:00:00.000Z",
   policy_version: 1,
+  provenance: {
+    classification: "FIXTURE_DECLARATION_NOT_LIVE_PROVENANCE",
+    source_commit_sha: "590abfdcd8efafb0e840be1e5bd37baf70ca9d36",
+    durable_registry_identity: null,
+    actual_creation_timestamp: null,
+    creation_evidence: null,
+    enabled_before_event_proof: false,
+  },
 } satisfies C2Policy;
 
 export type PolicyLookupResult =
@@ -58,4 +67,18 @@ export function lookupPreExistingPolicy(
     return { kind: "STALE", policy, reason: "source event time is not after policy creation time" };
   }
   return { kind: "MATCH", policy };
+}
+
+/** Future live ingestion must use this boundary, never the fixture-only lookup. */
+export function lookupPreExistingLivePolicy(
+  event: NormalizedGithubEvent,
+  policies: readonly C2Policy[] = [C2_POLICY],
+): PolicyLookupResult {
+  const result = lookupPreExistingPolicy(event, policies);
+  if (result.kind !== "MATCH") return result;
+  const provenance = checkLivePolicyProvenance(result.policy);
+  if (!provenance.live) {
+    return { kind: "NO_MATCH", reason: `policy lacks independent live provenance: ${provenance.reasons.join(", ")}` };
+  }
+  return result;
 }
