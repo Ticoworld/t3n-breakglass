@@ -16,16 +16,17 @@ test("R4E uses the fixed existing target and refuses PAT fallback", () => {
 
 test("provider work is blocked behind confirmed claim, effect-start, and operator gate", () => {
   const confirmClaim = broker.indexOf('"confirm-claim"', broker.indexOf("const confirmationRaw"));
-  const mint = broker.indexOf("const minted = await mintEffectInstallationToken");
-  const before = broker.indexOf("exactKey(effectToken");
   const begin = broker.indexOf('"begin-effect"');
   const confirmStart = broker.indexOf('"confirm-effect-start"');
+  const mint = broker.indexOf("const minted = await mintEffectInstallationToken");
+  const before = broker.indexOf("exactKey(effectToken");
   const deleteCall = broker.indexOf("deleteKey(effectToken");
   const gate = broker.indexOf("await waitForFile(releaseDelete)");
-  assert.ok(confirmClaim >= 0 && mint > confirmClaim && before > mint && begin > before && confirmStart > begin && gate > confirmStart && deleteCall > gate);
+  assert.ok(confirmClaim >= 0 && begin > confirmClaim && confirmStart > begin && mint > confirmStart && before > mint && gate > before && deleteCall > gate);
   assert.match(broker, /C1_EFFECT_START_READY_FILE/);
   assert.match(broker, /effect_token_cleanup/);
   assert.match(broker, /mintReadOnlyInstallationToken/);
+  assert.match(broker, /minted_after_confirmed_effect_start: true/);
   assert.match(broker, /reconcile-effect/);
 });
 

@@ -150,27 +150,6 @@ async function main() {
     const installation = await validateInstallation(config, jwt);
     evidence.installation_validation = { http_status: installation.status, provider_request_id: installation.responseHeaders["x-github-request-id"] ?? null };
     if (installation.status !== 200) throw new Error(`INSTALLATION_MISMATCH: GitHub installation GET HTTP ${installation.status}`);
-    const minted = await mintEffectInstallationToken(config, jwt);
-    effectToken = minted.token;
-    evidence.token_minted = Boolean(effectToken);
-    evidence.provider_credential_mint_count = effectToken ? 1 : 0;
-    evidence.effect_token = { issued: Boolean(effectToken), ...minted.metadata, exchange_http_status: minted.response.status, mutation_count: 0 };
-    if (!effectToken) throw new Error(`TOKEN_EXCHANGE_FAILED: GitHub returned HTTP ${minted.response.status}`);
-    const repos = await listInstallationRepositories(effectToken);
-    const body = repos.body && typeof repos.body === "object" && !Array.isArray(repos.body) ? repos.body as Record<string, unknown> : {};
-    const repoRows = Array.isArray(body.repositories) ? body.repositories : [];
-    const scoped = repoRows.find((repo) => repo && typeof repo === "object" && (repo as Record<string, unknown>).full_name === `${config.owner}/${config.repository}`) as Record<string, unknown> | undefined;
-    evidence.effect_token_scope = { repository_selection: minted.metadata.repository_selection ?? null, requested_permissions: { administration: "write" }, actual_permissions: minted.metadata.permissions ?? null, expires_at: minted.metadata.expires_at ?? null, repository_access_http_status: repos.status, target_repository: scoped ? { full_name: scoped.full_name, private: scoped.private } : null };
-    if (repos.status !== 200 || !scoped || scoped.private !== true) throw new Error("TOKEN_SCOPE_INVALID: effect token did not prove the exact private repository scope");
-
-    const keyId = Number(target.deploy_key_id);
-    const beforeGet = await exactKey(effectToken, config.owner, config.repository, keyId);
-    const beforeList = await listKeys(effectToken, config.owner, config.repository);
-    const beforeBody = beforeGet.body && typeof beforeGet.body === "object" && !Array.isArray(beforeGet.body) ? beforeGet.body as Record<string, unknown> : {};
-    const beforePresent = beforeGet.status === 200 && Number(beforeBody.id) === keyId && beforeBody.title === process.env.C1_EXPECTED_TARGET_TITLE && beforeBody.read_only === true && beforeList.status === 200 && repositoryListIsWellFormed(beforeList.body) && repositoryContains(beforeList.body, keyId);
-    evidence.before = { exact_get_http_status: beforeGet.status, list_http_status: beforeList.status, target_id: keyId, title: beforeBody.title ?? null, read_only: beforeBody.read_only ?? null, target_present: beforePresent, list_contains_target: repositoryContains(beforeList.body, keyId), list_body_valid: repositoryListIsWellFormed(beforeList.body) };
-    if (!beforePresent) throw new Error("TARGET_PRECHECK_FAILED: target was not present/read-only with the frozen title");
-
     const startNonce = randomBytes(16).toString("hex");
     evidence.effect_start_input = { incident_id: incidentId, claim_id: target.claim_id, start_nonce: startNonce };
     beginEffectSent = true;
@@ -185,6 +164,29 @@ async function main() {
     const confirmation = responseObject(confirmationRaw);
     if (confirmation.result !== "CONFIRMED" || confirmation.function !== "confirm-effect-start") throw new Error("effect-start confirmation did not prove persisted ownership");
     evidence.effect_start_confirmed = true;
+
+    // The destructive installation token is JIT authority. It is minted only
+    // after the contract has durably committed and confirmed effect-start.
+    const minted = await mintEffectInstallationToken(config, jwt);
+    effectToken = minted.token;
+    evidence.token_minted = Boolean(effectToken);
+    evidence.provider_credential_mint_count = effectToken ? 1 : 0;
+    evidence.effect_token = { issued: Boolean(effectToken), ...minted.metadata, exchange_http_status: minted.response.status, mutation_count: 0, minted_after_confirmed_effect_start: true };
+    if (!effectToken) throw new Error(`TOKEN_EXCHANGE_FAILED: GitHub returned HTTP ${minted.response.status}`);
+    const repos = await listInstallationRepositories(effectToken);
+    const body = repos.body && typeof repos.body === "object" && !Array.isArray(repos.body) ? repos.body as Record<string, unknown> : {};
+    const repoRows = Array.isArray(body.repositories) ? body.repositories : [];
+    const scoped = repoRows.find((repo) => repo && typeof repo === "object" && (repo as Record<string, unknown>).full_name === `${config.owner}/${config.repository}`) as Record<string, unknown> | undefined;
+    evidence.effect_token_scope = { repository_selection: minted.metadata.repository_selection ?? null, requested_permissions: { administration: "write" }, actual_permissions: minted.metadata.permissions ?? null, expires_at: minted.metadata.expires_at ?? null, repository_access_http_status: repos.status, target_repository: scoped ? { full_name: scoped.full_name, private: scoped.private } : null, minted_after_confirmed_effect_start: true };
+    if (repos.status !== 200 || !scoped || scoped.private !== true) throw new Error("TOKEN_SCOPE_INVALID: effect token did not prove the exact private repository scope");
+
+    const keyId = Number(target.deploy_key_id);
+    const beforeGet = await exactKey(effectToken, config.owner, config.repository, keyId);
+    const beforeList = await listKeys(effectToken, config.owner, config.repository);
+    const beforeBody = beforeGet.body && typeof beforeGet.body === "object" && !Array.isArray(beforeGet.body) ? beforeGet.body as Record<string, unknown> : {};
+    const beforePresent = beforeGet.status === 200 && Number(beforeBody.id) === keyId && beforeBody.title === process.env.C1_EXPECTED_TARGET_TITLE && beforeBody.read_only === true && beforeList.status === 200 && repositoryListIsWellFormed(beforeList.body) && repositoryContains(beforeList.body, keyId);
+    evidence.before = { exact_get_http_status: beforeGet.status, list_http_status: beforeList.status, target_id: keyId, title: beforeBody.title ?? null, read_only: beforeBody.read_only ?? null, target_present: beforePresent, list_contains_target: repositoryContains(beforeList.body, keyId), list_body_valid: repositoryListIsWellFormed(beforeList.body), read_after_confirmed_effect_start: true };
+    if (!beforePresent) throw new Error("TARGET_PRECHECK_FAILED: target was not present/read-only with the frozen title");
 
     const readyForDelete = process.env.C1_EFFECT_START_READY_FILE;
     const releaseDelete = process.env.C1_PRE_DELETE_RELEASE_FILE;
