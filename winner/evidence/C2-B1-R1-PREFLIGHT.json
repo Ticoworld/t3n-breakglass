@@ -1,0 +1,121 @@
+{
+  "artifact": "C2-B1-R1-PREFLIGHT",
+  "classification": "C2_B1_R1_PREFLIGHT_PASS",
+  "starting_sha": "5c67c452b90fa3da76b3b562564c4bc8526523a8",
+  "repair_commit_sha": "18f75e3a35e99fbbd982aa1468b43029b4e010c1",
+  "final_sha": "recorded_by_containing_git_commit",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "historical_failed_policy_retirement": {
+    "policy_id": "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+    "deploy_key_id": 162414923,
+    "retired": true,
+    "failure_classification": "C2_B1_FAIL_AFTER_CAUSAL_EVENT_VERIFIER_SCHEMA_BUG",
+    "cleanup_proven": true,
+    "retirement_artifact": "C2-B1-R1-HISTORICAL-POLICY-RETIREMENT.json"
+  },
+  "historical_target_state": {
+    "deploy_key_id": 162414923,
+    "current_provider_read_status": 404,
+    "historical_secret_commit": "dc321c7f8a251c50593f7f02008404cf2568f8f5",
+    "secret_remains_in_private_history": true,
+    "reusable": false
+  },
+  "evidence_schema_round_trip": {
+    "builder": "buildB1Evidence",
+    "serializer": "serializeB1Evidence",
+    "shape": "policy.registry_identity present; policy.policy_id absent",
+    "object_json_parse_verifier": "PASS",
+    "identity_absent_rejection": "PASS",
+    "prior_defect_regression": "PASS"
+  },
+  "policy_ambiguity_tests": {
+    "one_valid_enabled": "MATCH",
+    "disabled_historical_plus_valid_enabled": "MATCH",
+    "two_enabled_valid": "AMBIGUOUS",
+    "reversed_order": "same AMBIGUOUS result",
+    "malformed_historical_plus_valid": "valid policy MATCH",
+    "duplicate_identity": "AMBIGUOUS",
+    "stale_deleted_target_first": "AMBIGUOUS until explicitly retired"
+  },
+  "cleanup": {
+    "classification": "C2_B1_R1_BASELINE_CLEANUP_ONLY",
+    "initial_head": "dc321c7f8a251c50593f7f02008404cf2568f8f5",
+    "cleanup_commit_sha": "0ef99189955ff8bbdd18b1918937076883581528",
+    "changed_path_only": ".breakglass-c2/exposed-deploy-key",
+    "history_rewritten": false,
+    "ping_http_status": 200,
+    "secret_path_http_status": 404
+  },
+  "new_b1_before_sha": "0ef99189955ff8bbdd18b1918937076883581528",
+  "cleanup_delivery": {
+    "delivery_id": "2340d260-a98b-11f1-8b13-9a8912fb3fe4",
+    "event": "push",
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "before": "dc321c7f8a251c50593f7f02008404cf2568f8f5",
+    "after": "0ef99189955ff8bbdd18b1918937076883581528",
+    "created": false,
+    "forced": false,
+    "deleted": false,
+    "signature_verified": true,
+    "raw_body_sha256": "907b951df14f266aff4f3ed0a00bc15a295f34703da566b751dc992d53b32143",
+    "raw_body_persisted": false,
+    "authority_processing_attempted": false,
+    "authority_eligible": false,
+    "source_reader_calls": 0,
+    "c1_request_created": false,
+    "dedupe_status": "NEW"
+  },
+  "github_delivery_corroboration": {
+    "classification": "GITHUB_DELIVERY_CORROBORATED",
+    "delivery_id": "2340d260-a98b-11f1-8b13-9a8912fb3fe4",
+    "event": "push",
+    "delivered_at": "2026-09-06T00:37:29.568Z",
+    "status": "OK",
+    "status_code": 202,
+    "installation_id": 158227303,
+    "repository_id": 1350596128,
+    "redelivery": false
+  },
+  "mutation_counters": {
+    "ssh_key_generations": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "new_secret_exposures": 0,
+    "t3n_calls": 0,
+    "c1_create_calls": 0,
+    "provider_effects": 0
+  },
+  "tests": {
+    "c2_tests_passed": 78,
+    "c2_tests_failed": 0,
+    "product_tests_passed": 7,
+    "product_tests_failed": 0,
+    "synthetic_pipeline": "PASS",
+    "git_diff_check": "PASS",
+    "typescript_check": "NOT_CONFIGURED_NO_TSCONFIG_RUNTIME_TS_TESTS_PASS"
+  },
+  "sensitive_value_hygiene": {
+    "private_material_in_preflight_evidence": false,
+    "raw_webhook_body_in_preflight_evidence": false,
+    "tokens_in_preflight_evidence": false,
+    "historical_secret_history_deleted": false
+  },
+  "claims_earned": [
+    "the exact live evidence schema now round-trips through the shared builder and verifier",
+    "multiple matching enabled policies fail closed as AMBIGUOUS",
+    "the historical failed policy is explicitly retired",
+    "one cleanup-only descendant establishes a clean new B1 baseline",
+    "the cleanup delivery remained delivery-only"
+  ],
+  "claims_forbidden": [
+    "fresh target created",
+    "fresh private key generated",
+    "fresh deploy key created",
+    "new secret exposed",
+    "C2-B1 causal pass",
+    "T3N incident created",
+    "remediation executed"
+  ]
+}

@@ -103,6 +103,31 @@ test("missing, disabled, and invalid transition policies cannot create authority
   if (rejected.classification === "C2_PUSH_TRANSITION_REJECTED") assert.equal(rejected.transition, "SECRET_ALREADY_PRESENT_BEFORE");
 });
 
+test("ambiguous enabled policies fail closed before immutable reads", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = fixturePolicy({ policy_id: "c2-push-local-a" });
+  const second = fixturePolicy({ policy_id: "c2-push-local-b", deploy_key_id: 987654322 });
+  const forbiddenObservationAccess = {
+    get before(): never { throw new Error("ambiguous policy must not call source reader"); },
+    get after(): never { throw new Error("ambiguous policy must not call source reader"); },
+  };
+  const result = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [first, second], forbiddenObservationAccess, { allowLocalFixture: true });
+  assert.equal(result.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+  assert.equal(JSON.stringify(result).includes("create_request"), false);
+});
+
+test("duplicate policy identity cannot alter a durable replay by input order", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const policy = fixturePolicy({ policy_id: "c2-push-local-replay" });
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const duplicate = { ...policy, deploy_key_id: 987654322 };
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy, duplicate], observations, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+});
+
 test("commit-message injection and secret material never enter normalized evidence or dedupe", async (t) => {
   const dedupeDirectory = await directory();
   t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
