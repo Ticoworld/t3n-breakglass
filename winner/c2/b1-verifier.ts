@@ -54,7 +54,7 @@ export function verifyB1Evidence(value: unknown): { valid: boolean; reasons: str
   requireField(reasons, target?.private_public_relation_proven === true, "private/public relation was not proven");
   requireField(reasons, typeof e.private_material_sha256 === "string" && /^[0-9a-f]{64}$/.test(e.private_material_sha256), "private-material digest is malformed");
 
-  requireField(reasons, policy?.policy_id && policy.policy_version === 2, "policy identity/version is missing");
+  requireField(reasons, policy?.registry_identity && policy.policy_version === 2, "policy identity/version is missing");
   requireField(reasons, authority?.repository_id === 1350596128 && authority.repository_full_name === B1_REPOSITORY, "policy repository binding is not exact");
   requireField(reasons, authority?.ref === B1_REF && authority.secret_path === B1_SECRET_PATH, "policy ref/path binding is not exact");
   requireField(reasons, authority?.deploy_key_id === target?.id, "policy target ID differs from installed target");

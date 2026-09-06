@@ -13,7 +13,7 @@ function fixture(): any {
     policy_freeze_commit_sha: "b".repeat(40),
     private_material_sha256: digest,
     fresh_deploy_key: target,
-    policy: { policy_id: "c2-policy:test", policy_version: 2, authority_fields: { repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, secret_path: B1_SECRET_PATH, deploy_key_id: target.id, expected_deploy_key_title: target.title, expected_read_only: true, expected_public_key_fingerprint: target.provider_public_key_fingerprint, expected_private_material_sha256: digest, enabled: true, ttl_secs: 900 }, remote_readback: { success: true } },
+    policy: { registry_identity: "c2-policy:test", policy_version: 2, authority_fields: { repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, secret_path: B1_SECRET_PATH, deploy_key_id: target.id, expected_deploy_key_title: target.title, expected_read_only: true, expected_public_key_fingerprint: target.provider_public_key_fingerprint, expected_private_material_sha256: digest, enabled: true, ttl_secs: 900 }, remote_readback: { success: true } },
     policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true },
     secret_trigger_commit: { sha: "c".repeat(40), parent_sha: B1_BEFORE_SHA, only_changed_path: B1_SECRET_PATH, fast_forward: true },
     real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, before: B1_BEFORE_SHA, after: "c".repeat(40), created: false, forced: false, deleted: false, signature_verified: true, raw_body_sha256: digest, dedupe_status: "NEW" },

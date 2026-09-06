@@ -1,0 +1,19 @@
+{
+  "classification": "C2_B1_FAIL",
+  "cleanup": {
+    "classification": "FIXTURE_EMERGENCY_CLEANUP",
+    "reason": "offline B1 verifier failed: policy identity/version is missing",
+    "deploy_key_id": 162414923,
+    "delete_http_status": 204,
+    "exact_after_http_status": 404,
+    "absent": true,
+    "token_cleanup": {
+      "revoke_http_status": 204,
+      "refusal_http_status": 401,
+      "refusal_confirmed": true
+    }
+  },
+  "secret_push_issued": true,
+  "private_material_in_evidence": false,
+  "t3n_create_calls": 0
+}
