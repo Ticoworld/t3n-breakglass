@@ -60,7 +60,10 @@ export function validateC2PushPolicyV2(
   if (policy.repository_id !== C2_PUSH_REPOSITORY_ID || policy.repository_full_name !== C2_PUSH_REPOSITORY) reasons.push("repository binding is not exact");
   if (policy.ref !== C2_PUSH_REF || policy.secret_path !== C2_PUSH_SECRET_PATH) reasons.push("ref/path binding is not exact");
   if (!Number.isSafeInteger(policy.deploy_key_id) || policy.deploy_key_id <= 0 || !policy.expected_deploy_key_title || policy.expected_read_only !== true) reasons.push("deploy-key target binding is incomplete");
-  if (!/^SHA256\/[A-Za-z0-9+/]+={0,2}$/.test(policy.expected_public_key_fingerprint)) reasons.push("public-key fingerprint is malformed");
+  // OpenSSH's canonical fingerprint rendering uses SHA256:<base64>.  Keep
+  // accepting the historical fixture's slash spelling for compatibility, but
+  // live GitHub/OpenSSH bindings retain the standard colon form exactly.
+  if (!/^SHA256[/:][A-Za-z0-9+/]+={0,2}$/.test(policy.expected_public_key_fingerprint)) reasons.push("public-key fingerprint is malformed");
   if (!/^[0-9a-f]{64}$/.test(policy.expected_private_material_sha256)) reasons.push("private-material digest is malformed");
   if (!policy.remediation_agent_did || !policy.effect_broker_did) reasons.push("C1 principal binding is incomplete");
   if (!Number.isSafeInteger(policy.ttl_secs) || policy.ttl_secs <= 0 || policy.ttl_secs > 86_400) reasons.push("TTL is not bounded");
