@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { verifyE2EBundle } from "../c2/e2e-verifier.js";
+
+const liveRunner = await readFile(new URL("../scripts/c2-e2e-r1-live.ts", import.meta.url), "utf8");
 
 const targetId = 271828182;
 const policyId = "c2-policy:github-push-c2-e2e-r1-synthetic";
@@ -110,6 +113,10 @@ test("complete sanitized E2E bundle passes with zero network calls", () => {
   const result = verifyE2EBundle(JSON.parse(JSON.stringify(validBundle())));
   assert.equal(result.ok, true, result.errors.join(", "));
   assert.equal(result.network_calls, 0);
+});
+
+test("live B1 adapter emits the canonical source-reader read status", () => {
+  assert.match(liveRunner, /b1SourceReader\.read_http_status = afterRead\.status/);
 });
 
 test("E2E verifier rejects causal and hygiene substitutions", () => {

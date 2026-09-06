@@ -1,0 +1,96 @@
+{
+  "artifact": "C2-E2E-R1-FAILURE",
+  "classification": "C2_E2E_R1_FAIL_BEFORE_T3N_AUTHORITY",
+  "failure_reason": "B1 verifier rejected the runner evidence because the source-reader lifecycle omitted canonical read_http_status; no create-incident call was made.",
+  "starting_sha": "f66605e924dd1fff81f1cfa522275aa3ab097bad",
+  "execution_code_head_sha": "9ffc4bd5c98e98302609a855cd675383949fefc0",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "sandbox": {
+    "repository_id": 1350596128,
+    "repository": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "before_sha": "0ef99189955ff8bbdd18b1918937076883581528",
+    "secret_trigger_sha": "ddbc623e87782b52a4bba4de61da982d125e53f7",
+    "only_changed_path": ".breakglass-c2/exposed-deploy-key",
+    "fast_forward": true
+  },
+  "fresh_target": {
+    "deploy_key_id": 162451701,
+    "title": "breakglass-c2-b1-e2e-r1-1788700787614-4e6673a13355",
+    "read_only": true,
+    "generated_public_key_fingerprint": "SHA256:BcMEN99KdscJs4zNkcXwH8hTIdmfMtNqFXT8JUaltkI",
+    "provider_public_key_fingerprint": "SHA256:BcMEN99KdscJs4zNkcXwH8hTIdmfMtNqFXT8JUaltkI",
+    "private_public_relation_proven": true,
+    "private_material_sha256": "935d638506d94137d5e6f848d7934352f8263568287bd0be246cdd52ed53912a",
+    "emergency_cleanup": {
+      "classification": "FIXTURE_EMERGENCY_CLEANUP",
+      "delete_http_status": 204,
+      "exact_after_http_status": 404,
+      "absent": true
+    }
+  },
+  "policy": {
+    "registry_identity": "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a",
+    "policy_freeze_commit_sha": "31d13e1a99a9d71b0c7eebc11f5338fcd78f574d",
+    "policy_marker_commit_sha": "68acaf1c8a72e42c76519c933cca7c37e0347ba7",
+    "policy_content_sha256": "676ce19b98d55d119369d985f77dc76a4af1482249f2140165ace9e60a6cb656",
+    "remote_readback_success": true,
+    "enabled_before_event": true,
+    "retired_after_failure": true
+  },
+  "real_delivery": {
+    "delivery_id": "bc9c4182-a9f5-11f1-8b3a-74d6f4d4b9eb",
+    "event_type": "push",
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "before": "0ef99189955ff8bbdd18b1918937076883581528",
+    "after": "ddbc623e87782b52a4bba4de61da982d125e53f7",
+    "created": false,
+    "forced": false,
+    "deleted": false,
+    "signature_verified": true,
+    "raw_body_sha256": "7c65124247bd1912cc07549c4932081263f0919435316fa9657ca4d32496b7a1",
+    "raw_body_persisted": false,
+    "webhook_secret_persisted": false,
+    "dedupe_status": "NEW"
+  },
+  "immutable_transition": {
+    "before_http_status": 404,
+    "after_http_status": 200,
+    "after_digest_matches_policy": true,
+    "classification": "CAUSAL_SECRET_INTRODUCED"
+  },
+  "derived_c1_request": {
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a-a4877fe2810885bd31ad8a5b",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "deploy_key_id": 162451701,
+    "ttl_secs": 900,
+    "sent": false
+  },
+  "b1_verifier": {
+    "result": "FAIL",
+    "failed_check": "source token lifecycle is incomplete",
+    "missing_runner_field": "source_reader_token.read_http_status",
+    "t3n_create_calls": 0
+  },
+  "mutation_counters": {
+    "ssh_key_generations": 1,
+    "deploy_key_creates": 1,
+    "deploy_key_deletes": 1,
+    "secret_trigger_pushes": 1,
+    "t3n_create_calls": 0,
+    "c1_create_calls": 0,
+    "provider_effects": 0,
+    "remediation_calls": 0
+  },
+  "sensitive_value_hygiene": {
+    "private_material_in_evidence": false,
+    "raw_private_key_persisted": false,
+    "webhook_secret_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "raw_webhook_body_in_evidence": false
+  },
+  "recovery": "The fresh target was explicitly removed as FIXTURE_EMERGENCY_CLEANUP after the post-exposure verifier failure. The secret remains in sandbox history and is not reused. No automatic second run was performed."
+}
