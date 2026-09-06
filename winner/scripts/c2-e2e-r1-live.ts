@@ -246,7 +246,11 @@ async function stopExistingB0Receiver(): Promise<void> {
   if (!pid || pid === process.pid) return;
   const command = await execFileAsync("powershell.exe", ["-NoProfile", "-Command", `(Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}').CommandLine`], { encoding: "utf8", windowsHide: true });
   requireCondition(/c2-b0-live/i.test(String(command.stdout)), "port 8787 is occupied by an unexpected process");
-  try { process.kill(pid, "SIGTERM"); } catch { /* it may have exited between readback and signal */ }
+  try {
+    await execFileAsync("taskkill.exe", ["/PID", String(pid), "/T", "/F"], { encoding: "utf8", windowsHide: true });
+  } catch {
+    /* it may have exited between readback and signal; the bounded listener check below decides */
+  }
   const deadline = Date.now() + 15_000;
   while (Date.now() < deadline) { if (!(await listenerPid())) return; await new Promise((resolve) => setTimeout(resolve, 250)); }
   throw new Error("previous B0 receiver did not stop cleanly");
