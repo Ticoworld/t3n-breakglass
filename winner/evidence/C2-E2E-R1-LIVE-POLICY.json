@@ -1,0 +1,30 @@
+{
+  "artifact": "C2-E2E-R1 LIVE AUTHORITY-BEARING POLICY",
+  "registry_identity": "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a",
+  "policy": {
+    "policy_id": "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a",
+    "policy_version": 2,
+    "deploy_key_id": 162451701,
+    "expected_deploy_key_title": "breakglass-c2-b1-e2e-r1-1788700787614-4e6673a13355",
+    "expected_read_only": true,
+    "expected_public_key_fingerprint": "SHA256:BcMEN99KdscJs4zNkcXwH8hTIdmfMtNqFXT8JUaltkI",
+    "expected_private_material_sha256": "935d638506d94137d5e6f848d7934352f8263568287bd0be246cdd52ed53912a",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "ttl_secs": 900,
+    "enabled": true,
+    "actual_creation_timestamp": "2026-09-06T13:19:58.113Z",
+    "creation_commit_or_registry_identity": "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a",
+    "provenance": {
+      "classification": "LIVE_PROVENANCE",
+      "creation_evidence": "winner/evidence/C2-E2E-R1-LIVE-POLICY.json remote readback",
+      "enabled_before_event_proof": true
+    },
+    "source_provider": "github",
+    "source_event_type": "push",
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "secret_path": ".breakglass-c2/exposed-deploy-key"
+  }
+}
