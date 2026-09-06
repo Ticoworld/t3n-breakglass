@@ -68,6 +68,7 @@ let receiver: { server: Server; getRaw: () => Buffer | null; getHeaders: () => R
 let tempRunDirectory: string | null = null;
 let tempKeyDirectory: string | null = null;
 let stagingDirectory: string | null = null;
+let triggerDirectory: string | null = null;
 let privateBytes: Buffer | null = null;
 let stagedBytes: Buffer | null = null;
 
@@ -431,24 +432,36 @@ async function remotePolicyReadback(pat: string, policy: C2PushPolicyV2, policyB
   return { success: true, repository: CODE_REPOSITORY, ref: CODE_BRANCH, path: POLICY_FILE, policy_freeze_commit_sha: freezeSha, policy_content_sha256: sha256(remoteBytes), remote_blob_sha: body.sha ?? null, remote_readback_http_status: response.status, remote_readback_date: response.headers.date ?? null, commit_readback_http_status: commit.status };
 }
 
-async function triggerSecret(pat: string, bytes: Buffer): Promise<JsonObject> {
-  const ref = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/git/ref/heads/${SANDBOX_BRANCH}`);
-  requireCondition(object(object(ref.body).object).sha === BEFORE_SHA, "sandbox head changed before secret trigger");
-  const before = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH}?ref=${BEFORE_SHA}`);
-  requireCondition(before.status === 404, "secret path is not absent immediately before trigger");
+async function triggerSecret(bytes: Buffer): Promise<JsonObject> {
+  triggerDirectory = await mkdtemp(path.join(os.tmpdir(), "t3n-c2-e2e-r1-trigger-"));
+  const directory = triggerDirectory;
+  await execFileAsync("git", ["init", "--quiet", "--initial-branch=main"], { cwd: directory, windowsHide: true });
+  await execFileAsync("git", ["config", "core.autocrlf", "false"], { cwd: directory, windowsHide: true });
+  await execFileAsync("git", ["config", "user.name", "BreakGlass C2 E2E"], { cwd: directory, windowsHide: true });
+  await execFileAsync("git", ["config", "user.email", "breakglass-c2-e2e@users.noreply.github.com"], { cwd: directory, windowsHide: true });
+  await execFileAsync("git", ["remote", "add", "origin", `https://github.com/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}.git`], { cwd: directory, windowsHide: true });
+  await execFileAsync("git", ["fetch", "--quiet", "origin", `refs/heads/${SANDBOX_BRANCH}`], { cwd: directory, windowsHide: true });
+  const fetchedBefore = await runGit(["rev-parse", "FETCH_HEAD"], directory);
+  requireCondition(fetchedBefore === BEFORE_SHA, `sandbox head changed before secret trigger: ${fetchedBefore}`);
+  const beforeTree = await runGit(["rev-parse", `${BEFORE_SHA}^{tree}`], directory);
+  await runGit(["read-tree", beforeTree], directory);
+  const blobSha = (await runBuffer("git", ["hash-object", "-w", "--stdin"], directory, bytes)).toString("utf8").trim();
+  requireCondition(/^[0-9a-f]{40}$/i.test(blobSha), "secret blob was not staged as a Git object");
+  await runGit(["update-index", "--add", "--cacheinfo", `100644,${blobSha},${SECRET_PATH}`], directory);
+  const treeSha = await runGit(["write-tree"], directory);
+  const commitSha = await runGit(["commit-tree", treeSha, "-p", BEFORE_SHA, "-m", "C2-E2E-R1 exact disposable credential transition"], directory);
+  requireCondition(/^[0-9a-f]{40}$/i.test(commitSha), "secret trigger did not create a commit SHA");
+  await runGit(["update-ref", `refs/heads/${SANDBOX_BRANCH}`, commitSha], directory);
   secretPushIssued = true;
-  const response = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "C2-E2E-R1 exact disposable credential transition", content: bytes.toString("base64"), branch: SANDBOX_BRANCH }) });
-  requireCondition(response.status === 201, `secret trigger returned HTTP ${response.status}; no retry permitted`);
-  const responseBody = object(response.body); const commitSha = String(object(responseBody.commit).sha ?? "");
-  requireCondition(/^[0-9a-f]{40}$/i.test(commitSha), "secret trigger did not return a commit SHA");
-  const refAfter = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/git/ref/heads/${SANDBOX_BRANCH}`);
-  requireCondition(refAfter.status === 200 && object(object(refAfter.body).object).sha === commitSha, "sandbox branch did not advance to trigger commit");
-  const commit = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/commits/${commitSha}`);
-  const commitBody = object(commit.body);
-  const parents = Array.isArray(commitBody.parents) ? commitBody.parents.map((row) => object(row).sha) : [];
-  const files = Array.isArray(commitBody.files) ? commitBody.files.map((row) => ({ filename: object(row).filename, status: object(row).status, additions: object(row).additions, deletions: object(row).deletions })) : [];
-  requireCondition(commit.status === 200 && parents[0] === BEFORE_SHA && files.length === 1 && files[0].filename === SECRET_PATH && files[0].status === "added", "trigger commit is not one exact child adding only the secret path");
-  return { mechanism: "GitHub Contents API one fast-forward commit", sha: commitSha, parent_sha: parents[0], branch: SANDBOX_BRANCH, only_changed_path: SECRET_PATH, fast_forward: true, commit_readback: { http_status: commit.status, parent_sha: parents[0], files }, response: safeResponse(response) };
+  await execFileAsync("git", ["push", "origin", `${commitSha}:refs/heads/${SANDBOX_BRANCH}`], { cwd: directory, windowsHide: true });
+  const remote = String((await execFileAsync("git", ["ls-remote", "origin", `refs/heads/${SANDBOX_BRANCH}`], { cwd: directory, encoding: "utf8", windowsHide: true })).stdout).trim().split(/\s+/)[0];
+  requireCondition(remote === commitSha, "sandbox branch did not advance to the exact trigger commit");
+  const parents = (await runGit(["rev-list", "--parents", "-n", "1", commitSha], directory)).split(/\s+/).slice(1);
+  const files = (await runGit(["diff-tree", "--no-commit-id", "--name-status", "-r", commitSha], directory)).split(/\r?\n/).filter(Boolean).map((line) => { const [status, ...name] = line.split(/\s+/); return { filename: name.join(" "), status }; });
+  requireCondition(parents[0] === BEFORE_SHA && files.length === 1 && files[0].filename === SECRET_PATH && files[0].status === "A", "trigger commit is not one exact child adding only the secret path");
+  const result = { mechanism: "Git over GitHub HTTPS one fast-forward commit", sha: commitSha, parent_sha: parents[0], branch: SANDBOX_BRANCH, only_changed_path: SECRET_PATH, fast_forward: true, commit_readback: { mechanism: "local Git object plus ls-remote", parent_sha: parents[0], files } };
+  await rm(directory, { recursive: true, force: true }); triggerDirectory = null;
+  return result;
 }
 
 async function readContentDigest(token: string, ref: string): Promise<{ status: number; digest: string | null; response: ApiResult }> {
@@ -566,12 +579,14 @@ async function main(): Promise<void> {
   const setupCapabilityCleanup = await revokeAndRefuse(setupCapability.token);
   progress("source-token-capability");
   const sourceCapability = await mintInstallationToken({ contents: "read" }, "source-capability-preflight");
-  const sourceCapabilityCleanup = await revokeAndRefuse(sourceCapability.token);
   progress("verifier-token-capability");
   const verifierCapability = await mintInstallationToken({ administration: "read" }, "verifier-capability-preflight");
   const verifierCapabilityCleanup = await revokeAndRefuse(verifierCapability.token);
   progress("verify-clean-baseline");
-  const baseline = await verifyBaseline(pat);
+  let baseline: JsonObject;
+  let sourceCapabilityCleanup: JsonObject;
+  try { baseline = await verifyBaseline(sourceCapability.token); }
+  finally { sourceCapabilityCleanup = await revokeAndRefuse(sourceCapability.token); }
   requireCondition(baseline.branch_head_sha === BEFORE_SHA, "baseline changed during preflight");
 
   requireCondition((await appReadiness()).hook.configured === true, "webhook configuration changed before target setup");
@@ -596,12 +611,15 @@ async function main(): Promise<void> {
   const marker = { artifact: "POLICY_FROZEN_AND_REMOTE_CONFIRMED", registry_identity: policyId, policy_freeze_commit_sha: policyFreezeSha, policy_content_sha256: remotePolicy.policy_content_sha256, remote_readback_success: true, remote_readback_date: remotePolicy.remote_readback_date, deploy_key_id: target.id, expected_public_key_fingerprint: key.fingerprint, expected_private_material_sha256: key.privateDigest, enabled_before_event_proof: true };
   await writeJson(MARKER_FILE, marker);
   const markerSha = await commitAndPush([MARKER_FILE], `c2: attest E2E-R1 policy freeze ${policyId}`);
-  requireCondition((await verifyBaseline(pat)).branch_head_sha === BEFORE_SHA, "sandbox baseline moved before trigger");
-  const preTriggerTarget = await verifyTarget(pat, target.id, key.title, key.publicKey);
+  const targetVerifierCapability = await mintInstallationToken({ administration: "read" }, "target-pretrigger-verifier");
+  let targetVerifierCleanup: JsonObject;
+  let preTriggerTarget: JsonObject;
+  try { preTriggerTarget = await verifyTarget(targetVerifierCapability.token, target.id, key.title, key.publicKey); }
+  finally { targetVerifierCleanup = await revokeAndRefuse(targetVerifierCapability.token); }
   const stagedBefore = await runBuffer("git", ["cat-file", "blob", key.blobSha], stagingDirectory!);
   requireCondition(sha256(stagedBefore) === key.privateDigest && Buffer.compare(stagedBefore, privateBytes!) === 0, "staged secret bytes changed after policy freeze");
   progress("issue-one-secret-trigger");
-  const trigger = await triggerSecret(pat, stagedBefore);
+  const trigger = await triggerSecret(stagedBefore);
   stagedBefore.fill(0); if (stagedBytes) { stagedBytes.fill(0); stagedBytes = null; } if (privateBytes) { privateBytes.fill(0); privateBytes = null; } if (tempKeyDirectory) { await rm(tempKeyDirectory, { recursive: true, force: true }); tempKeyDirectory = null; } if (stagingDirectory) { await rm(stagingDirectory, { recursive: true, force: true }); stagingDirectory = null; }
   const capture = await awaitDelivery(capturePath, trigger.sha);
   progress("verify-delivery-and-transition");
@@ -684,6 +702,7 @@ async function main(): Promise<void> {
   requireCondition(terminalAgain.state === "CLOSED" && object(terminalAgain.detail).effect_attempts === 1 && JSON.stringify(terminalAgain.detail) === JSON.stringify(closed.detail), "C1 replay changed terminal state");
   const policyRetirement = { artifact: "C2-E2E-R1-POLICY-RETIREMENT", policy_id: policyId, deploy_key_id: target.id, terminal_incident_id: derivedRequest.incident_id, terminal_classification: "VERIFIED_ABSENT", retired: true, retirement_timestamp: new Date().toISOString(), retirement_evidence_identity: FINAL_FILE, reason: "C2_E2E_R1_COMPLETED_TARGET_REMOVED" };
   const bundle: JsonObject = { classification: "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS", starting_sha: STARTING_SHA, execution_code_head_sha: executionHead, policy_freeze_sha: policyFreezeSha, final_sha: "recorded_by_containing_git_commit", main_sha: MAIN_SHA, sandbox_before_sha: BEFORE_SHA, sandbox_secret_commit_sha: trigger.sha, ingress_readiness: ingressLive, github_app_readiness: appBefore, t3n_readiness: t3nReady.readiness, provider_capability_preflight: { setup: { ...setupCapability.metadata, lifecycle: setupCapabilityCleanup }, source: { ...sourceCapability.metadata, lifecycle: sourceCapabilityCleanup }, verifier: { ...verifierCapability.metadata, lifecycle: verifierCapabilityCleanup } }, sandbox_baseline: baseline, fresh_target: target, policy: { registry_identity: policyId, policy_version: 2, authority_fields: authorityFields, content_sha256: remotePolicy.policy_content_sha256, remote_readback: remotePolicy }, historical_policy_retirement: { historical_policy_id: retirement.historical_policy_id, historical_deploy_key_id: retirement.historical_deploy_key_id, retired: true, cleanup_proven: retirement.cleanup_proven }, policy_before_event: { policy_freeze_commit_sha: policyFreezeSha, marker_commit_sha: markerSha, remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true, trigger_issued_after_marker: true, remote_policy_readback_date: remotePolicy.remote_readback_date, trigger_delivery_at: history.delivered_at }, secret_trigger_commit: trigger, real_delivery: { event_type: "push", delivery_id: capture.delivery_id, repository_id: capture.repository_id, repository_full_name: capture.repository_full_name, ref: capture.ref, before: capture.before, after: capture.after, created: capture.created, forced: capture.forced, deleted: capture.deleted, sender_login: capture.sender_login, raw_body_sha256: capture.raw_body_sha256, signature_verified: true, raw_body_persisted: false, webhook_secret_persisted: false, authority_processing_attempted: false, authority_eligible: true, classification: "REAL_AUTHENTICATED_PUSH_WITH_CAUSAL_TRANSITION", dedupe_status: "NEW" }, immutable_before: { status: beforeRead.status, commit_sha: BEFORE_SHA, path: SECRET_PATH }, immutable_after: { status: afterRead.status, commit_sha: trigger.sha, path: SECRET_PATH, content_sha256: afterRead.digest }, transition_classification: transition.classification, b1_evidence: b1Evidence, b1_verifier: { valid: b1Verification.valid, reasons: b1Verification.reasons, context: verificationContext }, derived_c1_request: derivedRequest, t3n: { create: sanitize(create), active_readback: sanitize(active), reservation: sanitize(reserve), reserved_readback: sanitize(reserved), brokers: { broker_a: sanitize(brokerA, [brokerKey]), broker_b: sanitize(brokerB, [brokerKey]), winner: winner.contender, loser: loser.contender, confirmed_owner_count: 1 }, pre_delete_authority: sanitize({ effect_start_ready: effectReadyDoc, operator_readback: beforeDeleteState, delete_allowed_after_this_read: true }), closed_readback: sanitize(closed), effect_start_id: winner.effect_start_id, finalization: sanitize(winner.finalize), final_result_classification: "VERIFIED_ABSENT" }, provider_effect: { delete_attempt_count: winner.destructive_call_count, delete_http_status: winner.delete?.http_status, delete_request_id: winner.delete?.provider_request_id ?? null, target_absent: winner.after?.target_absent === true }, effect_token: sanitize({ ...winner.effect_token, cleanup: winner.effect_token_cleanup }), independent_verifier: sanitize({ token: winner.verifier_token, readback: winner.independent_provider_verification, cleanup: winner.verifier_token_cleanup }), c2_replay: { classification: c2Replay.dedupe.status, incident_id: c2Replay.incident_id, create_request: c2Replay.create_request, new_immutable_source_reads: 0, new_t3n_incident_creations: 0, provider_authority_count: 0, provider_mutations: 0 }, c1_replay: { remediation_reserve: sanitize(c1ReplayReserve), closed_replay_rejected: c1ReplayReserve.result !== "WON", broker: sanitize(replayBroker, [brokerKey]), new_effect_token_mints: 0, new_delete_count: 0, effect_attempts: 1, target_absent: true }, successful_policy_retirement: policyRetirement, mutation_counters: { fixture_setup: { ssh_key_generations: 1, deploy_key_creates: 1 }, causal_source: { secret_trigger_pushes: 1 }, t3n_protocol: { incident_creates: 1, reservations: 1, effect_attempts: 1 }, provider_effect: { deploy_key_deletes: 1 }, independent_verification: { provider_mutations: 0 }, replay: { provider_token_mints: 0, provider_mutations: 0, deploy_key_deletes: 0 } }, sensitive_value_hygiene: { private_material_in_policy: false, private_material_in_evidence: false, raw_webhook_body_in_evidence: false, app_private_key_in_evidence: false, installation_token_in_evidence: false, webhook_secret_in_evidence: false, raw_webhook_body_retained_only_in_process_memory: true, private_local_copy_removed_after_trigger: true }, tests: { b1_verifier: "PASS", c2_replay: "PASS", c1_replay: "PASS", offline_e2e_verifier: "pending", c2_and_product: "run_before_final_commit" }, claims_earned: ["one real authenticated GitHub push introduced the exact private material bound by a pre-existing live policy to one fresh read-only deploy key", "immutable GitHub reads proved the exact 404-to-digest transition", "B1 evidence verified with an explicit execution context", "one exact C1 request created one bounded T3N incident", "one confirmed broker owner committed one effect-start and one provider DELETE", "independent verification proved the target absent and T3N closed VERIFIED_ABSENT", "C2 and C1 replay earned zero provider authority and zero provider mutation"], claims_forbidden: ["GitHub globally guarantees exactly-once", "atomic T3N/GitHub transaction", "ephemeral GitHub App root", "zero standing GitHub root authority", "arbitrary incident/provider support", "C2 submission readiness"] };
+  target.pre_trigger_target_readback = { ...preTriggerTarget, token_lifecycle: { ...targetVerifierCapability.metadata, lifecycle: targetVerifierCleanup } };
   const offline = verifyE2EBundle(bundle); requireCondition(offline.ok, `offline E2E verifier failed: ${offline.errors.join(", ")}`); bundle.tests.offline_e2e_verifier = "PASS";
   progress("write-final-evidence");
   await writeJson(FINAL_FILE, bundle); await writeJson(RETIREMENT_FILE, policyRetirement);
@@ -694,7 +713,7 @@ async function main(): Promise<void> {
 
 main().catch(async (error) => {
   try { if (receiver) { await receiver.close(); const raw = receiver.getRaw(); raw?.fill(0); receiver = null; } } catch {}
-  try { if (privateBytes) privateBytes.fill(0); if (stagedBytes) stagedBytes.fill(0); if (tempKeyDirectory) await rm(tempKeyDirectory, { recursive: true, force: true }); if (stagingDirectory) await rm(stagingDirectory, { recursive: true, force: true }); } catch {}
+  try { if (privateBytes) privateBytes.fill(0); if (stagedBytes) stagedBytes.fill(0); if (tempKeyDirectory) await rm(tempKeyDirectory, { recursive: true, force: true }); if (stagingDirectory) await rm(stagingDirectory, { recursive: true, force: true }); if (triggerDirectory) await rm(triggerDirectory, { recursive: true, force: true }); } catch {}
   let cleanup: JsonObject | null = null;
   try { cleanup = await cleanupFreshTarget(error instanceof Error ? error.message : String(error)); } catch {}
   console.error(JSON.stringify({ classification: "C2_E2E_R1_FAILURE", error: redact(error, [process.env.GITHUB_PAT ?? "", process.env.T3N_API_KEY ?? "", process.env.AGENT_T3N_API_KEY ?? "", process.env.EFFECT_BROKER_T3N_API_KEY ?? ""]), secret_push_issued: secretPushIssued, incident_created: incidentCreated, effect_start_confirmed: effectStartConfirmed, cleanup, no_automatic_second_run: true }, null, 2));
