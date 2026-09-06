@@ -1,0 +1,12 @@
+{
+  "artifact": "POLICY_FROZEN_AND_REMOTE_CONFIRMED",
+  "registry_identity": "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+  "policy_freeze_commit_sha": "0c5ea01294f2e65532f54b68d25bbcbffb1f7705",
+  "policy_content_sha256": "6471e0259e37d0dcbd8676c403d999afafb945be5d064faa1791622f49d80f5c",
+  "remote_readback_success": true,
+  "remote_readback_date": "Sun, 06 Sep 2026 00:20:40 GMT",
+  "deploy_key_id": 162414923,
+  "expected_public_key_fingerprint": "SHA256:8aDE2cIdOcfKwxCyeJ/tL5bRP7hb1si1SK0AKvyP/j4",
+  "expected_private_material_sha256": "e1ef933fadcca2ae521d06f71b1983fd4c024b22950699dc3cc980a5a4a3ab1c",
+  "enabled_before_event_proof": true
+}
