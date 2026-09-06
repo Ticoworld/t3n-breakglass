@@ -129,6 +129,8 @@ function sanitize(value: unknown, secrets: string[] = [], seen = new WeakSet<obj
 
 function sha256(bytes: Uint8Array): string { return createHash("sha256").update(bytes).digest("hex"); }
 
+function progress(phase: string): void { console.error(`C2_E2E_PHASE:${phase}`); }
+
 async function runGit(args: string[], cwd = root): Promise<string> {
   const result = await execFileAsync("git", args, { cwd, encoding: "utf8", maxBuffer: 2_000_000, windowsHide: true });
   return String(result.stdout).trim();
@@ -522,6 +524,7 @@ async function cleanupFreshTarget(reason: string): Promise<JsonObject | null> {
 }
 
 async function main(): Promise<void> {
+  progress("load-credentials");
   const pat = process.env.GITHUB_PAT ?? await envFileValue(".env.bootstrap", "GITHUB_PAT");
   if (!process.env.GITHUB_PAT) process.env.GITHUB_PAT = pat;
   if (!process.env.T3N_API_KEY) process.env.T3N_API_KEY = await envFileValue(".env.bootstrap", "T3N_API_KEY");
@@ -543,18 +546,7 @@ async function main(): Promise<void> {
   requireCondition(registration.contract?.version === CONTRACT.version && registration.contract?.contract_id === CONTRACT.numeric_id && registration.contract?.wasm_bytes === CONTRACT.wasm_bytes && registration.contract?.wasm_sha256 === CONTRACT.wasm_sha256, "C1 artifact identity changed");
   for (const file of [POLICY_FILE, MARKER_FILE, FINAL_FILE, RETIREMENT_FILE]) { try { await access(path.join(root, file)); throw new Error(`${file} already exists; refusing a second E2E run`); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; } }
 
-  const ingressBefore = await ingressReachability();
-  const appBefore = await appReadiness();
-  const t3nReady = await t3nReadiness(agentKey, brokerKey);
-  const setupCapability = await mintInstallationToken({ administration: "write" }, "setup-capability-preflight");
-  const setupCapabilityCleanup = await revokeAndRefuse(setupCapability.token);
-  const sourceCapability = await mintInstallationToken({ contents: "read" }, "source-capability-preflight");
-  const sourceCapabilityCleanup = await revokeAndRefuse(sourceCapability.token);
-  const verifierCapability = await mintInstallationToken({ administration: "read" }, "verifier-capability-preflight");
-  const verifierCapabilityCleanup = await revokeAndRefuse(verifierCapability.token);
-  const baseline = await verifyBaseline(pat);
-  requireCondition(baseline.branch_head_sha === BEFORE_SHA, "baseline changed during preflight");
-
+  progress("start-receiver-and-verify-ingress");
   tempRunDirectory = await mkdtemp(path.join(os.tmpdir(), "t3n-c2-e2e-r1-run-"));
   const capturePath = path.join(tempRunDirectory, "github-delivery.json");
   const dedupeDirectory = path.join(tempRunDirectory, "dedupe");
@@ -562,8 +554,22 @@ async function main(): Promise<void> {
   await stopExistingB0Receiver();
   receiver = await startE2EReceiver(webhookSecret, capturePath, dedupeDirectory);
   const ingressLive = await ingressReachability();
+  const appBefore = await appReadiness();
+  progress("verify-t3n-and-capabilities");
+  const t3nReady = await t3nReadiness(agentKey, brokerKey);
+  const setupCapability = await mintInstallationToken({ administration: "write" }, "setup-capability-preflight");
+  const setupCapabilityCleanup = await revokeAndRefuse(setupCapability.token);
+  const sourceCapability = await mintInstallationToken({ contents: "read" }, "source-capability-preflight");
+  const sourceCapabilityCleanup = await revokeAndRefuse(sourceCapability.token);
+  const verifierCapability = await mintInstallationToken({ administration: "read" }, "verifier-capability-preflight");
+  const verifierCapabilityCleanup = await revokeAndRefuse(verifierCapability.token);
+  progress("verify-clean-baseline");
+  const baseline = await verifyBaseline(pat);
+  requireCondition(baseline.branch_head_sha === BEFORE_SHA, "baseline changed during preflight");
+
   requireCondition((await appReadiness()).hook.configured === true, "webhook configuration changed before target setup");
 
+  progress("generate-key-and-create-target");
   const key = await generateKeyAndStage();
   const target = await createTarget(key.publicKey, key.title, key.fingerprint);
   requireCondition(target.id === targetId, "fresh target ID was not retained");
@@ -575,6 +581,7 @@ async function main(): Promise<void> {
   const policy = buildC2PushPolicyV2({ policy_id: policyId, policy_version: 2, deploy_key_id: target.id, expected_deploy_key_title: key.title, expected_read_only: true, expected_public_key_fingerprint: key.fingerprint, expected_private_material_sha256: key.privateDigest, remediation_agent_did: REMEDIATION_DID, effect_broker_did: BROKER_DID, ttl_secs: 900, enabled: true, actual_creation_timestamp: new Date().toISOString(), creation_commit_or_registry_identity: policyId, provenance: { classification: "LIVE_PROVENANCE", creation_evidence: `${POLICY_FILE} remote readback`, enabled_before_event_proof: true } });
   const policySelection = lookupPreExistingPushPolicy({ provider: "github", event_type: "push", action: "push", delivery_id: "00000000-0000-0000-0000-000000000001", repository_id: SANDBOX_REPOSITORY_ID, repository_full_name: `${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}`, ref: SANDBOX_REF, before: BEFORE_SHA, after: "1".repeat(40), deleted: false, forced: false, created: false, sender_login: "preflight", raw_body_sha256: "0".repeat(64) }, [oldPolicy, policy], { retiredPolicyIds: retiredIds });
   requireCondition(policySelection.kind === "MATCH" && policySelection.policy.policy_id === policyId, "retired historical policy plus fresh policy did not uniquely match");
+  progress("freeze-policy-and-marker");
   const authorityFields = { ...policy };
   const policyBytes = await writeJson(POLICY_FILE, { artifact: "C2-E2E-R1 LIVE AUTHORITY-BEARING POLICY", registry_identity: policyId, policy: authorityFields });
   const policyFreezeSha = await commitAndPush([POLICY_FILE], `c2: freeze E2E-R1 live policy ${policyId}`);
@@ -586,9 +593,11 @@ async function main(): Promise<void> {
   const preTriggerTarget = await verifyTarget(pat, target.id, key.title, key.publicKey);
   const stagedBefore = await runBuffer("git", ["cat-file", "blob", key.blobSha], stagingDirectory!);
   requireCondition(sha256(stagedBefore) === key.privateDigest && Buffer.compare(stagedBefore, privateBytes!) === 0, "staged secret bytes changed after policy freeze");
+  progress("issue-one-secret-trigger");
   const trigger = await triggerSecret(pat, stagedBefore);
   stagedBefore.fill(0); if (stagedBytes) { stagedBytes.fill(0); stagedBytes = null; } if (privateBytes) { privateBytes.fill(0); privateBytes = null; } if (tempKeyDirectory) { await rm(tempKeyDirectory, { recursive: true, force: true }); tempKeyDirectory = null; } if (stagingDirectory) { await rm(stagingDirectory, { recursive: true, force: true }); stagingDirectory = null; }
   const capture = await awaitDelivery(capturePath, trigger.sha);
+  progress("verify-delivery-and-transition");
   const history = await deliveryHistory(String(capture.delivery_id));
   requireCondition(remotePolicy.remote_readback_date && history.delivered_at && Date.parse(String(remotePolicy.remote_readback_date)) < Date.parse(String(history.delivered_at)), "remote policy readback was not before GitHub delivery");
   const raw = receiver?.getRaw(); const rawHeaders = receiver?.getHeaders() ?? {};
@@ -615,6 +624,7 @@ async function main(): Promise<void> {
   const b1Verification = verifyB1Evidence(b1Evidence, verificationContext);
   requireCondition(b1Verification.valid && b1Verification.reasons.length === 0, `B1 verifier failed before T3N create: ${b1Verification.reasons.join(", ")}`);
 
+  progress("create-and-reserve-c1-authority");
   const connected = await connectTenant();
   requireCondition(connected.tenantDid === OPERATOR_DID, "operator DID changed before C1 create");
   const create = c1Response(await invokeC1OperatorSession(connected.t3n, CONTRACT_ID, "create-incident", derivedRequest), "create-incident", "WON");
@@ -628,6 +638,7 @@ async function main(): Promise<void> {
   requireCondition(reserved.state === "RESERVED" && object(reserved.detail).effect_attempts === 0, "RESERVED readback mismatch");
 
   const brokerRun = await mkdtemp(path.join(os.tmpdir(), "t3n-c2-e2e-r1-broker-"));
+  progress("run-two-broker-contenders");
   const barrier = path.join(brokerRun, "claim-release.json"); const proposalsComplete = path.join(brokerRun, "claim-proposals-complete.json"); const effectReady = path.join(brokerRun, "effect-start-ready.json"); const preDeleteRelease = path.join(brokerRun, "pre-delete-release.json");
   const brokerEnvironment = childEnvironment({ EFFECT_BROKER_T3N_API_KEY: brokerKey, EFFECT_BROKER_DID: BROKER_DID, C1_BARRIER_FILE: barrier, C1_PROPOSALS_COMPLETE_FILE: proposalsComplete, C1_OPERATOR_DID: OPERATOR_DID, C1_EXPECTED_CLAIM_VERSION: "0", C1_EXPECTED_TARGET_TITLE: key.title, C1_EFFECT_START_READY_FILE: effectReady, C1_PRE_DELETE_RELEASE_FILE: preDeleteRelease, GITHUB_APP_ID: appConfig.appId, GITHUB_APP_INSTALLATION_ID: appConfig.installationId, GITHUB_APP_PRIVATE_KEY_PATH: appConfig.privateKeyPath, GITHUB_OWNER: SANDBOX_OWNER, GITHUB_REPO: SANDBOX_REPOSITORY });
   const brokerAFile = path.join(brokerRun, "broker-a.result.json"); const brokerBFile = path.join(brokerRun, "broker-b.result.json"); const readyA = path.join(brokerRun, "broker-a.ready.json"); const readyB = path.join(brokerRun, "broker-b.ready.json");
@@ -653,6 +664,7 @@ async function main(): Promise<void> {
   requireCondition(closed.state === "CLOSED" && object(closed.detail).effect_attempts === 1 && object(closed.detail).final_result_classification === "VERIFIED_ABSENT", "C1 did not close VERIFIED_ABSENT");
   requireCondition(winner.destructive_call_count === 1 && winner.delete?.http_status === 204 && winner.after?.target_absent === true && winner.verifier_token?.mutation_count === 0, "provider effect/verification was not exact");
 
+  progress("replay-and-retire-policy");
   const replayRequest = { headers: rawHeaders, body: raw };
   const c2Replay = await processPushWebhook(replayRequest, webhookSecret, dedupeDirectory, [oldPolicy, policy], observations, { retiredPolicyIds: retiredIds });
   requireCondition(c2Replay.classification === "C2_PUSH_SELECTED" && c2Replay.replayed === true && c2Replay.dedupe.status === "DUPLICATE_SAME" && c2Replay.incident_id === derivedRequest.incident_id && JSON.stringify(c2Replay.create_request) === JSON.stringify(derivedRequest), "C2 replay did not return the durable request");
@@ -666,6 +678,7 @@ async function main(): Promise<void> {
   const policyRetirement = { artifact: "C2-E2E-R1-POLICY-RETIREMENT", policy_id: policyId, deploy_key_id: target.id, terminal_incident_id: derivedRequest.incident_id, terminal_classification: "VERIFIED_ABSENT", retired: true, retirement_timestamp: new Date().toISOString(), retirement_evidence_identity: FINAL_FILE, reason: "C2_E2E_R1_COMPLETED_TARGET_REMOVED" };
   const bundle: JsonObject = { classification: "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS", starting_sha: STARTING_SHA, execution_code_head_sha: executionHead, policy_freeze_sha: policyFreezeSha, final_sha: "recorded_by_containing_git_commit", main_sha: MAIN_SHA, sandbox_before_sha: BEFORE_SHA, sandbox_secret_commit_sha: trigger.sha, ingress_readiness: ingressLive, github_app_readiness: appBefore, t3n_readiness: t3nReady.readiness, provider_capability_preflight: { setup: { ...setupCapability.metadata, lifecycle: setupCapabilityCleanup }, source: { ...sourceCapability.metadata, lifecycle: sourceCapabilityCleanup }, verifier: { ...verifierCapability.metadata, lifecycle: verifierCapabilityCleanup } }, sandbox_baseline: baseline, fresh_target: target, policy: { registry_identity: policyId, policy_version: 2, authority_fields: authorityFields, content_sha256: remotePolicy.policy_content_sha256, remote_readback: remotePolicy }, historical_policy_retirement: { historical_policy_id: retirement.historical_policy_id, historical_deploy_key_id: retirement.historical_deploy_key_id, retired: true, cleanup_proven: retirement.cleanup_proven }, policy_before_event: { policy_freeze_commit_sha: policyFreezeSha, marker_commit_sha: markerSha, remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true, trigger_issued_after_marker: true, remote_policy_readback_date: remotePolicy.remote_readback_date, trigger_delivery_at: history.delivered_at }, secret_trigger_commit: trigger, real_delivery: { event_type: "push", delivery_id: capture.delivery_id, repository_id: capture.repository_id, repository_full_name: capture.repository_full_name, ref: capture.ref, before: capture.before, after: capture.after, created: capture.created, forced: capture.forced, deleted: capture.deleted, sender_login: capture.sender_login, raw_body_sha256: capture.raw_body_sha256, signature_verified: true, raw_body_persisted: false, webhook_secret_persisted: false, authority_processing_attempted: false, authority_eligible: true, classification: "REAL_AUTHENTICATED_PUSH_WITH_CAUSAL_TRANSITION", dedupe_status: "NEW" }, immutable_before: { status: beforeRead.status, commit_sha: BEFORE_SHA, path: SECRET_PATH }, immutable_after: { status: afterRead.status, commit_sha: trigger.sha, path: SECRET_PATH, content_sha256: afterRead.digest }, transition_classification: transition.classification, b1_evidence: b1Evidence, b1_verifier: { valid: b1Verification.valid, reasons: b1Verification.reasons, context: verificationContext }, derived_c1_request: derivedRequest, t3n: { create: sanitize(create), active_readback: sanitize(active), reservation: sanitize(reserve), reserved_readback: sanitize(reserved), brokers: { broker_a: sanitize(brokerA, [brokerKey]), broker_b: sanitize(brokerB, [brokerKey]), winner: winner.contender, loser: loser.contender, confirmed_owner_count: 1 }, pre_delete_authority: sanitize({ effect_start_ready: effectReadyDoc, operator_readback: beforeDeleteState, delete_allowed_after_this_read: true }), closed_readback: sanitize(closed), effect_start_id: winner.effect_start_id, finalization: sanitize(winner.finalize), final_result_classification: "VERIFIED_ABSENT" }, provider_effect: { delete_attempt_count: winner.destructive_call_count, delete_http_status: winner.delete?.http_status, delete_request_id: winner.delete?.provider_request_id ?? null, target_absent: winner.after?.target_absent === true }, effect_token: sanitize({ ...winner.effect_token, cleanup: winner.effect_token_cleanup }), independent_verifier: sanitize({ token: winner.verifier_token, readback: winner.independent_provider_verification, cleanup: winner.verifier_token_cleanup }), c2_replay: { classification: c2Replay.dedupe.status, incident_id: c2Replay.incident_id, create_request: c2Replay.create_request, new_immutable_source_reads: 0, new_t3n_incident_creations: 0, provider_authority_count: 0, provider_mutations: 0 }, c1_replay: { remediation_reserve: sanitize(c1ReplayReserve), closed_replay_rejected: c1ReplayReserve.result !== "WON", broker: sanitize(replayBroker, [brokerKey]), new_effect_token_mints: 0, new_delete_count: 0, effect_attempts: 1, target_absent: true }, successful_policy_retirement: policyRetirement, mutation_counters: { fixture_setup: { ssh_key_generations: 1, deploy_key_creates: 1 }, causal_source: { secret_trigger_pushes: 1 }, t3n_protocol: { incident_creates: 1, reservations: 1, effect_attempts: 1 }, provider_effect: { deploy_key_deletes: 1 }, independent_verification: { provider_mutations: 0 }, replay: { provider_token_mints: 0, provider_mutations: 0, deploy_key_deletes: 0 } }, sensitive_value_hygiene: { private_material_in_policy: false, private_material_in_evidence: false, raw_webhook_body_in_evidence: false, app_private_key_in_evidence: false, installation_token_in_evidence: false, webhook_secret_in_evidence: false, raw_webhook_body_retained_only_in_process_memory: true, private_local_copy_removed_after_trigger: true }, tests: { b1_verifier: "PASS", c2_replay: "PASS", c1_replay: "PASS", offline_e2e_verifier: "pending", c2_and_product: "run_before_final_commit" }, claims_earned: ["one real authenticated GitHub push introduced the exact private material bound by a pre-existing live policy to one fresh read-only deploy key", "immutable GitHub reads proved the exact 404-to-digest transition", "B1 evidence verified with an explicit execution context", "one exact C1 request created one bounded T3N incident", "one confirmed broker owner committed one effect-start and one provider DELETE", "independent verification proved the target absent and T3N closed VERIFIED_ABSENT", "C2 and C1 replay earned zero provider authority and zero provider mutation"], claims_forbidden: ["GitHub globally guarantees exactly-once", "atomic T3N/GitHub transaction", "ephemeral GitHub App root", "zero standing GitHub root authority", "arbitrary incident/provider support", "C2 submission readiness"] };
   const offline = verifyE2EBundle(bundle); requireCondition(offline.ok, `offline E2E verifier failed: ${offline.errors.join(", ")}`); bundle.tests.offline_e2e_verifier = "PASS";
+  progress("write-final-evidence");
   await writeJson(FINAL_FILE, bundle); await writeJson(RETIREMENT_FILE, policyRetirement);
   const finalSha = await commitAndPush([FINAL_FILE, RETIREMENT_FILE], "c2: prove full causal GitHub-to-T3N remediation");
   if (receiver) { await receiver.close(); const rawToClear = receiver.getRaw(); rawToClear?.fill(0); receiver = null; }
