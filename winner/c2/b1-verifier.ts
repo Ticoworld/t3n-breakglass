@@ -88,7 +88,7 @@ export function verifyB1Evidence(value: unknown, context: B1VerificationContext)
 
   requireField(reasons, source?.requested_permissions?.contents === "read", "source token was not requested Contents:read");
   requireField(reasons, source?.actual_permissions?.contents === "read" && source?.administration_write_granted === false, "source token permissions are too broad");
-  requireField(reasons, source?.read_http_status === 200 && source?.revoke_http_status === 204 && (source?.refusal_http_status === 401 || source?.refusal_http_status === 403), "source token lifecycle is incomplete");
+  requireField(reasons, source?.immutable_before_http_status === 404 && source?.immutable_after_http_status === 200 && source?.revoke_http_status === 204 && (source?.refusal_http_status === 401 || source?.refusal_http_status === 403), "source token lifecycle is incomplete");
   requireField(reasons, before?.status === 404 && before?.commit_sha === expectedBeforeSha && before.path === B1_SECRET_PATH, "immutable BEFORE proof is not exact");
   requireField(reasons, after?.status === 200 && after?.commit_sha === trigger?.sha && after.path === B1_SECRET_PATH && after.content_sha256 === e.private_material_sha256, "immutable AFTER digest proof is not exact");
   requireField(reasons, e.transition_classification === "CAUSAL_SECRET_INTRODUCED", "transition is not causal");

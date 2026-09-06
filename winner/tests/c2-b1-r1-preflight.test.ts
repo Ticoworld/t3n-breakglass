@@ -61,7 +61,7 @@ test("full synthetic B1 pipeline uses the runner evidence builder and passes rou
     policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true },
     secret_trigger_commit: { sha: SYNTHETIC_AFTER_SHA, parent_sha: NEW_B1_BEFORE_SHA, only_changed_path: B1_SECRET_PATH, fast_forward: true },
     real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, before: NEW_B1_BEFORE_SHA, after: SYNTHETIC_AFTER_SHA, created: false, forced: false, deleted: false, signature_verified: true, raw_body_sha256: event.raw_body_sha256, dedupe_status: "NEW" },
-    source_reader_token: { requested_permissions: { contents: "read" }, actual_permissions: { contents: "read" }, administration_write_granted: false, read_http_status: 200, revoke_http_status: 204, refusal_http_status: 401 },
+    source_reader_token: { requested_permissions: { contents: "read" }, actual_permissions: { contents: "read" }, administration_write_granted: false, immutable_before_http_status: 404, immutable_after_http_status: 200, revoke_http_status: 204, refusal_http_status: 401 },
     immutable_before: { status: 404, commit_sha: NEW_B1_BEFORE_SHA, path: B1_SECRET_PATH },
     immutable_after: { status: 200, commit_sha: SYNTHETIC_AFTER_SHA, path: B1_SECRET_PATH, content_sha256: DIGEST },
     transition_classification: transition.classification,

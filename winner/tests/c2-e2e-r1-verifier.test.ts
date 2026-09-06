@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { verifyE2EBundle } from "../c2/e2e-verifier.js";
+import { verifyE2EBundle, type E2EVerificationContext } from "../c2/e2e-verifier.js";
+import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
+import { buildB1SourceReaderEvidence } from "../c2/b1-source-reader.js";
+import { verifyB1Evidence } from "../c2/b1-verifier.js";
 
-const liveRunner = await readFile(new URL("../scripts/c2-e2e-r1-live.ts", import.meta.url), "utf8");
+const DEFAULT_CONTEXT: E2EVerificationContext = {
+  expectedStartingSha: "f66605e924dd1fff81f1cfa522275aa3ab097bad",
+  expectedMainSha: "4a077035474337b7a1ad16204820e68ed3020477",
+  expectedBeforeSha: "0ef99189955ff8bbdd18b1918937076883581528",
+};
 
 const targetId = 271828182;
 const policyId = "c2-policy:github-push-c2-e2e-r1-synthetic";
@@ -68,9 +74,9 @@ function validBundle(): Record<string, unknown> {
   };
   return {
     classification: "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS",
-    starting_sha: "f66605e924dd1fff81f1cfa522275aa3ab097bad",
-    main_sha: "4a077035474337b7a1ad16204820e68ed3020477",
-    sandbox_before_sha: "0ef99189955ff8bbdd18b1918937076883581528",
+    starting_sha: DEFAULT_CONTEXT.expectedStartingSha,
+    main_sha: DEFAULT_CONTEXT.expectedMainSha,
+    sandbox_before_sha: DEFAULT_CONTEXT.expectedBeforeSha,
     private_material_sha256: privateDigest,
     fresh_target: {
       id: targetId,
@@ -86,12 +92,12 @@ function validBundle(): Record<string, unknown> {
     policy: { registry_identity: policyId, policy_version: 2, authority_fields: authority, remote_readback: { success: true }, content_sha256: "a".repeat(64) },
     historical_policy_retirement: { historical_policy_id: "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89", retired: true, cleanup_proven: true },
     policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true, trigger_issued_after_marker: true },
-    secret_trigger_commit: { parent_sha: "0ef99189955ff8bbdd18b1918937076883581528", sha: triggerSha, only_changed_path: ".breakglass-c2/exposed-deploy-key", fast_forward: true },
-    real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: "Ticoworld/t3n-breakglass-sandbox", ref: "refs/heads/c2-breakglass-demo", before: "0ef99189955ff8bbdd18b1918937076883581528", after: triggerSha, created: false, forced: false, deleted: false, signature_verified: true, hmac_verified: true, delivery_id: "12345678-1234-1234-1234-123456789012", dedupe_status: "NEW" },
-    immutable_before: { status: 404, commit_sha: "0ef99189955ff8bbdd18b1918937076883581528", path: ".breakglass-c2/exposed-deploy-key" },
+    secret_trigger_commit: { parent_sha: DEFAULT_CONTEXT.expectedBeforeSha, sha: triggerSha, only_changed_path: ".breakglass-c2/exposed-deploy-key", fast_forward: true },
+    real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: "Ticoworld/t3n-breakglass-sandbox", ref: "refs/heads/c2-breakglass-demo", before: DEFAULT_CONTEXT.expectedBeforeSha, after: triggerSha, created: false, forced: false, deleted: false, signature_verified: true, hmac_verified: true, delivery_id: "12345678-1234-1234-1234-123456789012", raw_body_sha256: "2".repeat(64), dedupe_status: "NEW" },
+    immutable_before: { status: 404, commit_sha: DEFAULT_CONTEXT.expectedBeforeSha, path: ".breakglass-c2/exposed-deploy-key" },
     immutable_after: { status: 200, commit_sha: triggerSha, path: ".breakglass-c2/exposed-deploy-key", content_sha256: privateDigest },
     transition_classification: "CAUSAL_SECRET_INTRODUCED",
-    b1_verifier: { valid: true, reasons: [], context: { expectedStartingSha: "f66605e924dd1fff81f1cfa522275aa3ab097bad", expectedMainSha: "4a077035474337b7a1ad16204820e68ed3020477", expectedBeforeSha: "0ef99189955ff8bbdd18b1918937076883581528" } },
+    b1_verifier: { valid: true, reasons: [], context: DEFAULT_CONTEXT },
     derived_c1_request: request,
     t3n: {
       create: { result: "WON", function: "create-incident", state: "ACTIVE", detail: { deploy_key_id: targetId, remediation_agent_did: request.remediation_agent_did, effect_broker_did: request.effect_broker_did, action: "revoke_github_deploy_key" } },
@@ -109,14 +115,81 @@ function validBundle(): Record<string, unknown> {
   };
 }
 
+function syntheticB1Evidence(bundle: Record<string, any>, context: E2EVerificationContext): Record<string, unknown> {
+  const target = bundle.fresh_target;
+  const policy = bundle.policy;
+  const authority = policy.authority_fields;
+  const delivery = bundle.real_delivery;
+  const trigger = bundle.secret_trigger_commit;
+  const digest = bundle.private_material_sha256;
+  return buildB1Evidence({
+    starting_sha: context.expectedStartingSha,
+    main_sha: context.expectedMainSha,
+    b0_before_sha: context.expectedBeforeSha,
+    policy_freeze_commit_sha: "1".repeat(40),
+    private_material_sha256: digest,
+    fresh_deploy_key: target,
+    policy: { registry_identity: policy.registry_identity, policy_version: policy.policy_version, authority_fields: authority, remote_readback: { success: true } },
+    policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true },
+    secret_trigger_commit: { sha: trigger.sha, parent_sha: context.expectedBeforeSha, only_changed_path: ".breakglass-c2/exposed-deploy-key", fast_forward: true },
+    real_delivery: { ...delivery, raw_body_sha256: delivery.raw_body_sha256 ?? "2".repeat(64) },
+    source_reader_token: buildB1SourceReaderEvidence({
+      requested_permissions: { contents: "read" },
+      actual_permissions: { contents: "read" },
+      administration_write_granted: false,
+      immutable_before_http_status: 404,
+      immutable_after_http_status: 200,
+      revoke_http_status: 204,
+      refusal_http_status: 401,
+    }),
+    immutable_before: { status: 404, commit_sha: context.expectedBeforeSha, path: ".breakglass-c2/exposed-deploy-key" },
+    immutable_after: { status: 200, commit_sha: trigger.sha, path: ".breakglass-c2/exposed-deploy-key", content_sha256: digest },
+    transition_classification: "CAUSAL_SECRET_INTRODUCED",
+    derived_c1_request: bundle.derived_c1_request,
+    mutation_counters: { t3n_create_calls: 0, provider_effects: 0 },
+    sensitive_value_hygiene: { private_material_in_evidence: false, raw_webhook_body_in_evidence: false },
+  });
+}
+
 test("complete sanitized E2E bundle passes with zero network calls", () => {
-  const result = verifyE2EBundle(JSON.parse(JSON.stringify(validBundle())));
+  const result = verifyE2EBundle(JSON.parse(JSON.stringify(validBundle())), DEFAULT_CONTEXT);
   assert.equal(result.ok, true, result.errors.join(", "));
   assert.equal(result.network_calls, 0);
 });
 
-test("live B1 adapter emits the canonical source-reader read status", () => {
-  assert.match(liveRunner, /b1SourceReader\.read_http_status = afterRead\.status/);
+test("full E2E verification fails closed without explicit context", () => {
+  const result = verifyE2EBundle(JSON.parse(JSON.stringify(validBundle())));
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["explicit E2E verification context is required"]);
+});
+
+test("arbitrary future checkpoint passes only when all explicit context values match", () => {
+  const future: E2EVerificationContext = { expectedStartingSha: "a".repeat(40), expectedMainSha: "b".repeat(40), expectedBeforeSha: "c".repeat(40) };
+  const bundle = JSON.parse(JSON.stringify(validBundle())) as Record<string, any>;
+  bundle.starting_sha = future.expectedStartingSha;
+  bundle.main_sha = future.expectedMainSha;
+  bundle.sandbox_before_sha = future.expectedBeforeSha;
+  bundle.secret_trigger_commit.parent_sha = future.expectedBeforeSha;
+  bundle.real_delivery.before = future.expectedBeforeSha;
+  bundle.immutable_before.commit_sha = future.expectedBeforeSha;
+  bundle.b1_verifier.context = future;
+  assert.equal(verifyE2EBundle(bundle, future).ok, true);
+  assert.equal(verifyE2EBundle(bundle, { ...future, expectedStartingSha: "d".repeat(40) }).ok, false);
+  assert.equal(verifyE2EBundle(bundle, { ...future, expectedBeforeSha: "e".repeat(40) }).ok, false);
+  assert.equal(verifyE2EBundle(bundle, { ...future, expectedMainSha: "1".repeat(40) }).ok, false);
+});
+
+test("the synthetic runner-to-B1-to-E2E adapter pipeline round-trips without network calls", () => {
+  const bundle = JSON.parse(JSON.stringify(validBundle())) as Record<string, any>;
+  const b1 = syntheticB1Evidence(bundle, DEFAULT_CONTEXT);
+  const b1RoundTrip = JSON.parse(serializeB1Evidence(b1).toString("utf8")) as Record<string, unknown>;
+  const b1Result = verifyB1Evidence(b1RoundTrip, DEFAULT_CONTEXT);
+  assert.deepEqual(b1Result, { valid: true, reasons: [] });
+  bundle.b1_evidence = b1RoundTrip;
+  bundle.b1_verifier = { valid: b1Result.valid, reasons: b1Result.reasons, context: DEFAULT_CONTEXT };
+  const e2eResult = verifyE2EBundle(bundle, DEFAULT_CONTEXT);
+  assert.equal(e2eResult.ok, true, e2eResult.errors.join(", "));
+  assert.equal(e2eResult.network_calls, 0);
 });
 
 test("E2E verifier rejects causal and hygiene substitutions", () => {
@@ -137,6 +210,6 @@ test("E2E verifier rejects causal and hygiene substitutions", () => {
   for (const [name, mutate] of cases) {
     const bundle = JSON.parse(JSON.stringify(validBundle())) as Record<string, any>;
     mutate(bundle);
-    assert.equal(verifyE2EBundle(bundle).ok, false, `${name} was accepted`);
+    assert.equal(verifyE2EBundle(bundle, DEFAULT_CONTEXT).ok, false, `${name} was accepted`);
   }
 });

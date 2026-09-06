@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
+import { buildB1SourceReaderEvidence } from "../c2/b1-source-reader.js";
 import { B1_REPOSITORY, B1_REF, B1_SECRET_PATH, verifyB1Evidence, type B1VerificationContext } from "../c2/b1-verifier.js";
 
 const CURRENT_CONTEXT: B1VerificationContext = {
@@ -28,7 +29,7 @@ function evidenceFor(context: B1VerificationContext): Record<string, unknown> {
     policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true },
     secret_trigger_commit: { sha: after, parent_sha: context.expectedBeforeSha, only_changed_path: B1_SECRET_PATH, fast_forward: true },
     real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, before: context.expectedBeforeSha, after, created: false, forced: false, deleted: false, signature_verified: true, raw_body_sha256: "2".repeat(64), dedupe_status: "NEW" },
-    source_reader_token: { requested_permissions: { contents: "read" }, actual_permissions: { contents: "read" }, administration_write_granted: false, read_http_status: 200, revoke_http_status: 204, refusal_http_status: 401 },
+    source_reader_token: { requested_permissions: { contents: "read" }, actual_permissions: { contents: "read" }, administration_write_granted: false, immutable_before_http_status: 404, immutable_after_http_status: 200, revoke_http_status: 204, refusal_http_status: 401 },
     immutable_before: { status: 404, commit_sha: context.expectedBeforeSha, path: B1_SECRET_PATH },
     immutable_after: { status: 200, commit_sha: after, path: B1_SECRET_PATH, content_sha256: digest },
     transition_classification: "CAUSAL_SECRET_INTRODUCED",
@@ -58,3 +59,36 @@ test("arbitrary future execution checkpoints are accepted only when context matc
   assert.equal(verifyB1Evidence(evidence, { ...future, expectedStartingSha: "d".repeat(40) }).valid, false);
   assert.equal(verifyB1Evidence(evidence, { ...future, expectedBeforeSha: "e".repeat(40) }).valid, false);
 });
+
+test("the shared source-reader adapter round-trips the canonical B1 lifecycle", () => {
+  const source = buildB1SourceReaderEvidence({
+    requested_permissions: { contents: "read" },
+    actual_permissions: { contents: "read" },
+    administration_write_granted: false,
+    immutable_before_http_status: 404,
+    immutable_after_http_status: 200,
+    revoke_http_status: 204,
+    refusal_http_status: 401,
+    read_http_status: 200,
+  });
+  assert.equal(Object.prototype.hasOwnProperty.call(source, "read_http_status"), false);
+  const evidence = evidenceFor(CURRENT_CONTEXT);
+  evidence.source_reader_token = source;
+  const roundTripped = roundTrip(evidence);
+  assert.deepEqual(verifyB1Evidence(roundTripped, CURRENT_CONTEXT), { valid: true, reasons: [] });
+});
+
+for (const [name, mutate] of [
+  ["before status", (source: Record<string, any>) => { source.immutable_before_http_status = 200; }],
+  ["after status", (source: Record<string, any>) => { source.immutable_after_http_status = 500; }],
+  ["administration write", (source: Record<string, any>) => { source.administration_write_granted = true; }],
+  ["missing revoke", (source: Record<string, any>) => { delete source.revoke_http_status; }],
+  ["missing refusal", (source: Record<string, any>) => { delete source.refusal_http_status; }],
+  ["renamed lifecycle field", (source: Record<string, any>) => { delete source.immutable_after_http_status; source.read_http_status = 200; }],
+] as const) {
+  test(`canonical source-reader adapter rejects ${name}`, () => {
+    const evidence = evidenceFor(CURRENT_CONTEXT);
+    mutate(evidence.source_reader_token as Record<string, any>);
+    assert.equal(verifyB1Evidence(roundTrip(evidence), CURRENT_CONTEXT).valid, false);
+  });
+}

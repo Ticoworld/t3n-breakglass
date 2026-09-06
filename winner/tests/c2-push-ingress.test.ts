@@ -128,6 +128,30 @@ test("duplicate policy identity cannot alter a durable replay by input order", a
   assert.equal(replay.classification, "C2_PUSH_POLICY_AMBIGUOUS");
 });
 
+test("duplicate durable replay identity is ambiguous across policy versions", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const policy = fixturePolicy({ policy_id: "c2-push-local-versioned-replay" });
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const duplicateVersion = { ...policy, policy_version: policy.policy_version + 1 };
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [duplicateVersion, policy], observations, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+  const reversed = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy, duplicateVersion], observations, { allowLocalFixture: true });
+  assert.equal(reversed.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+});
+
+test("retired durable replay identity cannot be selected", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const policy = fixturePolicy({ policy_id: "c2-push-local-retired-replay" });
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true, retiredPolicyIds: new Set([policy.policy_id]) });
+  assert.equal(replay.classification, "C2_PUSH_REJECTED");
+  assert.match(replay.reason, /durable terminal decision|original policy version/);
+});
+
 test("commit-message injection and secret material never enter normalized evidence or dedupe", async (t) => {
   const dedupeDirectory = await directory();
   t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));

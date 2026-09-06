@@ -544,7 +544,7 @@ async function main(): Promise<void> {
     transition_classification: transition.classification,
     immutable_read_plan: readPlan,
     derived_c1_request: derived.create_request,
-    source_reader_token: { ...sourceMint.metadata, read_http_status: afterRead.status, immutable_before_http_status: beforeRead.status, immutable_after_http_status: afterRead.status, revoke_http_status: sourceTokenLifecycle.revoke_http_status, refusal_http_status: sourceTokenLifecycle.refusal_http_status, administration_write_granted: false, token_value_persisted: false, jwt_value_persisted: false },
+    source_reader_token: { ...sourceMint.metadata, immutable_before_http_status: beforeRead.status, immutable_after_http_status: afterRead.status, revoke_http_status: sourceTokenLifecycle.revoke_http_status, refusal_http_status: sourceTokenLifecycle.refusal_http_status, administration_write_granted: false, token_value_persisted: false, jwt_value_persisted: false },
     github_delivery_corroboration: deliveryHistoryResult,
     compromised_target_state: "COMPROMISED_DISPOSABLE_TARGET_PENDING_CAUSAL_REMEDIATION",
     mutation_counters: { app_permission_writes: 0, app_subscription_writes: 0, webhook_configuration_writes: 0, deploy_key_creates: 1, deploy_key_deletes: 0, secret_introduction_pushes: 1, secret_exposures: 1, live_policy_v2_creates: 1, t3n_create_calls: 0, c1_create_calls: 0, provider_effects: 0, t3n_writes: 0 },

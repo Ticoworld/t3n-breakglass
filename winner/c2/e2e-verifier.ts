@@ -7,11 +7,14 @@ export interface E2EVerificationResult {
   network_calls: 0;
 }
 
+export interface E2EVerificationContext {
+  expectedStartingSha: string;
+  expectedMainSha: string;
+  expectedBeforeSha: string;
+}
+
 type JsonObject = Record<string, any>;
 
-const STARTING_SHA = "f66605e924dd1fff81f1cfa522275aa3ab097bad";
-const MAIN_SHA = "4a077035474337b7a1ad16204820e68ed3020477";
-const BEFORE_SHA = "0ef99189955ff8bbdd18b1918937076883581528";
 const REPOSITORY = "Ticoworld/t3n-breakglass-sandbox";
 const REPOSITORY_ID = 1350596128;
 const REF = "refs/heads/c2-breakglass-demo";
@@ -51,7 +54,7 @@ function status(value: unknown, expected: number): boolean {
   return object(value).http_status === expected || object(value).status === expected;
 }
 
-export function verifyE2EBundle(source: string | Record<string, unknown>): E2EVerificationResult {
+export function verifyE2EBundle(source: string | Record<string, unknown>, context?: E2EVerificationContext): E2EVerificationResult {
   let bundle: JsonObject;
   try {
     bundle = typeof source === "string" ? JSON.parse(readFileSync(source, "utf8")) as JsonObject : source as JsonObject;
@@ -60,6 +63,11 @@ export function verifyE2EBundle(source: string | Record<string, unknown>): E2EVe
   }
 
   const checks: Record<string, boolean> = {};
+  if (!context) return { ok: false, errors: ["explicit E2E verification context is required"], checks, network_calls: 0 };
+  const validSha = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{40}$/i.test(value);
+  if (!validSha(context.expectedStartingSha) || !validSha(context.expectedMainSha) || !validSha(context.expectedBeforeSha)) {
+    return { ok: false, errors: ["E2E verification context contains an invalid SHA"], checks, network_calls: 0 };
+  }
   const check = (name: string, condition: unknown) => { checks[name] = condition === true; };
   const target = object(bundle.fresh_target);
   const targetSetup = object(target.setup_token);
@@ -99,9 +107,9 @@ export function verifyE2EBundle(source: string | Record<string, unknown>): E2EVe
   const counters = object(bundle.mutation_counters);
 
   check("classification", bundle.classification === "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS");
-  check("starting_sha", bundle.starting_sha === STARTING_SHA);
-  check("main_sha", bundle.main_sha === MAIN_SHA);
-  check("sandbox_before_sha", bundle.sandbox_before_sha === BEFORE_SHA);
+  check("starting_sha", bundle.starting_sha === context.expectedStartingSha);
+  check("main_sha", bundle.main_sha === context.expectedMainSha);
+  check("sandbox_before_sha", bundle.sandbox_before_sha === context.expectedBeforeSha);
   check("target_fresh", Number.isSafeInteger(target.id) && target.id > 0 && typeof target.title === "string" && target.title.startsWith("breakglass-c2-b1-e2e-r1-"));
   check("target_exact", target.repository === REPOSITORY && target.read_only === true && target.provider_readback_exact === true);
   check("private_public_target_relation", target.private_public_relation_proven === true && target.generated_public_key_fingerprint === target.provider_public_key_fingerprint && target.provider_public_key_fingerprint === authority.expected_public_key_fingerprint);
@@ -113,9 +121,9 @@ export function verifyE2EBundle(source: string | Record<string, unknown>): E2EVe
   check("historical_policy_retired", retired.historical_policy_id === HISTORICAL_POLICY && retired.retired === true && retired.cleanup_proven === true);
   check("policy_before_event", object(bundle.policy_before_event).remote_policy_readback_before_trigger === true && object(bundle.policy_before_event).marker_persisted_before_trigger === true && object(bundle.policy_before_event).trigger_issued_after_marker === true);
   check("real_delivery", delivery.event_type === "push" && delivery.repository_id === REPOSITORY_ID && delivery.repository_full_name === REPOSITORY && delivery.ref === REF && delivery.created === false && delivery.forced === false && delivery.deleted === false && delivery.signature_verified === true && delivery.hmac_verified === true && typeof delivery.delivery_id === "string" && delivery.dedupe_status === "NEW");
-  check("trigger_exact", trigger.parent_sha === BEFORE_SHA && trigger.only_changed_path === SECRET_PATH && trigger.fast_forward === true && delivery.before === BEFORE_SHA && delivery.after === trigger.sha && /^[0-9a-f]{40}$/i.test(String(trigger.sha ?? "")));
-  check("immutable_transition", before.status === 404 && before.commit_sha === BEFORE_SHA && before.path === SECRET_PATH && after.status === 200 && after.commit_sha === trigger.sha && after.path === SECRET_PATH && after.content_sha256 === bundle.private_material_sha256 && bundle.transition_classification === "CAUSAL_SECRET_INTRODUCED");
-  check("b1_verifier", b1.valid === true && Array.isArray(b1.reasons) && b1.reasons.length === 0 && b1.context?.expectedStartingSha === STARTING_SHA && b1.context?.expectedMainSha === MAIN_SHA && b1.context?.expectedBeforeSha === BEFORE_SHA);
+  check("trigger_exact", trigger.parent_sha === context.expectedBeforeSha && trigger.only_changed_path === SECRET_PATH && trigger.fast_forward === true && delivery.before === context.expectedBeforeSha && delivery.after === trigger.sha && /^[0-9a-f]{40}$/i.test(String(trigger.sha ?? "")));
+  check("immutable_transition", before.status === 404 && before.commit_sha === context.expectedBeforeSha && before.path === SECRET_PATH && after.status === 200 && after.commit_sha === trigger.sha && after.path === SECRET_PATH && after.content_sha256 === bundle.private_material_sha256 && bundle.transition_classification === "CAUSAL_SECRET_INTRODUCED");
+  check("b1_verifier", b1.valid === true && Array.isArray(b1.reasons) && b1.reasons.length === 0 && b1.context?.expectedStartingSha === context.expectedStartingSha && b1.context?.expectedMainSha === context.expectedMainSha && b1.context?.expectedBeforeSha === context.expectedBeforeSha);
   check("derived_request_shape", equalJson(Object.keys(request).sort(), ["deploy_key_id", "effect_broker_did", "incident_id", "remediation_agent_did", "ttl_secs"].sort()) && request.deploy_key_id === target.id && request.remediation_agent_did === REMEDIATION_DID && request.effect_broker_did === BROKER_DID && request.ttl_secs === 900);
   check("create_once", create.result === "WON" && create.function === "create-incident" && create.state === "ACTIVE" && createDetail.deploy_key_id === target.id && createDetail.remediation_agent_did === REMEDIATION_DID && createDetail.effect_broker_did === BROKER_DID && createDetail.action === "revoke_github_deploy_key");
   check("active_readback", active.state === "ACTIVE" && active.detail?.deploy_key_id === target.id && active.detail?.effect_attempts === 0);
@@ -141,5 +149,5 @@ export function verifyE2EBundle(source: string | Record<string, unknown>): E2EVe
 if (process.argv[1] && process.argv[1].endsWith("e2e-verifier.ts")) {
   const file = process.argv[2];
   if (!file) { console.error("usage: e2e-verifier.ts <bundle.json>"); process.exitCode = 1; }
-  else { const result = verifyE2EBundle(file); console.log(JSON.stringify(result, null, 2)); if (!result.ok) process.exitCode = 1; }
+  else { console.error("the CLI requires an explicit execution context; import verifyE2EBundle and provide it"); process.exitCode = 1; }
 }

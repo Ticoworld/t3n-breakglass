@@ -1,7 +1,7 @@
 import type { C1CreateRequest, DedupeResult, NormalizedPushEvent, RawGithubRequest } from "./types.js";
 import { reserveDedupe, finalizeDedupe } from "./dedupe.js";
 import { normalizeVerifiedPushEvent } from "./push-source.js";
-import { lookupPreExistingPushPolicy, type C2PushPolicyV2, type PushPolicyLookupOptions } from "./push-policy.js";
+import { lookupPreExistingPushPolicy, validateC2PushPolicyV2, type C2PushPolicyV2, type PushPolicyLookupOptions } from "./push-policy.js";
 import { createImmutablePushReadPlan, PushAuthorityEligibilityError, type ImmutablePushReadPlan } from "./push-read-plan.js";
 import { derivePushC1CreateRequest } from "./push-c1.js";
 import { verifyPushSecretTransition, type ImmutablePathObservation, type PushTransitionClassification } from "./push-transition.js";
@@ -52,12 +52,22 @@ export async function processPushWebhook(
 
   if (dedupe.status === "DUPLICATE_SAME" && dedupe.record.state !== "RESERVED") {
     if (dedupe.record.state === "ACCEPTED" && dedupe.record.create_request && dedupe.record.derived_incident_id) {
+      const nonRetiredIdentityMatches = policies.filter((candidate) =>
+        candidate.policy_id === dedupe.record.policy_id && options.retiredPolicyIds?.has(candidate.policy_id) !== true,
+      );
+      if (nonRetiredIdentityMatches.length > 1) {
+        return { classification: "C2_PUSH_POLICY_AMBIGUOUS", reason: "durable replay references a duplicated non-retired policy identity; refusing to select by input order", dedupe, event };
+      }
       const policyMatches = policies.filter((candidate) =>
         candidate.policy_id === dedupe.record.policy_id && candidate.policy_version === dedupe.record.policy_version &&
         options.retiredPolicyIds?.has(candidate.policy_id) !== true,
       );
       if (policyMatches.length === 1) {
         const policy = policyMatches[0];
+        const validation = validateC2PushPolicyV2(policy, { requireLiveProvenance: options.allowLocalFixture !== true });
+        if (!validation.valid) {
+          return { classification: "C2_PUSH_REJECTED", reason: "durable replay references a policy that is no longer valid", dedupe, event };
+        }
         return {
           classification: "C2_PUSH_SELECTED",
           dedupe,
@@ -69,9 +79,7 @@ export async function processPushWebhook(
           replayed: true,
         };
       }
-      if (policyMatches.length > 1) {
-        return { classification: "C2_PUSH_POLICY_AMBIGUOUS", reason: "durable replay references a duplicated policy identity; refusing to select by input order", dedupe, event };
-      }
+      if (policyMatches.length > 1) return { classification: "C2_PUSH_POLICY_AMBIGUOUS", reason: "durable replay references a duplicated policy identity/version; refusing to select by input order", dedupe, event };
     }
     return {
       classification: "C2_PUSH_REJECTED",
