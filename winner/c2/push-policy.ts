@@ -130,8 +130,14 @@ export function lookupPreExistingPushPolicy(
   if (matching.length === 0) return { kind: "NO_MATCH", reason: "no pre-existing push policy matches the authenticated repository/ref" };
 
   const retired = matching.filter((candidate) => options.retiredPolicyIds?.has(candidate.policy_id) === true);
-  const active = matching.filter((candidate) => !options.retiredPolicyIds?.has(candidate.policy_id) && candidate.enabled === true);
-  const disabled = matching.filter((candidate) => !options.retiredPolicyIds?.has(candidate.policy_id) && candidate.enabled !== true);
+  const nonRetired = matching.filter((candidate) => options.retiredPolicyIds?.has(candidate.policy_id) !== true);
+  const identityCounts = new Map<string, number>();
+  for (const candidate of nonRetired) identityCounts.set(candidate.policy_id, (identityCounts.get(candidate.policy_id) ?? 0) + 1);
+  const duplicateIdentity = [...identityCounts.entries()].find(([, count]) => count > 1);
+  if (duplicateIdentity) return { kind: "AMBIGUOUS", reason: `policy identity ${duplicateIdentity[0]} occurs more than once among non-retired matching records` };
+
+  const active = nonRetired.filter((candidate) => candidate.enabled === true);
+  const disabled = nonRetired.filter((candidate) => candidate.enabled !== true);
   const usable: C2PushPolicyV2[] = [];
   const invalidReasons: string[] = [];
   for (const candidate of active) {

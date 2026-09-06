@@ -106,6 +106,27 @@ test("duplicate policy identity fails closed", () => {
   assert.equal(result.kind, "AMBIGUOUS");
 });
 
+test("duplicate identity is ambiguous even when one copy is malformed", () => {
+  const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
+  const malformed = { ...livePolicy("same-policy-malformed"), expected_private_material_sha256: "not-a-digest" };
+  const result = lookupPreExistingPushPolicy(event, [livePolicy("same-policy-malformed"), malformed]);
+  assert.equal(result.kind, "AMBIGUOUS");
+});
+
+test("duplicate identity is ambiguous even when one copy is disabled", () => {
+  const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
+  const result = lookupPreExistingPushPolicy(event, [livePolicy("same-policy-disabled"), livePolicy("same-policy-disabled", { enabled: false })]);
+  assert.equal(result.kind, "AMBIGUOUS");
+});
+
+test("duplicate identity remains ambiguous with reversed input order", () => {
+  const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
+  const policies = [livePolicy("same-policy-order"), livePolicy("same-policy-order", { enabled: false })];
+  const first = lookupPreExistingPushPolicy(event, policies);
+  const reversed = lookupPreExistingPushPolicy(event, [...policies].reverse());
+  assert.deepEqual(first, reversed);
+});
+
 test("stale deleted-target policy cannot win by appearing first, and retirement permits the new policy", () => {
   const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
   const stale = livePolicy("stale-deleted-target", { deploy_key_id: 162414923 });

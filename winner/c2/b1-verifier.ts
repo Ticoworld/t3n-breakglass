@@ -1,8 +1,11 @@
 import type { C1CreateRequest } from "./types.js";
 
-export const B1_STARTING_SHA = "84df42102b6b7ad7eddf36e786cf6438f2024d1a";
-export const B1_MAIN_SHA = "4a077035474337b7a1ad16204820e68ed3020477";
-export const B1_BEFORE_SHA = "983a95d2e1f6ef44530490bdc4377bb5f3b44514";
+export interface B1VerificationContext {
+  expectedStartingSha: string;
+  expectedMainSha: string;
+  expectedBeforeSha: string;
+}
+
 export const B1_REPOSITORY = "Ticoworld/t3n-breakglass-sandbox";
 export const B1_REF = "refs/heads/c2-breakglass-demo";
 export const B1_SECRET_PATH = ".breakglass-c2/exposed-deploy-key";
@@ -25,15 +28,18 @@ function requireField(reasons: string[], condition: unknown, reason: string): vo
  * Offline verifier for the sanitized B1 bundle.  It intentionally checks the
  * causal ordering and target identity without ever needing private material.
  */
-export function verifyB1Evidence(value: unknown, options: { expectedBeforeSha?: string } = {}): { valid: boolean; reasons: string[] } {
+export function verifyB1Evidence(value: unknown, context: B1VerificationContext): { valid: boolean; reasons: string[] } {
   const e = object(value);
   const reasons: string[] = [];
   if (!e) return { valid: false, reasons: ["evidence is not an object"] };
-  const expectedBeforeSha = options.expectedBeforeSha ?? B1_BEFORE_SHA;
+  if (!context) return { valid: false, reasons: ["explicit B1 verification context is required"] };
+  const expectedStartingSha = context.expectedStartingSha;
+  const expectedMainSha = context.expectedMainSha;
+  const expectedBeforeSha = context.expectedBeforeSha;
 
   requireField(reasons, e.classification === "C2_B1_REAL_CAUSAL_SECRET_INTRODUCTION_PASS", "classification is not the B1 causal pass");
-  requireField(reasons, e.starting_sha === B1_STARTING_SHA, "starting SHA is not the frozen B1 checkpoint");
-  requireField(reasons, e.main_sha === B1_MAIN_SHA, "main SHA changed");
+  requireField(reasons, hex(expectedStartingSha, 40) && e.starting_sha === expectedStartingSha, "starting SHA does not match the explicit execution context");
+  requireField(reasons, hex(expectedMainSha, 40) && e.main_sha === expectedMainSha, "main SHA does not match the explicit execution context");
   requireField(reasons, hex(expectedBeforeSha, 40) && e.b0_before_sha === expectedBeforeSha, "B1 baseline is not exact");
 
   const target = object(e.fresh_deploy_key);
@@ -60,7 +66,7 @@ export function verifyB1Evidence(value: unknown, options: { expectedBeforeSha?: 
   requireField(reasons, authority?.repository_id === 1350596128 && authority.repository_full_name === B1_REPOSITORY, "policy repository binding is not exact");
   requireField(reasons, authority?.ref === B1_REF && authority.secret_path === B1_SECRET_PATH, "policy ref/path binding is not exact");
   requireField(reasons, authority?.deploy_key_id === target?.id, "policy target ID differs from installed target");
-  requireField(reasons, authority?.expected_deploy_key_title === target?.title && authority.expected_read_only === true, "policy target metadata differs");
+  requireField(reasons, authority?.expected_deploy_key_title === target?.title && authority?.expected_read_only === true, "policy target metadata differs");
   requireField(reasons, authority?.expected_public_key_fingerprint === target?.provider_public_key_fingerprint, "policy public fingerprint differs");
   requireField(reasons, authority?.expected_private_material_sha256 === e.private_material_sha256, "policy private-material digest differs");
   requireField(reasons, authority?.enabled === true && authority?.ttl_secs === 900, "policy authority bounds are not exact");
@@ -70,7 +76,7 @@ export function verifyB1Evidence(value: unknown, options: { expectedBeforeSha?: 
   requireField(reasons, ordering?.marker_persisted_before_trigger === true, "policy frozen marker was not persisted before trigger");
 
   requireField(reasons, trigger?.parent_sha === expectedBeforeSha, "secret commit parent is not the exact B1 baseline");
-  requireField(reasons, hex(trigger?.sha, 40) && trigger.sha !== expectedBeforeSha, "secret commit SHA is invalid");
+  requireField(reasons, hex(trigger?.sha, 40) && trigger?.sha !== expectedBeforeSha, "secret commit SHA is invalid");
   requireField(reasons, trigger?.only_changed_path === B1_SECRET_PATH, "secret commit changed an unexpected path");
   requireField(reasons, trigger?.fast_forward === true, "secret commit was not fast-forward");
 

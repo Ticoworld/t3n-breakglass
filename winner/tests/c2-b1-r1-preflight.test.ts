@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
-import { verifyB1Evidence, B1_MAIN_SHA, B1_REPOSITORY, B1_REF, B1_SECRET_PATH, B1_STARTING_SHA } from "../c2/b1-verifier.js";
+import { verifyB1Evidence, B1_REPOSITORY, B1_REF, B1_SECRET_PATH, type B1VerificationContext } from "../c2/b1-verifier.js";
 import { derivePushC1CreateRequest } from "../c2/push-c1.js";
 import { createImmutablePushReadPlan } from "../c2/push-read-plan.js";
 import { lookupPreExistingPushPolicy, buildC2PushPolicyV2 } from "../c2/push-policy.js";
@@ -10,7 +10,10 @@ import { normalizeVerifiedPushEvent } from "../c2/push-source.js";
 import { verifyPushSecretTransition } from "../c2/push-transition.js";
 import { PUSH_TEST_SECRET, signedPush } from "./c2-push-fixture.js";
 
-const NEW_B1_BEFORE_SHA = "dc321c7f8a251c50593f7f02008404cf2568f8f5";
+const NEW_B1_BEFORE_SHA = "0ef99189955ff8bbdd18b1918937076883581528";
+const PREFLIGHT_STARTING_SHA = "3c00f57f8a4d5d0187658cd53c2b2b9f676e5c2c";
+const PREFLIGHT_MAIN_SHA = "4a077035474337b7a1ad16204820e68ed3020477";
+const PREFLIGHT_CONTEXT: B1VerificationContext = { expectedStartingSha: PREFLIGHT_STARTING_SHA, expectedMainSha: PREFLIGHT_MAIN_SHA, expectedBeforeSha: NEW_B1_BEFORE_SHA };
 const SYNTHETIC_AFTER_SHA = "f".repeat(40);
 const SYNTHETIC_DELIVERY_ID = "33333333-3333-4333-8333-333333333333";
 const DIGEST = createHash("sha256").update("c2-b1-r1 synthetic disposable private material", "utf8").digest("hex");
@@ -48,8 +51,8 @@ test("full synthetic B1 pipeline uses the runner evidence builder and passes rou
   assert.equal(transition.classification, "CAUSAL_SECRET_INTRODUCED");
   const derived = derivePushC1CreateRequest(event, policy, transition);
   const evidence = buildB1Evidence({
-    starting_sha: B1_STARTING_SHA,
-    main_sha: B1_MAIN_SHA,
+    starting_sha: PREFLIGHT_STARTING_SHA,
+    main_sha: PREFLIGHT_MAIN_SHA,
     b0_before_sha: NEW_B1_BEFORE_SHA,
     policy_freeze_commit_sha: "1".repeat(40),
     private_material_sha256: DIGEST,
@@ -67,5 +70,5 @@ test("full synthetic B1 pipeline uses the runner evidence builder and passes rou
     sensitive_value_hygiene: { private_material_in_evidence: false, raw_webhook_body_in_evidence: false },
   });
   const roundTrip = JSON.parse(serializeB1Evidence(evidence).toString("utf8"));
-  assert.deepEqual(verifyB1Evidence(roundTrip, { expectedBeforeSha: NEW_B1_BEFORE_SHA }), { valid: true, reasons: [] });
+  assert.deepEqual(verifyB1Evidence(roundTrip, PREFLIGHT_CONTEXT), { valid: true, reasons: [] });
 });

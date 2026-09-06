@@ -1,0 +1,118 @@
+{
+  "artifact": "C2-B1-R1A-VERIFIER-CHECKPOINT",
+  "classification": "C2_B1_R1A_CHECKPOINT_VERIFIER_PASS",
+  "starting_sha": "3c00f57f8a4d5d0187658cd53c2b2b9f676e5c2c",
+  "final_sha": "recorded_by_containing_git_commit",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "current_sandbox_baseline": {
+    "branch": "c2-breakglass-demo",
+    "before_sha": "0ef99189955ff8bbdd18b1918937076883581528",
+    "secret_path_status": 404
+  },
+  "verifier_checkpoint_repair": {
+    "old_hardcoded_constants_discovered": {
+      "starting_sha": "84df42102b6b7ad7eddf36e786cf6438f2024d1a",
+      "before_sha": "983a95d2e1f6ef44530490bdc4377bb5f3b44514"
+    },
+    "old_constant_disposition": "removed from production verifier defaults; historical values remain only as explicitly named test-local negative fixtures",
+    "api_before": "verifyB1Evidence(evidence, optionalContext) with historical execution defaults",
+    "api_after": "verifyB1Evidence(evidence, context) where context is required and contains expectedStartingSha, expectedMainSha, and expectedBeforeSha",
+    "missing_context": "FAIL_CLOSED",
+    "current_checkpoint_round_trip": {
+      "builder": "buildB1Evidence",
+      "serializer": "serializeB1Evidence",
+      "json_parse": true,
+      "verification": "PASS",
+      "context": {
+        "expected_starting_sha": "3c00f57f8a4d5d0187658cd53c2b2b9f676e5c2c",
+        "expected_main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+        "expected_before_sha": "0ef99189955ff8bbdd18b1918937076883581528"
+      }
+    },
+    "stale_start_negative": "PASS: old starting context rejects current evidence; old starting evidence rejects current context",
+    "stale_baseline_negative": "PASS: old baseline context rejects current evidence; old baseline evidence rejects current context",
+    "arbitrary_future_checkpoint": "PASS with matching arbitrary context; FAIL with mismatched starting or before context",
+    "policy_identity_schema": "policy.registry_identity is required and must equal policy.authority_fields.policy_id; policy_id alone is insufficient"
+  },
+  "strict_policy_id_uniqueness": {
+    "matching_scope": "frozen source/repository/ref; retired identities excluded by retirement model",
+    "duplicate_check_order": "group all non-retired matching records by policy_id before validation, enabled filtering, or candidate selection",
+    "matrix": {
+      "one_valid_unique_policy": "MATCH",
+      "two_valid_different_ids": "AMBIGUOUS",
+      "same_id_two_valid_copies": "AMBIGUOUS",
+      "same_id_valid_and_malformed": "AMBIGUOUS",
+      "same_id_enabled_and_disabled": "AMBIGUOUS",
+      "same_id_reversed_input_order": "AMBIGUOUS in either order",
+      "malformed_different_id_plus_valid": "valid policy MATCH",
+      "disabled_different_id_plus_valid": "valid policy MATCH",
+      "retired_old_failed_policy_plus_fresh_valid": "fresh valid policy MATCH",
+      "stale_deleted_target_first": "AMBIGUOUS until stale identity is explicitly retired"
+    },
+    "authority_on_ambiguous": "none"
+  },
+  "durable_replay_ambiguity": {
+    "duplicate_non_retired_policy_identity": "C2_PUSH_POLICY_AMBIGUOUS; no authority replay and no input-order selection",
+    "retired_policy_identity": "no replayed authority; rejected terminally under retirement model",
+    "one_non_retired_exact_identity_and_version": "existing durable request may replay without new source reads"
+  },
+  "historical_policy_retirement": {
+    "policy_id": "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+    "deploy_key_id": 162414923,
+    "retired": true,
+    "failure_classification": "C2_B1_FAIL_AFTER_CAUSAL_EVENT_VERIFIER_SCHEMA_BUG",
+    "cleanup_proven": true,
+    "retirement_artifact": "C2-B1-R1-HISTORICAL-POLICY-RETIREMENT.json"
+  },
+  "synthetic_pipeline": {
+    "policy_lookup": "PASS",
+    "authority_eligibility": "PASS",
+    "immutable_read_plan": "PASS",
+    "transition_verifier": "PASS",
+    "c1_derivation": "PASS",
+    "evidence_builder": "PASS",
+    "json_round_trip": "PASS",
+    "offline_verifier": "PASS"
+  },
+  "targeted_typescript": {
+    "compiler": "tsc",
+    "flags": ["--noEmit", "--types", "node", "--target", "ES2022", "--module", "NodeNext", "--moduleResolution", "NodeNext", "--skipLibCheck", "--pretty", "false"],
+    "file_scope": "winner/c2/*.ts plus changed C2 runner and tests",
+    "result": "PASS"
+  },
+  "tests": {
+    "c2_tests_passed": 84,
+    "c2_tests_failed": 0,
+    "product_tests_passed": 7,
+    "product_tests_failed": 0,
+    "git_diff_check": "PASS"
+  },
+  "mutation_counters": {
+    "sandbox_pushes": 0,
+    "ssh_key_generations": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "secret_exposures": 0,
+    "live_policy_creates": 0,
+    "github_provider_mutations": 0,
+    "t3n_calls": 0,
+    "c1_create_calls": 0
+  },
+  "claims_earned": [
+    "future B1 verification requires an explicit execution context and cannot fall back to historical SHA values",
+    "the current checkpoint evidence shape round-trips through the shared builder/serializer and verifier",
+    "arbitrary future checkpoints are accepted only when evidence and explicit context match",
+    "duplicate non-retired policy identities fail closed independent of validity or input ordering",
+    "durable replay refuses to select among duplicate policy identities",
+    "the historical failed policy remains retired and the clean baseline remains the exact 0ef99189955ff8bbdd18b1918937076883581528 commit"
+  ],
+  "claims_forbidden": [
+    "fresh private key generated",
+    "fresh deploy key created",
+    "new secret exposed",
+    "live causal GitHub event",
+    "T3N incident created",
+    "remediation executed",
+    "C2-E2E-R1 pass"
+  ]
+}

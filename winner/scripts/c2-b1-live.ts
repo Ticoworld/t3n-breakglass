@@ -9,7 +9,7 @@ import { buildC2PushPolicyV2, type C2PushPolicyV2 } from "../c2/push-policy.js";
 import { createImmutablePushReadPlan } from "../c2/push-read-plan.js";
 import { derivePushC1CreateRequest } from "../c2/push-c1.js";
 import { verifyPushSecretTransition, type ImmutablePathObservation } from "../c2/push-transition.js";
-import { verifyB1Evidence, B1_BEFORE_SHA, B1_MAIN_SHA, B1_REPOSITORY, B1_REF, B1_SECRET_PATH, B1_STARTING_SHA } from "../c2/b1-verifier.js";
+import { verifyB1Evidence, type B1VerificationContext, B1_REPOSITORY, B1_REF, B1_SECRET_PATH } from "../c2/b1-verifier.js";
 import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
 import type { NormalizedPushEvent } from "../c2/types.js";
 
@@ -51,6 +51,7 @@ let tempKeyDirectory: string | null = null;
 let stagingDirectory: string | null = null;
 let privateBytes: Buffer | null = null;
 let stagedBytes: Buffer | null = null;
+let executionContext: B1VerificationContext | null = null;
 
 function asObject(value: unknown): JsonObject | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : null;
@@ -58,6 +59,23 @@ function asObject(value: unknown): JsonObject | null {
 
 function requireCondition(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
+}
+
+function requireExecutionContext(): B1VerificationContext {
+  requireCondition(executionContext, "explicit B1 execution context is required");
+  return executionContext;
+}
+
+function readExecutionContext(): B1VerificationContext {
+  const context = {
+    expectedStartingSha: process.env.C2_B1_EXPECTED_STARTING_SHA,
+    expectedMainSha: process.env.C2_B1_EXPECTED_MAIN_SHA,
+    expectedBeforeSha: process.env.C2_B1_EXPECTED_BEFORE_SHA,
+  };
+  requireCondition(typeof context.expectedStartingSha === "string" && /^[0-9a-f]{40}$/i.test(context.expectedStartingSha), "C2_B1_EXPECTED_STARTING_SHA is required and must be a 40-hex SHA");
+  requireCondition(typeof context.expectedMainSha === "string" && /^[0-9a-f]{40}$/i.test(context.expectedMainSha), "C2_B1_EXPECTED_MAIN_SHA is required and must be a 40-hex SHA");
+  requireCondition(typeof context.expectedBeforeSha === "string" && /^[0-9a-f]{40}$/i.test(context.expectedBeforeSha), "C2_B1_EXPECTED_BEFORE_SHA is required and must be a 40-hex SHA");
+  return context as B1VerificationContext;
 }
 
 function envFileValue(contents: string, name: string): string {
@@ -215,14 +233,14 @@ async function revokeAndProbe(token: string): Promise<JsonObject> {
   return { revoke_http_status: revoke.status, refusal_http_status: probe.status, refusal_confirmed: true };
 }
 
-async function verifyBaseline(pat: string): Promise<JsonObject> {
+async function verifyBaseline(pat: string, context: B1VerificationContext): Promise<JsonObject> {
   const ref = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/git/ref/heads/c2-breakglass-demo`);
   const refBody = asObject(ref.body) ?? {};
   const objectSha = asObject(refBody.object)?.sha;
-  requireCondition(ref.status === 200 && objectSha === B1_BEFORE_SHA, `sandbox baseline moved: expected ${B1_BEFORE_SHA}, got ${String(objectSha)}`);
-  const secret = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH_PARTS}?ref=${B1_BEFORE_SHA}`);
+  requireCondition(ref.status === 200 && objectSha === context.expectedBeforeSha, `sandbox baseline moved: expected ${context.expectedBeforeSha}, got ${String(objectSha)}`);
+  const secret = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH_PARTS}?ref=${context.expectedBeforeSha}`);
   requireCondition(secret.status === 404, `secret path is not absent at the exact B0 baseline (HTTP ${secret.status})`);
-  const ping = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/.breakglass-c2/ping.txt?ref=${B1_BEFORE_SHA}`);
+  const ping = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/.breakglass-c2/ping.txt?ref=${context.expectedBeforeSha}`);
   requireCondition(ping.status === 200, `B0 ping path is not readable at baseline (HTTP ${ping.status})`);
   return { branch: "c2-breakglass-demo", branch_head_sha: objectSha, ping_http_status: ping.status, secret_path_http_status: secret.status, secret_path_absent: true };
 }
@@ -331,10 +349,10 @@ async function verifyTargetWithPat(pat: string, id: number, title: string, publi
   return { exact_get_http_status: exact.status, list_get_http_status: list.status, list_contains_target: true, title, read_only: true, id };
 }
 
-async function secretTrigger(pat: string, bytes: Buffer): Promise<{ response: ApiResult; commitSha: string; parentSha: string; afterRefSha: string; commitReadback: JsonObject }> {
+async function secretTrigger(pat: string, bytes: Buffer, context: B1VerificationContext): Promise<{ response: ApiResult; commitSha: string; parentSha: string; afterRefSha: string; commitReadback: JsonObject }> {
   const ref = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/git/ref/heads/c2-breakglass-demo`);
-  requireCondition(asObject(asObject(ref.body)?.object)?.sha === B1_BEFORE_SHA, "sandbox head moved immediately before secret trigger");
-  const beforePath = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH_PARTS}?ref=${B1_BEFORE_SHA}`);
+  requireCondition(asObject(asObject(ref.body)?.object)?.sha === context.expectedBeforeSha, "sandbox head moved immediately before secret trigger");
+  const beforePath = await githubRequest(pat, `/repos/${SANDBOX_OWNER}/${SANDBOX_REPOSITORY}/contents/${SECRET_PATH_PARTS}?ref=${context.expectedBeforeSha}`);
   requireCondition(beforePath.status === 404, "secret path was not absent immediately before trigger");
   const body = JSON.stringify({ message: "C2-B1 exact disposable credential transition", content: bytes.toString("base64"), branch: "c2-breakglass-demo" });
   secretPushIssued = true;
@@ -350,7 +368,7 @@ async function secretTrigger(pat: string, bytes: Buffer): Promise<{ response: Ap
   const commitBody = asObject(commit.body) ?? {};
   const parents = Array.isArray(commitBody.parents) ? commitBody.parents.map((parent) => asObject(parent)?.sha) : [];
   const files = Array.isArray(commitBody.files) ? commitBody.files.map((file) => { const row = asObject(file) ?? {}; return { filename: row.filename, status: row.status, additions: row.additions, deletions: row.deletions }; }) : [];
-  requireCondition(commit.status === 200 && parents.length >= 1 && parents[0] === B1_BEFORE_SHA && files.length === 1 && files[0].filename === B1_SECRET_PATH && files[0].status === "added", "secret commit is not one exact fast-forward child adding only the policy path");
+  requireCondition(commit.status === 200 && parents.length >= 1 && parents[0] === context.expectedBeforeSha && files.length === 1 && files[0].filename === B1_SECRET_PATH && files[0].status === "added", "secret commit is not one exact fast-forward child adding only the policy path");
   return { response, commitSha, parentSha: parents[0], afterRefSha, commitReadback: { http_status: commit.status, parent_sha: parents[0], files } };
 }
 
@@ -362,13 +380,13 @@ async function readCapture(file: string): Promise<JsonObject | null> {
   try { return JSON.parse(await readFile(file, "utf8")) as JsonObject; } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return null; throw error; }
 }
 
-async function awaitRealDelivery(file: string, priorDeliveryId: string | null, afterSha: string): Promise<JsonObject> {
+async function awaitRealDelivery(file: string, priorDeliveryId: string | null, afterSha: string, context: B1VerificationContext): Promise<JsonObject> {
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
     const capture = await readCapture(file);
     if (capture && capture.delivery_id !== priorDeliveryId) {
       requireCondition(capture.event === "push" && capture.repository_id === 1350596128 && capture.repository_full_name === B1_REPOSITORY && capture.ref === B1_REF, "new capture is not the exact GitHub push vertical");
-      requireCondition(capture.before === B1_BEFORE_SHA && capture.after === afterSha && capture.created === false && capture.forced === false && capture.deleted === false, "new capture does not have the exact B1 authority-safe before/after shape");
+      requireCondition(capture.before === context.expectedBeforeSha && capture.after === afterSha && capture.created === false && capture.forced === false && capture.deleted === false, "new capture does not have the exact B1 authority-safe before/after shape");
       requireCondition(capture.signature_verified === true && capture.raw_body_persisted === false && capture.webhook_secret_persisted === false, "real delivery capture failed authentication or secret-hygiene checks");
       requireCondition(capture.authority_processing_attempted === false && capture.authority_eligible === false && capture.source_reader_calls === 0 && capture.c1_request_created === false, "receiver entered authority mode for the B1 delivery");
       requireCondition(asObject(capture.dedupe)?.status === "NEW", "B1 delivery was not durably reserved as NEW");
@@ -416,11 +434,13 @@ async function emergencyCleanup(pat: string | null, reason: string): Promise<Jso
 async function main(): Promise<void> {
   const pat = process.env.GITHUB_PAT;
   requireCondition(pat, "GITHUB_PAT is required for the explicitly authorized B1 GitHub setup/trigger workflow");
+  executionContext = readExecutionContext();
+  const context = requireExecutionContext();
   requireCondition(await runGit(["rev-parse", "--abbrev-ref", "HEAD"]) === CODE_BRANCH, "B1 must run on winner-v2-core");
   const implementationHead = await runGit(["rev-parse", "HEAD"]);
-  try { await execFileAsync("git", ["merge-base", "--is-ancestor", B1_STARTING_SHA, "HEAD"], { cwd: root, windowsHide: true }); } catch { throw new Error("B1 implementation HEAD is not descended from the frozen checkpoint"); }
+  requireCondition(implementationHead === context.expectedStartingSha, "B1 implementation HEAD does not equal the explicit execution starting SHA");
   requireCondition(await runGit(["rev-parse", "origin/winner-v2-core"]) === implementationHead, "origin/winner-v2-core does not match the checked-in B1 implementation");
-  requireCondition(await runGit(["rev-parse", "origin/main"]) === B1_MAIN_SHA, "origin/main does not match the frozen checkpoint");
+  requireCondition(await runGit(["rev-parse", "origin/main"]) === context.expectedMainSha, "origin/main does not match the explicit execution context");
   requireCondition((await runGit(["status", "--porcelain"])) === "", "working tree is not clean at B1 start");
   await assertNoPreexistingB1Files();
   const registration = JSON.parse(await readFile(path.join(root, "winner/evidence/contract-registration.json"), "utf8")) as JsonObject;
@@ -429,7 +449,7 @@ async function main(): Promise<void> {
   appJwtValue = await appJwt(appConfig);
   const ingress = await verifyIngress();
   const app = await appReadback();
-  const baseline = await verifyBaseline(pat);
+  const baseline = await verifyBaseline(pat, context);
   const captureFile = await readCapturePath();
   const priorCapture = await readCapture(captureFile);
   const priorDeliveryId = typeof priorCapture?.delivery_id === "string" ? priorCapture.delivery_id : null;
@@ -471,13 +491,13 @@ async function main(): Promise<void> {
   const preTriggerTarget = await verifyTargetWithPat(pat, target.target.id, key.title, key.publicKey);
   const stagedBeforePush = await runBuffer("git", ["cat-file", "blob", key.stagedBlobSha], stagingDirectory!);
   requireCondition(sha256Hex(stagedBeforePush) === key.privateDigest && Buffer.compare(stagedBeforePush, privateBytes!) === 0, "staged private material changed after policy freeze");
-  const trigger = await secretTrigger(pat, stagedBeforePush);
+  const trigger = await secretTrigger(pat, stagedBeforePush, context);
   stagedBeforePush.fill(0);
   if (stagedBytes) { stagedBytes.fill(0); stagedBytes = null; }
   if (privateBytes) { privateBytes.fill(0); privateBytes = null; }
   if (tempKeyDirectory) { await rm(tempKeyDirectory, { recursive: true, force: true }); tempKeyDirectory = null; }
   if (stagingDirectory) { await rm(stagingDirectory, { recursive: true, force: true }); stagingDirectory = null; }
-  const capture = await awaitRealDelivery(captureFile, priorDeliveryId, trigger.commitSha);
+  const capture = await awaitRealDelivery(captureFile, priorDeliveryId, trigger.commitSha, context);
   const deliveryHistoryResult = await deliveryHistory(String(capture.delivery_id));
   if (deliveryHistoryResult.classification === "GITHUB_DELIVERY_CORROBORATED" && remotePolicy.remote_readback_date && deliveryHistoryResult.delivered_at) requireCondition(Date.parse(remotePolicy.remote_readback_date) < Date.parse(String(deliveryHistoryResult.delivered_at)), "GitHub policy readback Date is not before webhook delivery time");
 
@@ -485,7 +505,7 @@ async function main(): Promise<void> {
   sourceToken = sourceMint.token;
   const actualPermissions = sourceMint.metadata.actual_permissions;
   requireCondition(actualPermissions.contents === "read" && actualPermissions.administration !== "write", "source-reader token granted broader than Contents:read-only scope");
-  const beforeRead = await readContentDigest(sourceToken, B1_BEFORE_SHA);
+  const beforeRead = await readContentDigest(sourceToken, context.expectedBeforeSha);
   requireCondition(beforeRead.status === 404 && beforeRead.digest === null, "immutable BEFORE read did not prove a missing secret path");
   const afterRead = await readContentDigest(sourceToken, trigger.commitSha);
   requireCondition(afterRead.status === 200 && afterRead.digest === key.privateDigest, "immutable AFTER read did not match the exact private-material digest");
@@ -496,7 +516,7 @@ async function main(): Promise<void> {
 
   const event: NormalizedPushEvent = { provider: "github", event_type: "push", action: "push", delivery_id: String(capture.delivery_id), repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, before: String(capture.before), after: String(capture.after), deleted: false, forced: false, created: false, sender_login: String(asObject(capture.normalized)?.sender_login ?? "Ticoworld"), raw_body_sha256: String(capture.raw_body_sha256) };
   const readPlan = createImmutablePushReadPlan(event, policy);
-  const beforeObservation: ImmutablePathObservation = { repository: B1_REPOSITORY, commit_sha: B1_BEFORE_SHA, path: B1_SECRET_PATH, status: 404 };
+  const beforeObservation: ImmutablePathObservation = { repository: B1_REPOSITORY, commit_sha: context.expectedBeforeSha, path: B1_SECRET_PATH, status: 404 };
   const afterObservation: ImmutablePathObservation = { repository: B1_REPOSITORY, commit_sha: trigger.commitSha, path: B1_SECRET_PATH, status: 200, content_sha256: key.privateDigest };
   const transition = verifyPushSecretTransition(beforeObservation, afterObservation, policy, readPlan);
   requireCondition(transition.classification === "CAUSAL_SECRET_INTRODUCED", `unexpected transition classification ${transition.classification}`);
@@ -504,12 +524,12 @@ async function main(): Promise<void> {
   requireCondition(derived.create_request.deploy_key_id === target.target.id && derived.create_request.ttl_secs === 900, "derived C1 request does not match exact fresh target policy");
 
   const evidence: JsonObject = buildB1Evidence({
-    starting_sha: B1_STARTING_SHA,
+    starting_sha: context.expectedStartingSha,
     policy_freeze_commit_sha: policyFreezeSha,
     policy_marker_commit_sha: markerSha,
     final_sha: "recorded_by_containing_git_commit",
-    main_sha: B1_MAIN_SHA,
-    b0_before_sha: B1_BEFORE_SHA,
+    main_sha: context.expectedMainSha,
+    b0_before_sha: context.expectedBeforeSha,
     ingress_readiness: ingress,
     app_readback: { registration: safeResponse(app.app), installation: safeResponse(app.installation), app_slug: APP_SLUG, installation_id: INSTALLATION_ID, permissions: safePermissions(app.appBody), events: app.appBody.events ?? [], installation_permissions: safePermissions(app.installationBody), repository_selection: app.installationBody.repository_selection ?? null },
     fresh_deploy_key: { ...target.target, generated_public_key_fingerprint: generatedFingerprint, provider_public_key_fingerprint: target.providerFingerprint, private_public_relation_proven: true, setup_token: { ...target.setupToken, lifecycle: setupTokenLifecycle }, provider_exact_readback: safeResponse(target.exact), provider_list_readback: { http_status: target.list.status, rows: safeKeyRows(target.list.body) } },
@@ -519,7 +539,7 @@ async function main(): Promise<void> {
     pre_trigger_target_recheck: preTriggerTarget,
     secret_trigger_commit: { mechanism: "GitHub Contents API single fast-forward commit (one push webhook)", sha: trigger.commitSha, parent_sha: trigger.parentSha, branch: "c2-breakglass-demo", only_changed_path: B1_SECRET_PATH, fast_forward: true, commit_readback: trigger.commitReadback, response: safeResponse(trigger.response) },
     real_delivery: { delivery_id: event.delivery_id, event_type: event.event_type, repository_id: event.repository_id, repository_full_name: event.repository_full_name, ref: event.ref, before: event.before, after: event.after, created: event.created, forced: event.forced, deleted: event.deleted, sender_login: event.sender_login, raw_body_sha256: event.raw_body_sha256, signature_verified: capture.signature_verified, raw_body_persisted: capture.raw_body_persisted, webhook_secret_persisted: capture.webhook_secret_persisted, authority_processing_attempted: capture.authority_processing_attempted, authority_eligible: capture.authority_eligible, dedupe_status: asObject(capture.dedupe)?.status ?? null, dedupe_key: asObject(capture.dedupe)?.key ?? null },
-    immutable_before: { status: beforeRead.status, commit_sha: B1_BEFORE_SHA, path: B1_SECRET_PATH, response: safeResponse(beforeRead.response) },
+    immutable_before: { status: beforeRead.status, commit_sha: context.expectedBeforeSha, path: B1_SECRET_PATH, response: safeResponse(beforeRead.response) },
     immutable_after: { status: afterRead.status, commit_sha: trigger.commitSha, path: B1_SECRET_PATH, content_sha256: afterRead.digest, response: safeResponse(afterRead.response) },
     transition_classification: transition.classification,
     immutable_read_plan: readPlan,
@@ -534,14 +554,14 @@ async function main(): Promise<void> {
     claims_earned: ["one fresh read-only deploy key was bound to the generated public key", "the exact private/public/target relation and private-material digest were frozen", "the live policy was committed and remotely read back before the security event", "one real authenticated push introduced the exact policy-bound private material", "immutable BEFORE/AFTER reads proved CAUSAL_SECRET_INTRODUCED", "the exact C1 request was derived without sending create-incident"],
     claims_forbidden: ["T3N incident created", "remediation executed", "deploy key revoked", "C2-C completion", "autonomous remediation", "C2 submission readiness"],
   });
-  const offline = verifyB1Evidence(evidence);
+  const offline = verifyB1Evidence(evidence, context);
   requireCondition(offline.valid, `offline B1 verifier failed: ${offline.reasons.join(", ")}`);
   evidence.tests.offline_verifier = "PASS";
   const finalEvidenceBytes = serializeB1Evidence(evidence);
   await writeFile(path.join(root, FINAL_EVIDENCE_FILE), finalEvidenceBytes);
   const finalSha = await commitAndPush(FINAL_EVIDENCE_FILE, `c2: record causal B1 secret introduction ${policyId}`);
   completed = true;
-  console.log(JSON.stringify({ final_sha: finalSha, main_sha: B1_MAIN_SHA, policy_freeze_commit_sha: policyFreezeSha, marker_commit_sha: markerSha, deploy_key_id: target.target.id, target_title: key.title, delivery_id: event.delivery_id, secret_commit_sha: trigger.commitSha, transition: transition.classification, derived_c1_request: derived.create_request, evidence: FINAL_EVIDENCE_FILE, total_provider_mutations: 2, t3n_create_calls: 0, note: `final evidence bytes ${finalEvidenceBytes.length}; final_sha is reported from the containing commit` }, null, 2));
+  console.log(JSON.stringify({ final_sha: finalSha, main_sha: context.expectedMainSha, policy_freeze_commit_sha: policyFreezeSha, marker_commit_sha: markerSha, deploy_key_id: target.target.id, target_title: key.title, delivery_id: event.delivery_id, secret_commit_sha: trigger.commitSha, transition: transition.classification, derived_c1_request: derived.create_request, evidence: FINAL_EVIDENCE_FILE, total_provider_mutations: 2, t3n_create_calls: 0, note: `final evidence bytes ${finalEvidenceBytes.length}; final_sha is reported from the containing commit` }, null, 2));
 }
 
 main().catch(async (error) => {
