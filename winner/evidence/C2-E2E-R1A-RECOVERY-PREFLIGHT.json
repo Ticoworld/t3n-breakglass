@@ -1,0 +1,161 @@
+{
+  "classification": "C2_E2E_R1A_RECOVERY_PREFLIGHT_PASS",
+  "starting_sha": "3895d279b1491b93992f78edb2b1a2b8f1e96f46",
+  "implementation_commit_sha": "f7576d0bab0c645091688716a3e0f7a7560258fe",
+  "final_sha": "recorded_by_containing_git_commit",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "historical_failure": {
+    "failed_sandbox_head": "ddbc623e87782b52a4bba4de61da982d125e53f7",
+    "failed_target_id": 162451701,
+    "failed_target_current_state": { "read_only_get_http_status": 404, "present": false },
+    "failed_policy_id": "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a",
+    "failed_policy_retired": true,
+    "failed_policy_retirement_artifact": "winner/evidence/C2-E2E-R1-FAILED-POLICY-RETIREMENT.json",
+    "prior_b1_failed_policy_id": "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+    "prior_b1_failed_policy_retired": true,
+    "prior_b1_retirement_artifact": "winner/evidence/C2-B1-R1-HISTORICAL-POLICY-RETIREMENT.json",
+    "secret_material_persisted": false
+  },
+  "baseline_cleanup": {
+    "classification": "C2_E2E_R1A_BASELINE_CLEANUP_ONLY",
+    "parent_sha": "ddbc623e87782b52a4bba4de61da982d125e53f7",
+    "cleanup_commit_sha": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5",
+    "remote_branch": "c2-breakglass-demo",
+    "remote_head_verified": true,
+    "exact_tree_change": "D .breakglass-c2/exposed-deploy-key",
+    "ping_preserved": true,
+    "secret_path_at_new_baseline": { "path": ".breakglass-c2/exposed-deploy-key", "status": 404 },
+    "new_e2e_before_sha": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5",
+    "historical_secret_remains_in_git_history": true,
+    "cleanup_delivery_authority": "NON_AUTHORITATIVE; retired failed policy excluded and no source/C1/T3N path was run"
+  },
+  "b1_adapter_repair": {
+    "old_behavior": "live runner built immutable_before_http_status/immutable_after_http_status and then post-mutated read_http_status = afterRead.status",
+    "new_behavior": "one buildB1SourceReaderEvidence adapter is used by buildB1Evidence, live runner evidence construction, and tests",
+    "canonical_source_reader_fields": [
+      "requested_permissions.contents",
+      "actual_permissions.contents",
+      "administration_write_granted",
+      "immutable_before_http_status",
+      "immutable_after_http_status",
+      "revoke_http_status",
+      "refusal_http_status"
+    ],
+    "legacy_read_http_status_emitted": false,
+    "actual_adapter_serializer_verifier_round_trip": "PASS",
+    "negative_round_trip_cases": {
+      "before_status_not_404": "REJECT",
+      "after_status_not_200": "REJECT",
+      "administration_write_granted": "REJECT",
+      "revoke_missing": "REJECT",
+      "refusal_missing": "REJECT",
+      "renamed_or_omitted_lifecycle_field": "REJECT"
+    }
+  },
+  "e2e_verifier_repair": {
+    "old_hardcoded_starting_sha": "f66605e924dd1fff81f1cfa522275aa3ab097bad",
+    "old_hardcoded_before_sha": "0ef99189955ff8bbdd18b1918937076883581528",
+    "old_values_live_defaults": false,
+    "api": "verifyE2EBundle(bundle, context)",
+    "context": ["expectedStartingSha", "expectedMainSha", "expectedBeforeSha"],
+    "missing_context": "FAIL_CLOSED",
+    "current_checkpoint_round_trip": "PASS with explicit context",
+    "stale_start_context": "REJECT",
+    "stale_before_context": "REJECT",
+    "arbitrary_future_checkpoint_matching_context": "PASS",
+    "arbitrary_future_start_mismatch": "REJECT",
+    "arbitrary_future_before_mismatch": "REJECT",
+    "arbitrary_future_main_mismatch": "REJECT"
+  },
+  "policy_lookup": {
+    "matching_set_semantics": "all frozen source/repository/ref matches are collected before validation or selection",
+    "duplicate_identity_rule": "any duplicate policy_id among non-retired matching records returns AMBIGUOUS regardless of validity, enabled state, or input order",
+    "matrix": {
+      "one_valid_unique": "MATCH",
+      "two_valid_different_ids": "AMBIGUOUS",
+      "same_id_two_valid_copies": "AMBIGUOUS",
+      "same_id_valid_plus_malformed": "AMBIGUOUS",
+      "same_id_enabled_plus_disabled": "AMBIGUOUS",
+      "same_id_reversed_order": "AMBIGUOUS",
+      "malformed_different_id_plus_valid": "MATCH valid policy",
+      "disabled_different_id_plus_valid": "MATCH valid policy",
+      "retired_old_plus_fresh_valid": "MATCH fresh policy",
+      "stale_deleted_target_first_without_retirement": "AMBIGUOUS"
+    },
+    "historical_retired_policy_lookup": "both failed E2E/B1 identities excluded; fresh unique policy matches in synthetic registry",
+    "durable_replay": {
+      "duplicate_non_retired_identity_even_across_versions": "C2_PUSH_POLICY_AMBIGUOUS",
+      "retired_identity": "not replay-selected",
+      "one_non_retired_exact_identity_and_version": "existing request may replay without new source reads"
+    }
+  },
+  "synthetic_pipeline": {
+    "input": "authenticated normalized push + synthetic live-provenance policy + immutable observations",
+    "stages": [
+      "policy lookup",
+      "authority eligibility",
+      "immutable read plan",
+      "CAUSAL_SECRET_INTRODUCED",
+      "C1 request derivation",
+      "canonical B1 source-reader adapter",
+      "B1 evidence serialization/parse",
+      "B1 verification",
+      "full E2E bundle serialization/parse",
+      "full E2E verification"
+    ],
+    "result": "PASS",
+    "network_calls": 0,
+    "private_material_in_pipeline_evidence": false
+  },
+  "tests": {
+    "c2_tests": { "count": 98, "result": "PASS" },
+    "product_boundary_tests": { "count": 7, "result": "PASS" },
+    "offline_relevant_c1_tests": { "count": 73, "result": "PASS" },
+    "targeted_typescript": { "file_count": 34, "flags": "--noEmit --types node --target ES2022 --module NodeNext --moduleResolution NodeNext --skipLibCheck", "result": "PASS" },
+    "git_diff_check": "PASS",
+    "broad_live_provider_harness": "NOT USED; this preflight performed no provider remediation and its isolated prior invocation was stopped after timeout without evidence"
+  },
+  "mutation_counters": {
+    "sandbox_cleanup_pushes": 1,
+    "fresh_ssh_key_generations": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "new_secret_exposures": 0,
+    "new_live_policy_creates": 0,
+    "t3n_incident_creates": 0,
+    "c1_create_calls": 0,
+    "provider_remediation_effects": 0
+  },
+  "sensitive_value_hygiene": {
+    "private_material_in_evidence": false,
+    "private_material_in_policy": false,
+    "raw_webhook_body_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "T3N_credential_in_evidence": false,
+    "webhook_secret_in_evidence": false
+  },
+  "claims_earned": [
+    "the failed secret-bearing sandbox head now has one clean normal descendant baseline",
+    "the failed target and both historical failed policies remain excluded from future authority",
+    "B1 live evidence construction and verification share one canonical source-reader lifecycle schema",
+    "the full E2E verifier requires explicit runtime checkpoint context and accepts arbitrary future checkpoints only when it matches",
+    "duplicate non-retired policy identities and durable replay identity ambiguity fail closed",
+    "the complete synthetic adapter-to-verifier pipeline passes without network calls"
+  ],
+  "claims_forbidden": [
+    "a fresh private key was generated",
+    "a fresh deploy key was created",
+    "a new live policy was created",
+    "a new causal GitHub event was induced",
+    "a T3N incident was created",
+    "provider remediation occurred",
+    "C2-E2E-R2 passed or is submission-ready"
+  ],
+  "push_verification": {
+    "winner_branch": "winner-v2-core",
+    "implementation_commit_pushed": true,
+    "origin_winner_sha": "f7576d0bab0c645091688716a3e0f7a7560258fe",
+    "sandbox_cleanup_remote_head": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5",
+    "main_modified": false
+  }
+}
