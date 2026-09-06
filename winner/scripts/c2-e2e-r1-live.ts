@@ -483,11 +483,14 @@ function c1Response(value: unknown, functionName: string, expected?: string): Js
 }
 
 async function t3nReadiness(agentKey: string, brokerKey: string): Promise<{ t3n: Awaited<ReturnType<typeof connectTenant>>["t3n"]; nodeUrl: string; readiness: JsonObject }> {
+  progress("t3n-connect");
   const connected = await connectTenant();
   requireCondition(connected.tenantDid === OPERATOR_DID, "operator DID mismatch");
+  progress("t3n-contract-map");
   const inventory = (await connected.tenant.contracts.listDetailed()).contracts.find((item) => item.name === CONTRACT_ID && item.version === CONTRACT_VERSION);
   const mapStatus = await connected.tenant.maps.getStatus(INCIDENT_MAP_TAIL);
   const org = new SessionOrgDataClient(connected.t3n, connected.nodeUrl);
+  progress("t3n-organization-readback");
   const admin = await org.amIAdmin({ orgDid: ORGANISATION_DID });
   const grants = await connected.t3n.getMemberDelegation();
   const rem = grants.grants.find((grant) => grant.grantee === REMEDIATION_DID && grant.contract_id === CONTRACT_ID);
@@ -497,6 +500,7 @@ async function t3nReadiness(agentKey: string, brokerKey: string): Promise<{ t3n:
   requireCondition(inventory?.status === "active" && mapStatus === "active" && admin, "C1 contract/map/operator readiness failed");
   requireCondition(rem?.version_req === CONTRACT_VERSION && JSON.stringify([...(rem.functions ?? [])].sort()) === JSON.stringify([RESERVATION_FUNCTION]) && !remEgress.egress, "remediation delegation readiness failed");
   requireCondition(broker?.version_req === CONTRACT_VERSION && JSON.stringify([...(broker.functions ?? [])].sort()) === JSON.stringify([...BROKER_FUNCTIONS].sort()) && !brokerEgress.egress, "broker delegation readiness failed");
+  progress("t3n-principal-probes");
   const noSuch = `C2-E2E-R1-READINESS-${Date.now()}-${randomBytes(4).toString("hex")}`;
   const operatorRead = c1Response(await invokeC1OperatorSession(connected.t3n, CONTRACT_ID, "get-incident", { incident_id: noSuch }), "get-incident");
   requireCondition(operatorRead.result === "DENIED" && operatorRead.note === "incident authority does not exist", "operator C1 readiness did not return harmless nonexistent-incident denial");
@@ -557,10 +561,13 @@ async function main(): Promise<void> {
   const appBefore = await appReadiness();
   progress("verify-t3n-and-capabilities");
   const t3nReady = await t3nReadiness(agentKey, brokerKey);
+  progress("setup-token-capability");
   const setupCapability = await mintInstallationToken({ administration: "write" }, "setup-capability-preflight");
   const setupCapabilityCleanup = await revokeAndRefuse(setupCapability.token);
+  progress("source-token-capability");
   const sourceCapability = await mintInstallationToken({ contents: "read" }, "source-capability-preflight");
   const sourceCapabilityCleanup = await revokeAndRefuse(sourceCapability.token);
+  progress("verifier-token-capability");
   const verifierCapability = await mintInstallationToken({ administration: "read" }, "verifier-capability-preflight");
   const verifierCapabilityCleanup = await revokeAndRefuse(verifierCapability.token);
   progress("verify-clean-baseline");
