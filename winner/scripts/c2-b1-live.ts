@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import os from "node:os";
@@ -245,6 +245,7 @@ async function generateKeyAndStage(): Promise<{ title: string; publicKey: string
   await execFileAsync("git", ["config", "core.autocrlf", "false"], { cwd: stagingDirectory, windowsHide: true });
   await execFileAsync("git", ["config", "core.safecrlf", "false"], { cwd: stagingDirectory, windowsHide: true });
   const stagedPath = path.join(stagingDirectory, ".breakglass-c2", "exposed-deploy-key");
+  await mkdir(path.dirname(stagedPath), { recursive: true });
   await writeFile(stagedPath, privateBytes);
   await execFileAsync("git", ["add", "--", ".breakglass-c2/exposed-deploy-key"], { cwd: stagingDirectory, windowsHide: true });
   const stagedBlobSha = await runGit(["rev-parse", ":.breakglass-c2/exposed-deploy-key"], stagingDirectory);
