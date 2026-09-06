@@ -1,0 +1,11 @@
+{
+  "artifact": "C2-B1-R1-HISTORICAL-POLICY-RETIREMENT",
+  "historical_policy_id": "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+  "historical_deploy_key_id": 162414923,
+  "failure_classification": "C2_B1_FAIL_AFTER_CAUSAL_EVENT_VERIFIER_SCHEMA_BUG",
+  "cleanup_classification": "TARGET_EMERGENCY_CLEANED",
+  "cleanup_proven": true,
+  "retired": true,
+  "retirement_timestamp": "2026-09-06T00:36:33.1003625Z",
+  "retirement_evidence_identity": "C2-B1-FAILURE-1788654059367.json"
+}

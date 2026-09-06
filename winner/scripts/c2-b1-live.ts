@@ -10,6 +10,7 @@ import { createImmutablePushReadPlan } from "../c2/push-read-plan.js";
 import { derivePushC1CreateRequest } from "../c2/push-c1.js";
 import { verifyPushSecretTransition, type ImmutablePathObservation } from "../c2/push-transition.js";
 import { verifyB1Evidence, B1_BEFORE_SHA, B1_MAIN_SHA, B1_REPOSITORY, B1_REF, B1_SECRET_PATH, B1_STARTING_SHA } from "../c2/b1-verifier.js";
+import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
 import type { NormalizedPushEvent } from "../c2/types.js";
 
 const execFileAsync = promisify(execFile);
@@ -502,8 +503,7 @@ async function main(): Promise<void> {
   const derived = derivePushC1CreateRequest(event, policy, transition);
   requireCondition(derived.create_request.deploy_key_id === target.target.id && derived.create_request.ttl_secs === 900, "derived C1 request does not match exact fresh target policy");
 
-  const evidence: JsonObject = {
-    classification: "C2_B1_REAL_CAUSAL_SECRET_INTRODUCTION_PASS",
+  const evidence: JsonObject = buildB1Evidence({
     starting_sha: B1_STARTING_SHA,
     policy_freeze_commit_sha: policyFreezeSha,
     policy_marker_commit_sha: markerSha,
@@ -533,11 +533,12 @@ async function main(): Promise<void> {
     c1_artifact: CONTRACT,
     claims_earned: ["one fresh read-only deploy key was bound to the generated public key", "the exact private/public/target relation and private-material digest were frozen", "the live policy was committed and remotely read back before the security event", "one real authenticated push introduced the exact policy-bound private material", "immutable BEFORE/AFTER reads proved CAUSAL_SECRET_INTRODUCED", "the exact C1 request was derived without sending create-incident"],
     claims_forbidden: ["T3N incident created", "remediation executed", "deploy key revoked", "C2-C completion", "autonomous remediation", "C2 submission readiness"],
-  };
+  });
   const offline = verifyB1Evidence(evidence);
   requireCondition(offline.valid, `offline B1 verifier failed: ${offline.reasons.join(", ")}`);
   evidence.tests.offline_verifier = "PASS";
-  const finalEvidenceBytes = await writeJson(FINAL_EVIDENCE_FILE, evidence);
+  const finalEvidenceBytes = serializeB1Evidence(evidence);
+  await writeFile(path.join(root, FINAL_EVIDENCE_FILE), finalEvidenceBytes);
   const finalSha = await commitAndPush(FINAL_EVIDENCE_FILE, `c2: record causal B1 secret introduction ${policyId}`);
   completed = true;
   console.log(JSON.stringify({ final_sha: finalSha, main_sha: B1_MAIN_SHA, policy_freeze_commit_sha: policyFreezeSha, marker_commit_sha: markerSha, deploy_key_id: target.target.id, target_title: key.title, delivery_id: event.delivery_id, secret_commit_sha: trigger.commitSha, transition: transition.classification, derived_c1_request: derived.create_request, evidence: FINAL_EVIDENCE_FILE, total_provider_mutations: 2, t3n_create_calls: 0, note: `final evidence bytes ${finalEvidenceBytes.length}; final_sha is reported from the containing commit` }, null, 2));

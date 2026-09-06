@@ -18,7 +18,7 @@ export type PushIngressResult =
       replayed: boolean;
     }
   | {
-      classification: "C2_PUSH_REJECTED" | "C2_PUSH_NO_MATCHING_POLICY" | "C2_PUSH_POLICY_DISABLED" | "C2_PUSH_TRANSITION_REJECTED" | "C2_PUSH_NOT_AUTHORITY_ELIGIBLE";
+      classification: "C2_PUSH_REJECTED" | "C2_PUSH_NO_MATCHING_POLICY" | "C2_PUSH_POLICY_DISABLED" | "C2_PUSH_POLICY_AMBIGUOUS" | "C2_PUSH_TRANSITION_REJECTED" | "C2_PUSH_NOT_AUTHORITY_ELIGIBLE";
       reason: string;
       dedupe: DedupeResult;
       event: NormalizedPushEvent;
@@ -76,17 +76,18 @@ export async function processPushWebhook(
 
   const lookup = lookupPreExistingPushPolicy(event, policies, options);
   if (lookup.kind !== "MATCH") {
-    const classification = lookup.kind === "NO_MATCH" ? "C2_PUSH_NO_MATCHING_POLICY" : "C2_PUSH_POLICY_DISABLED";
+    const classification = lookup.kind === "NO_MATCH" ? "C2_PUSH_NO_MATCHING_POLICY" : lookup.kind === "AMBIGUOUS" ? "C2_PUSH_POLICY_AMBIGUOUS" : "C2_PUSH_POLICY_DISABLED";
+    const reason = lookup.kind === "NO_MATCH" || lookup.kind === "AMBIGUOUS" ? lookup.reason : "policy is disabled";
     await finalizeDedupe(dedupeDirectory, dedupe, {
       state: "REJECTED",
       decision: classification,
-      reason: lookup.kind === "NO_MATCH" ? lookup.reason : "policy is disabled",
+      reason,
       policy_id: "policy" in lookup ? lookup.policy.policy_id : undefined,
       policy_version: "policy" in lookup ? lookup.policy.policy_version : undefined,
     });
     return {
       classification,
-      reason: lookup.kind === "NO_MATCH" ? lookup.reason : "policy is disabled",
+      reason,
       dedupe,
       event,
       policy: "policy" in lookup ? lookup.policy : undefined,

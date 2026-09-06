@@ -25,15 +25,16 @@ function requireField(reasons: string[], condition: unknown, reason: string): vo
  * Offline verifier for the sanitized B1 bundle.  It intentionally checks the
  * causal ordering and target identity without ever needing private material.
  */
-export function verifyB1Evidence(value: unknown): { valid: boolean; reasons: string[] } {
+export function verifyB1Evidence(value: unknown, options: { expectedBeforeSha?: string } = {}): { valid: boolean; reasons: string[] } {
   const e = object(value);
   const reasons: string[] = [];
   if (!e) return { valid: false, reasons: ["evidence is not an object"] };
+  const expectedBeforeSha = options.expectedBeforeSha ?? B1_BEFORE_SHA;
 
   requireField(reasons, e.classification === "C2_B1_REAL_CAUSAL_SECRET_INTRODUCTION_PASS", "classification is not the B1 causal pass");
   requireField(reasons, e.starting_sha === B1_STARTING_SHA, "starting SHA is not the frozen B1 checkpoint");
   requireField(reasons, e.main_sha === B1_MAIN_SHA, "main SHA changed");
-  requireField(reasons, e.b0_before_sha === B1_BEFORE_SHA, "B0 baseline is not exact");
+  requireField(reasons, hex(expectedBeforeSha, 40) && e.b0_before_sha === expectedBeforeSha, "B1 baseline is not exact");
 
   const target = object(e.fresh_deploy_key);
   const policy = object(e.policy);
@@ -55,6 +56,7 @@ export function verifyB1Evidence(value: unknown): { valid: boolean; reasons: str
   requireField(reasons, typeof e.private_material_sha256 === "string" && /^[0-9a-f]{64}$/.test(e.private_material_sha256), "private-material digest is malformed");
 
   requireField(reasons, policy?.registry_identity && policy.policy_version === 2, "policy identity/version is missing");
+  requireField(reasons, policy?.registry_identity === authority?.policy_id, "policy registry identity does not match authority identity");
   requireField(reasons, authority?.repository_id === 1350596128 && authority.repository_full_name === B1_REPOSITORY, "policy repository binding is not exact");
   requireField(reasons, authority?.ref === B1_REF && authority.secret_path === B1_SECRET_PATH, "policy ref/path binding is not exact");
   requireField(reasons, authority?.deploy_key_id === target?.id, "policy target ID differs from installed target");
@@ -67,13 +69,13 @@ export function verifyB1Evidence(value: unknown): { valid: boolean; reasons: str
   requireField(reasons, ordering?.remote_policy_readback_before_trigger === true, "policy was not proven before trigger");
   requireField(reasons, ordering?.marker_persisted_before_trigger === true, "policy frozen marker was not persisted before trigger");
 
-  requireField(reasons, trigger?.parent_sha === B1_BEFORE_SHA, "secret commit parent is not the exact B0 baseline");
-  requireField(reasons, hex(trigger?.sha, 40) && trigger.sha !== B1_BEFORE_SHA, "secret commit SHA is invalid");
+  requireField(reasons, trigger?.parent_sha === expectedBeforeSha, "secret commit parent is not the exact B1 baseline");
+  requireField(reasons, hex(trigger?.sha, 40) && trigger.sha !== expectedBeforeSha, "secret commit SHA is invalid");
   requireField(reasons, trigger?.only_changed_path === B1_SECRET_PATH, "secret commit changed an unexpected path");
   requireField(reasons, trigger?.fast_forward === true, "secret commit was not fast-forward");
 
   requireField(reasons, delivery?.event_type === "push" && delivery.repository_id === 1350596128 && delivery.repository_full_name === B1_REPOSITORY, "delivery source identity is not exact");
-  requireField(reasons, delivery?.ref === B1_REF && delivery.before === B1_BEFORE_SHA && delivery.after === trigger?.sha, "delivery ref or before/after identity is not exact");
+  requireField(reasons, delivery?.ref === B1_REF && delivery.before === expectedBeforeSha && delivery.after === trigger?.sha, "delivery ref or before/after identity is not exact");
   requireField(reasons, delivery?.created === false && delivery?.forced === false && delivery?.deleted === false, "delivery flags are not authority-safe");
   requireField(reasons, delivery?.signature_verified === true && typeof delivery.raw_body_sha256 === "string", "delivery HMAC/digest evidence is missing");
   requireField(reasons, delivery?.dedupe_status === "NEW", "delivery was not durably NEW");
@@ -81,7 +83,7 @@ export function verifyB1Evidence(value: unknown): { valid: boolean; reasons: str
   requireField(reasons, source?.requested_permissions?.contents === "read", "source token was not requested Contents:read");
   requireField(reasons, source?.actual_permissions?.contents === "read" && source?.administration_write_granted === false, "source token permissions are too broad");
   requireField(reasons, source?.read_http_status === 200 && source?.revoke_http_status === 204 && (source?.refusal_http_status === 401 || source?.refusal_http_status === 403), "source token lifecycle is incomplete");
-  requireField(reasons, before?.status === 404 && before?.commit_sha === B1_BEFORE_SHA && before.path === B1_SECRET_PATH, "immutable BEFORE proof is not exact");
+  requireField(reasons, before?.status === 404 && before?.commit_sha === expectedBeforeSha && before.path === B1_SECRET_PATH, "immutable BEFORE proof is not exact");
   requireField(reasons, after?.status === 200 && after?.commit_sha === trigger?.sha && after.path === B1_SECRET_PATH && after.content_sha256 === e.private_material_sha256, "immutable AFTER digest proof is not exact");
   requireField(reasons, e.transition_classification === "CAUSAL_SECRET_INTRODUCED", "transition is not causal");
 

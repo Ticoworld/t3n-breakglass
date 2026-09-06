@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { verifyB1Evidence, B1_BEFORE_SHA, B1_MAIN_SHA, B1_REPOSITORY, B1_REF, B1_SECRET_PATH, B1_STARTING_SHA } from "../c2/b1-verifier.js";
+import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
 
 function fixture(): any {
   const target = { id: 123456789, title: "breakglass-c2-b1-test", read_only: true, generated_public_key_fingerprint: "SHA256:test", provider_public_key_fingerprint: "SHA256:test", private_public_relation_proven: true };
@@ -13,7 +14,7 @@ function fixture(): any {
     policy_freeze_commit_sha: "b".repeat(40),
     private_material_sha256: digest,
     fresh_deploy_key: target,
-    policy: { registry_identity: "c2-policy:test", policy_version: 2, authority_fields: { repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, secret_path: B1_SECRET_PATH, deploy_key_id: target.id, expected_deploy_key_title: target.title, expected_read_only: true, expected_public_key_fingerprint: target.provider_public_key_fingerprint, expected_private_material_sha256: digest, enabled: true, ttl_secs: 900 }, remote_readback: { success: true } },
+    policy: { registry_identity: "c2-policy:test", policy_version: 2, authority_fields: { policy_id: "c2-policy:test", repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, secret_path: B1_SECRET_PATH, deploy_key_id: target.id, expected_deploy_key_title: target.title, expected_read_only: true, expected_public_key_fingerprint: target.provider_public_key_fingerprint, expected_private_material_sha256: digest, enabled: true, ttl_secs: 900 }, remote_readback: { success: true } },
     policy_before_event: { remote_policy_readback_before_trigger: true, marker_persisted_before_trigger: true },
     secret_trigger_commit: { sha: "c".repeat(40), parent_sha: B1_BEFORE_SHA, only_changed_path: B1_SECRET_PATH, fast_forward: true },
     real_delivery: { event_type: "push", repository_id: 1350596128, repository_full_name: B1_REPOSITORY, ref: B1_REF, before: B1_BEFORE_SHA, after: "c".repeat(40), created: false, forced: false, deleted: false, signature_verified: true, raw_body_sha256: digest, dedupe_status: "NEW" },
@@ -29,6 +30,26 @@ function fixture(): any {
 
 test("accepts a complete sanitized causal B1 bundle", () => {
   assert.deepEqual(verifyB1Evidence(fixture()), { valid: true, reasons: [] });
+});
+
+test("the exact runner evidence shape round-trips with registry_identity and no policy_id", () => {
+  const serialized = serializeB1Evidence(buildB1Evidence(fixture()));
+  const parsed = JSON.parse(serialized.toString("utf8"));
+  assert.equal(parsed.policy.registry_identity, "c2-policy:test");
+  assert.equal(parsed.policy.policy_id, undefined);
+  assert.deepEqual(verifyB1Evidence(parsed), { valid: true, reasons: [] });
+});
+
+test("policy identity absent entirely fails closed", () => {
+  const copy = fixture();
+  delete copy.policy.registry_identity;
+  assert.equal(verifyB1Evidence(JSON.parse(JSON.stringify(copy))).valid, false);
+});
+
+test("wrong registry identity fails closed", () => {
+  const copy = fixture();
+  copy.policy.registry_identity = "c2-policy:other";
+  assert.equal(verifyB1Evidence(copy).valid, false);
 });
 
 for (const [name, mutate] of [

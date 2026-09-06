@@ -15,6 +15,14 @@ export interface PushPolicyProvenance {
   enabled_before_event_proof: boolean;
 }
 
+export interface PushPolicyRetirementRecord {
+  policy_id: string;
+  retired: true;
+  retirement_reason: string;
+  retirement_timestamp: string;
+  retirement_evidence_identity: string;
+}
+
 /**
  * This is a shape for a future live registry record, not a pre-filled target.
  * The builder requires actual target and provenance facts from its caller.
@@ -69,11 +77,15 @@ export function validateC2PushPolicyV2(
   if (!Number.isSafeInteger(policy.ttl_secs) || policy.ttl_secs <= 0 || policy.ttl_secs > 86_400) reasons.push("TTL is not bounded");
   if (!policy.actual_creation_timestamp || !Number.isFinite(Date.parse(policy.actual_creation_timestamp))) reasons.push("actual creation timestamp is missing or malformed");
   if (!policy.creation_commit_or_registry_identity) reasons.push("creation commit/registry identity is missing");
-  if (!policy.provenance.creation_evidence) reasons.push("creation evidence is missing");
-  if (policy.provenance.enabled_before_event_proof !== true) reasons.push("enabled-before-event proof is missing");
+  if (!policy.provenance || typeof policy.provenance !== "object") {
+    reasons.push("policy provenance is missing");
+  } else {
+    if (!policy.provenance.creation_evidence) reasons.push("creation evidence is missing");
+    if (policy.provenance.enabled_before_event_proof !== true) reasons.push("enabled-before-event proof is missing");
+  }
 
-  const live = policy.provenance.classification === "LIVE_PROVENANCE" && reasons.length === 0;
-  if (options.requireLiveProvenance === true && policy.provenance.classification !== "LIVE_PROVENANCE") reasons.push("policy is a local fixture, not live provenance");
+  const live = policy.provenance?.classification === "LIVE_PROVENANCE" && reasons.length === 0;
+  if (options.requireLiveProvenance === true && policy.provenance?.classification !== "LIVE_PROVENANCE") reasons.push("policy is a local fixture, not live provenance");
   return { valid: reasons.length === 0, live, reasons };
 }
 
@@ -95,23 +107,44 @@ export function buildC2PushPolicyV2(input: C2PushPolicyV2Input): C2PushPolicyV2 
 export type PushPolicyLookupResult =
   | { kind: "MATCH"; policy: C2PushPolicyV2 }
   | { kind: "NO_MATCH"; reason: string }
-  | { kind: "DISABLED"; policy: C2PushPolicyV2 };
+  | { kind: "DISABLED"; policy: C2PushPolicyV2 }
+  | { kind: "AMBIGUOUS"; reason: string };
+
+export interface PushPolicyLookupOptions {
+  allowLocalFixture?: boolean;
+  retiredPolicyIds?: ReadonlySet<string>;
+}
 
 export function lookupPreExistingPushPolicy(
   event: NormalizedPushEvent,
   policies: readonly C2PushPolicyV2[],
-  options: { allowLocalFixture?: boolean } = {},
+  options: PushPolicyLookupOptions = {},
 ): PushPolicyLookupResult {
-  const policy = policies.find((candidate) =>
+  const matching = policies.filter((candidate) =>
     candidate.source_provider === event.provider &&
     candidate.source_event_type === event.event_type &&
     candidate.repository_id === event.repository_id &&
     candidate.repository_full_name === event.repository_full_name &&
     candidate.ref === event.ref,
   );
-  if (!policy) return { kind: "NO_MATCH", reason: "no pre-existing push policy matches the authenticated repository/ref" };
-  if (!policy.enabled) return { kind: "DISABLED", policy };
-  const validation = validateC2PushPolicyV2(policy, { requireLiveProvenance: options.allowLocalFixture !== true });
-  if (!validation.valid) return { kind: "NO_MATCH", reason: `policy is not usable: ${validation.reasons.join(", ")}` };
-  return { kind: "MATCH", policy };
+  if (matching.length === 0) return { kind: "NO_MATCH", reason: "no pre-existing push policy matches the authenticated repository/ref" };
+
+  const retired = matching.filter((candidate) => options.retiredPolicyIds?.has(candidate.policy_id) === true);
+  const active = matching.filter((candidate) => !options.retiredPolicyIds?.has(candidate.policy_id) && candidate.enabled === true);
+  const disabled = matching.filter((candidate) => !options.retiredPolicyIds?.has(candidate.policy_id) && candidate.enabled !== true);
+  const usable: C2PushPolicyV2[] = [];
+  const invalidReasons: string[] = [];
+  for (const candidate of active) {
+    const validation = validateC2PushPolicyV2(candidate, { requireLiveProvenance: options.allowLocalFixture !== true });
+    if (validation.valid) usable.push(candidate);
+    else invalidReasons.push(`${candidate.policy_id}: ${validation.reasons.join(", ")}`);
+  }
+  if (usable.length > 1) return { kind: "AMBIGUOUS", reason: `more than one usable enabled policy matches the authenticated repository/ref (${usable.length})` };
+  if (usable.length === 1) return { kind: "MATCH", policy: usable[0] };
+  if (disabled.length > 0 || retired.length > 0) return { kind: "DISABLED", policy: disabled[0] ?? retired[0] };
+  return { kind: "NO_MATCH", reason: invalidReasons.length > 0 ? `matching policies are not usable: ${invalidReasons.join("; ")}` : "no usable enabled policy matches the authenticated repository/ref" };
+}
+
+export function retiredPolicyIdSet(records: readonly PushPolicyRetirementRecord[]): ReadonlySet<string> {
+  return new Set(records.filter((record) => record.retired === true).map((record) => record.policy_id));
 }
