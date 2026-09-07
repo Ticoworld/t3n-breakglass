@@ -1,0 +1,161 @@
+{
+  "classification": "C2_E2E_R2_FAIL_BROKER_OWNER_EVIDENCE_ADJUDICATION",
+  "failure_reason": "The winning broker completed the provider effect, but the runner required the losing contender to reach confirm-claim and emit NOT_OWNER. The losing contender legitimately returned CLAIM_LOST at claim-effect and therefore had no ownership_confirmation field. The run was not promoted to PASS.",
+  "required_starting_sha": "49499358463c40987cc1d0b78f5428e5e30bbee7",
+  "actual_starting_sha": "3a0d7aa601920bdd7be716dbe8acd31714b32f0c",
+  "policy_freeze_sha": "56ec67bde35c4596ed415db45929c113ba552d72",
+  "marker_commit_sha": "7812d66224caacdd36a6fc09de672fda6875e7b1",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "sandbox_before_sha": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5",
+  "secret_trigger_after_sha": "f4fbebf7349821b857ab1ffa83b6f9637dcba35e",
+  "fresh_target": {
+    "id": 162525303,
+    "title": "breakglass-c2-b1-e2e-r2-1788774218778-d5d21aec49c5",
+    "read_only": true,
+    "public_key_fingerprint": "SHA256:RVcdepXsb/zs93VSfEOEuMw5vQvrdDnYaP6AM0F9RCM",
+    "private_material_sha256": "d6b745fbd23d22bab4e937b224a2ac4b865cffa2ef20fc3060eff4aea09dfa2b",
+    "provider_effect_result": "HTTP 204 DELETE; exact GET 404; list excluded target"
+  },
+  "policy": {
+    "registry_identity": "c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86",
+    "policy_version": 2,
+    "content_sha256": "13aa0874a2bc2fe6351da80c91bb1dced11e5494b03f0accec750affebc5f87b",
+    "remote_readback": true,
+    "remote_readback_before_trigger": true,
+    "historical_failed_policies_retired": [
+      "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89",
+      "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a"
+    ],
+    "retired_after_recovery": true
+  },
+  "real_delivery": {
+    "delivery_id": "c1278f3a-aaa0-11f1-9f5f-1f10261aa34b",
+    "event_type": "push",
+    "repository_id": 1350596128,
+    "repository_full_name": "Ticoworld/t3n-breakglass-sandbox",
+    "ref": "refs/heads/c2-breakglass-demo",
+    "before": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5",
+    "after": "f4fbebf7349821b857ab1ffa83b6f9637dcba35e",
+    "created": false,
+    "forced": false,
+    "deleted": false,
+    "hmac_verified": true,
+    "raw_body_sha256": "e542fbd83a0ed290440e626eba03abf03b29ea5567ee2c30c8fc6b8d369ba6c7",
+    "raw_body_persisted": false,
+    "authority_event_verified": true,
+    "dedupe_status": "NEW"
+  },
+  "immutable_transition": {
+    "before_http_status": 404,
+    "after_http_status": 200,
+    "after_digest_matches_policy": true,
+    "classification": "CAUSAL_SECRET_INTRODUCED"
+  },
+  "b1_gate": {
+    "runtime_gate_passed_before_t3n_create": true,
+    "verification_context": {
+      "expectedStartingSha": "3a0d7aa601920bdd7be716dbe8acd31714b32f0c",
+      "expectedMainSha": "4a077035474337b7a1ad16204820e68ed3020477",
+      "expectedBeforeSha": "d0338f9f4b9ab0c2823b1d59c59a5caa40968fa5"
+    },
+    "canonical_source_reader_lifecycle": {
+      "requested_contents": "read",
+      "actual_contents": "read",
+      "administration_write_granted": false,
+      "immutable_before_http_status": 404,
+      "immutable_after_http_status": 200,
+      "revoke_http_status": 204,
+      "refusal_http_status": 401
+    }
+  },
+  "derived_c1_request": {
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "deploy_key_id": 162525303,
+    "ttl_secs": 900
+  },
+  "t3n": {
+    "create_calls": 1,
+    "create_state": "ACTIVE",
+    "reservation_state": "RESERVED",
+    "effect_start_state": "EFFECT_STARTED",
+    "final_state": "CLOSED",
+    "final_result_classification": "VERIFIED_ABSENT",
+    "effect_attempts": 1,
+    "recovery_call": "reconcile-effect",
+    "recovery_provider_calls": 0
+  },
+  "brokers": {
+    "broker_a": {
+      "claim_outcome": "CLAIM_WON",
+      "ownership_confirmation": "CONFIRMED",
+      "effect_start_confirmed": true,
+      "provider_credential_mint_count": 1,
+      "delete_count": 1,
+      "delete_http_status": 204,
+      "independent_absence": true,
+      "provider_token_cleanup": "revoke 204; refusal 401"
+    },
+    "broker_b": {
+      "claim_outcome": "CLAIM_LOST",
+      "ownership_confirmation": "NOT_EMITTED_AFTER_EARLY_LOSS",
+      "provider_credential_mint_count": 0,
+      "delete_count": 0,
+      "provider_calls_after_loss": 0
+    },
+    "confirmed_owner_count": 1,
+    "runner_adjudication": "FAIL: loser schema did not normalize early CLAIM_LOST to NOT_OWNER"
+  },
+  "delivery_corroboration": {
+    "classification": "GITHUB_DELIVERY_CORROBORATED",
+    "delivered_at": "2026-09-07T09:44:45.623Z",
+    "status": "OK",
+    "status_code": 202,
+    "redelivery": false,
+    "installation_id": 158227303
+  },
+  "replay": {
+    "c2_replay_executed": false,
+    "c1_replay_executed": false,
+    "reason": "run stopped at broker evidence adjudication; no second authority or provider attempt"
+  },
+  "policy_retirement": {
+    "retired": true,
+    "reason": "C2_E2E_R2_FAILED_RUN_TARGET_ALREADY_REMOVED_AND_POLICY_MUST_NOT_REMATCH",
+    "evidence_identity": "winner/evidence/C2-E2E-R2-FAILURE.json"
+  },
+  "mutation_counters": {
+    "fixture_setup": { "ssh_key_generations": 1, "deploy_key_creates": 1 },
+    "causal_source": { "secret_trigger_pushes": 1 },
+    "t3n_protocol": { "incident_creates": 1, "reservations": 1, "effect_starts": 1, "reconcile_calls": 1 },
+    "provider_remediation": { "deploy_key_deletes": 1 },
+    "independent_verification": { "provider_mutations": 0 },
+    "replay": { "provider_token_mints": 0, "provider_mutations": 0, "deploy_key_deletes": 0 }
+  },
+  "sensitive_value_hygiene": {
+    "private_material_in_policy": false,
+    "private_material_in_evidence": false,
+    "raw_webhook_body_in_evidence": false,
+    "installation_token_in_evidence": false,
+    "webhook_secret_in_evidence": false,
+    "app_private_key_in_evidence": false
+  },
+  "claims_earned": [
+    "one fresh disposable read-only deploy key was bound to a pre-existing remotely read-back policy",
+    "one real authenticated push introduced the exact policy-bound private material",
+    "immutable before/after evidence established CAUSAL_SECRET_INTRODUCED",
+    "one exact C1 request created one incident and the existing C1 protocol closed it VERIFIED_ABSENT",
+    "one confirmed broker performed one DELETE and independent absence verification",
+    "the fresh target is absent and the fresh policy is retired"
+  ],
+  "claims_forbidden": [
+    "C2_E2E_R2 full remediation PASS",
+    "successful C2 replay proof",
+    "successful C1 replay proof",
+    "winner or submission readiness",
+    "GitHub or T3N atomicity",
+    "general provider exactly-once semantics"
+  ],
+  "no_automatic_second_run": true
+}
