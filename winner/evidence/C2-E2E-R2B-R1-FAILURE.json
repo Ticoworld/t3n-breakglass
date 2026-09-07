@@ -1,0 +1,13 @@
+{
+  "classification": "C2_E2E_R2B_R1_REDELIVERY_REQUEST_FAILED_HTTP_404",
+  "live_start_sha": "5b8fa43c7c9b132c4a1017ff3bcafac26768d6c3",
+  "delivery_guid": "c1278f3a-aaa0-11f1-9f5f-1f10261aa34b",
+  "prior_displayed_delivery_id": "3841363528254497000",
+  "redelivery_post_http_status": 404,
+  "root_cause_confirmed": false,
+  "downstream_replay_attempted": false,
+  "t3n_calls": 0,
+  "provider_token_mints": 0,
+  "provider_mutations": 0,
+  "note": "Historical stop only. The displayed delivery ID was not independently proven lossless in this run."
+}

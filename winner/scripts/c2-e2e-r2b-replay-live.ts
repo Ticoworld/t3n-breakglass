@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { appConfigFromEnvironment, appJwt } from "../broker/github-app.js";
 import { adjudicateBrokerResult } from "../c2/broker-adjudication.js";
+import { parseGithubDeliveryList, parseGithubDeliveryObject, selectOriginalDelivery, selectRedelivery, unsafeNumberRoundtripChangesId, type LosslessGithubDelivery } from "../c2/github-delivery-json.js";
 import { evaluateGithubAppWebhookReadiness, type GithubAppWebhookReadinessFacts } from "../c2/github-app-webhook-readiness.js";
 import { processPushWebhook } from "../c2/push-ingress.js";
 import { createR2BReplayWebhookServer, type R2BReplayCapture, type R2BReplayServerHandle } from "../c2/replay-webhook-server.js";
@@ -44,7 +45,7 @@ const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 type JsonObject = Record<string, any>;
-type ApiResult = { status: number; body: unknown; headers: Record<string, string> };
+type ApiResult = { status: number; text: string; body: unknown; headers: Record<string, string> };
 type ChildResult = { code: number; stderr: string };
 
 function object(value: unknown): JsonObject {
@@ -125,7 +126,7 @@ async function githubRequest(token: string, route: string, init: RequestInit = {
     const value = response.headers.get(name);
     if (value) headers[name] = value;
   }
-  return { status: response.status, body, headers };
+  return { status: response.status, text, body, headers };
 }
 
 async function waitFor(file: string, timeoutMs = 120_000): Promise<void> {
@@ -153,10 +154,6 @@ function listen(server: R2BReplayServerHandle["server"], port: number, host: str
     server.once("listening", onListening);
     server.listen(port, host);
   });
-}
-
-function deliveryRows(body: unknown): JsonObject[] {
-  return Array.isArray(body) ? body.map((entry) => object(entry)) : [];
 }
 
 function terminalProjection(response: JsonObject): JsonObject {
@@ -248,31 +245,73 @@ async function tunnelReadiness(expectedOrigin: string): Promise<GithubAppWebhook
   return { ngrok_api_http_status: apiStatus, public_origin: publicOrigin, forwarding_address: forwardingAddress, public_route_probe_http_status: publicProbeStatus };
 }
 
-async function originalDelivery(jwt: string): Promise<JsonObject> {
-  const response = await githubRequest(jwt, "/app/hook/deliveries?per_page=100");
-  const rows = deliveryRows(response.body).filter((row) => row.guid === HISTORICAL_DELIVERY_ID && row.event === "push" && Number(row.installation_id) === INSTALLATION_ID && row.redelivery === false);
-  requireCondition(response.status === 200 && rows.length === 1, `historical original delivery identity is not unique (HTTP ${response.status}, matches ${rows.length})`);
-  const row = rows[0];
-  const detail = row.id === undefined ? { status: 0, body: null, headers: {} } : await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(String(row.id))}`);
-  const exact = object(detail.body);
-  const repositoryId = exact.repository_id ?? row.repository_id;
-  requireCondition(Number(repositoryId) === SANDBOX_REPOSITORY_ID, "historical delivery does not identify the exact sandbox repository");
-  requireCondition(String(row.status).toUpperCase() === "OK" && [200, 202].includes(Number(row.status_code ?? row.response_code)), "historical original delivery was not a successful receiver delivery");
-  return { list_http_status: response.status, detail_http_status: detail.status, numeric_delivery_id: row.id, guid: row.guid, event: row.event, repository_id: Number(repositoryId), installation_id: Number(row.installation_id), delivered_at: row.delivered_at ?? null, status: row.status, status_code: row.status_code ?? row.response_code ?? null, redelivery: false };
+const HISTORICAL_DELIVERY_QUERY = {
+  guid: HISTORICAL_DELIVERY_ID,
+  event: "push",
+  installation_id: INSTALLATION_ID,
+  repository_id: SANDBOX_REPOSITORY_ID,
+} as const;
+
+function deliverySucceeded(row: LosslessGithubDelivery): boolean {
+  return String(row.status ?? "").toUpperCase() === "OK" && [200, 202].includes(row.status_code ?? row.response_code ?? -1);
 }
 
-async function waitForRedeliveryHistory(jwt: string, originalNumericId: number | string): Promise<JsonObject> {
+function requireDeliveryIdentity(row: LosslessGithubDelivery, expectedRedelivery: boolean): void {
+  requireCondition(row.guid === HISTORICAL_DELIVERY_ID && row.event === "push", "delivery history identity does not match the historical event");
+  requireCondition(row.installation_id === INSTALLATION_ID && row.repository_id === SANDBOX_REPOSITORY_ID, "delivery history repository/installation identity is not exact");
+  requireCondition(row.redelivery === expectedRedelivery, "delivery history redelivery flag is not exact");
+}
+
+async function originalDelivery(jwt: string): Promise<JsonObject> {
+  const response = await githubRequest(jwt, "/app/hook/deliveries?per_page=100");
+  requireCondition(response.status === 200, `historical original delivery list failed HTTP ${response.status}`);
+  const rows = parseGithubDeliveryList(response.text);
+  const row = selectOriginalDelivery(rows, HISTORICAL_DELIVERY_QUERY);
+  requireDeliveryIdentity(row, false);
+  requireCondition(typeof row.id === "string" && /^[0-9]+$/.test(row.id), "historical original delivery ID is not an exact decimal string");
+
+  const detail = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(row.id)}`);
+  requireCondition(detail.status === 200, `exact historical delivery GET failed HTTP ${detail.status}`);
+  const detailRow = parseGithubDeliveryObject(detail.text);
+  requireDeliveryIdentity(detailRow, false);
+  requireCondition(detailRow.id === row.id, "historical detail delivery ID does not equal the lossless list delivery ID");
+  requireCondition(deliverySucceeded(row) && deliverySucceeded(detailRow), "historical original delivery was not a successful receiver delivery");
+  return {
+    list_http_status: response.status,
+    detail_http_status: detail.status,
+    original_delivery_id_exact: row.id,
+    guid: row.guid,
+    event: row.event,
+    repository_id: row.repository_id,
+    installation_id: row.installation_id,
+    delivered_at: row.delivered_at ?? detailRow.delivered_at ?? null,
+    status: row.status ?? detailRow.status ?? null,
+    status_code: row.status_code ?? row.response_code ?? detailRow.status_code ?? detailRow.response_code ?? null,
+    redelivery: false,
+  };
+}
+
+async function waitForRedeliveryHistory(jwt: string, originalDeliveryIdExact: string): Promise<JsonObject> {
   const deadline = Date.now() + 120_000;
   while (Date.now() <= deadline) {
     const response = await githubRequest(jwt, "/app/hook/deliveries?per_page=100");
-    const rows = deliveryRows(response.body).filter((row) => row.guid === HISTORICAL_DELIVERY_ID && row.event === "push" && Number(row.installation_id) === INSTALLATION_ID && row.redelivery === true);
-    const row = rows.find((candidate) => String(candidate.id) !== String(originalNumericId)) ?? rows[0];
-    if (response.status === 200 && row) {
-      const detail = row.id === undefined ? { status: 0, body: null, headers: {} } : await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(String(row.id))}`);
-      const repositoryId = object(detail.body).repository_id ?? row.repository_id;
-      requireCondition(Number(repositoryId) === SANDBOX_REPOSITORY_ID, "redelivery history repository identity is not exact");
-      requireCondition(String(row.status).toUpperCase() === "OK" && [200, 202].includes(Number(row.status_code ?? row.response_code)), "redelivery history was not successful");
-      return { list_http_status: response.status, numeric_delivery_id: row.id, guid: row.guid, event: row.event, repository_id: Number(repositoryId), installation_id: Number(row.installation_id), delivered_at: row.delivered_at ?? null, status: row.status, status_code: row.status_code ?? row.response_code ?? null, redelivery: true, original_numeric_delivery_id: originalNumericId };
+    if (response.status !== 200) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      continue;
+    }
+    const rows = parseGithubDeliveryList(response.text);
+    const matching = rows.filter((row) => row.guid === HISTORICAL_DELIVERY_ID && row.event === "push" && row.installation_id === INSTALLATION_ID && row.repository_id === SANDBOX_REPOSITORY_ID && row.redelivery === true && row.id !== originalDeliveryIdExact);
+    if (matching.length > 0) {
+      const row = selectRedelivery(rows, HISTORICAL_DELIVERY_QUERY, originalDeliveryIdExact);
+      requireDeliveryIdentity(row, true);
+      requireCondition(typeof row.id === "string" && /^[0-9]+$/.test(row.id), "redelivery ID is not an exact decimal string");
+      const detail = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(row.id)}`);
+      requireCondition(detail.status === 200, `exact redelivery history GET failed HTTP ${detail.status}`);
+      const detailRow = parseGithubDeliveryObject(detail.text);
+      requireDeliveryIdentity(detailRow, true);
+      requireCondition(detailRow.id === row.id, "redelivery detail ID does not equal the lossless list delivery ID");
+      requireCondition(deliverySucceeded(row) && deliverySucceeded(detailRow), "redelivery history was not successful");
+      return { list_http_status: response.status, detail_http_status: detail.status, redelivery_delivery_id_exact: row.id, guid: row.guid, event: row.event, repository_id: row.repository_id, installation_id: row.installation_id, delivered_at: row.delivered_at ?? detailRow.delivered_at ?? null, status: row.status ?? detailRow.status ?? null, status_code: row.status_code ?? row.response_code ?? detailRow.status_code ?? detailRow.response_code ?? null, redelivery: true, original_delivery_id_exact: originalDeliveryIdExact };
     }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
@@ -379,9 +418,21 @@ async function main(): Promise<void> {
     const readiness = evaluateGithubAppWebhookReadiness({ ...appReadback.facts, tunnel, receiver: { listening_locally: true } });
     requireCondition(readiness.valid && readiness.classification === "WEBHOOK_CONFIGURED_AND_REACHABLE", `webhook readiness failed: ${readiness.reasons.join("; ")}`);
     const original = await originalDelivery(jwt);
-    const redeliveryResponse = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(String(original.numeric_delivery_id))}/attempts`, { method: "POST" });
+    const exactDeliveryId = String(original.original_delivery_id_exact ?? "");
+    requireCondition(/^[0-9]+$/.test(exactDeliveryId), "lossless original delivery ID is unavailable");
+    const priorDisplayedId = "3841363528254497000";
+    const unsafeRoundtripChangesId = unsafeNumberRoundtripChangesId(exactDeliveryId);
+    requireCondition(exactDeliveryId !== priorDisplayedId, "exact delivery ID equals the prior unsafe display value; root cause remains unresolved");
+    let priorRoundedGet: JsonObject | null = null;
+    let rootCause = "UNRESOLVED";
+    if (unsafeRoundtripChangesId) {
+      const rounded = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(priorDisplayedId)}`);
+      priorRoundedGet = { http_status: rounded.status };
+      if (rounded.status === 404) rootCause = "R2B_R1_ROOT_CAUSE_CONFIRMED_UNSAFE_DELIVERY_ID_ROUNDING";
+    }
+    const redeliveryResponse = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(exactDeliveryId)}/attempts`, { method: "POST" });
     requireCondition(redeliveryResponse.status === 202, `GitHub redelivery request failed HTTP ${redeliveryResponse.status}`);
-    const redelivery = { post_http_status: redeliveryResponse.status, history: await waitForRedeliveryHistory(jwt, original.numeric_delivery_id as number | string) };
+    const redelivery = { post_http_status: redeliveryResponse.status, history: await waitForRedeliveryHistory(jwt, exactDeliveryId) };
     await waitFor(captureFile, 120_000);
     const captured = receiver.getCapture();
     requireCondition(captured, "dedicated replay receiver did not retain the redelivery in memory");
@@ -406,7 +457,7 @@ async function main(): Promise<void> {
       main_sha: mainSha,
       historical_r2: { classification: failure.classification, actual_execution_start: R2_STARTING_SHA, policy_id: HISTORICAL_POLICY_ID, policy_version: 2, target_id: HISTORICAL_TARGET_ID, incident_id: HISTORICAL_INCIDENT_ID, delivery_guid: HISTORICAL_DELIVERY_ID, r2a_adjudication_artifact: R2A_EVIDENCE },
       durable_receipt: { path_class: "OS_TEMP/t3n-c2-e2e-r2-run-*/dedupe/<dedupe-key>.json", receipt_sha256_before: receiptBeforeReplay, receipt_sha256_after: receiptAfterReplay, receipt_unchanged: receiptBeforeReplay === receiptAfterReplay, state: receipt.record.state, decision: receipt.record.decision, policy_id: receipt.record.policy_id, policy_version: receipt.record.policy_version, incident_id: receipt.record.derived_incident_id, create_request: receipt.record.create_request },
-      original_github_delivery: original,
+      original_github_delivery: { ...original, github_delivery_id_handling: { canonical_type: "decimal_string", exact_original_delivery_id: exactDeliveryId, prior_unsafe_display_value: priorDisplayedId, number_max_safe_integer: "9007199254740991", unsafe_number_roundtrip_changes_id: unsafeRoundtripChangesId, exact_detail_get_http_status: original.detail_http_status, prior_rounded_get: priorRoundedGet, root_cause: rootCause } },
       redelivery: { post_http_status: redelivery.post_http_status, ...redelivery.history },
       authenticated_event: { guid: capture.delivery_id, event: capture.event, repository_id: capture.repository_id, repository_full_name: capture.repository_full_name, ref: capture.ref, before: capture.before, after: capture.after, created: capture.created, forced: capture.forced, deleted: capture.deleted, raw_body_sha256: capture.raw_body_sha256, hmac_valid: capture.signature_verified, raw_body_persisted: false },
       c2_replay: { classification: c2Replay.classification, dedupe_status: c2Replay.dedupe.status, receipt_replay: c2Replay.receipt_replay === true, authority_rederived: c2Replay.authority_rederived, source_reads: c2Replay.source_reads, source_observation_accesses: observationAccesses, active_policy_candidates_for_replay: 0, policy_selection_count: 0, incident_id: c2Replay.incident_id, incident_id_equal: c2Replay.incident_id === receipt.record.derived_incident_id, create_request_equal: JSON.stringify(c2Replay.create_request) === JSON.stringify(receipt.record.create_request), provider_authority: 0, t3n_calls: 0 },
