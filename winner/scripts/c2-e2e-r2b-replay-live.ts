@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import { appConfigFromEnvironment, appJwt } from "../broker/github-app.js";
 import { adjudicateBrokerResult } from "../c2/broker-adjudication.js";
+import { evaluateGithubAppWebhookReadiness, type GithubAppWebhookReadinessFacts } from "../c2/github-app-webhook-readiness.js";
 import { processPushWebhook } from "../c2/push-ingress.js";
 import { createR2BReplayWebhookServer, type R2BReplayCapture, type R2BReplayServerHandle } from "../c2/replay-webhook-server.js";
 import { connectTenant } from "../../scripts/lib.js";
@@ -199,7 +200,7 @@ async function findDurableReceipt(): Promise<{ file: string; record: JsonObject;
   return { ...found, sha256: await hashFile(found.file) };
 }
 
-async function appReadiness(jwt: string, expectedWebhookUrl: string): Promise<JsonObject> {
+async function readAppConfiguration(jwt: string, expectedWebhookUrl: string): Promise<{ facts: Omit<GithubAppWebhookReadinessFacts, "tunnel" | "receiver">; evidence: JsonObject }> {
   const app = await githubRequest(jwt, "/app");
   const installation = await githubRequest(jwt, `/app/installations/${INSTALLATION_ID}`);
   const hook = await githubRequest(jwt, "/app/hook/config");
@@ -209,30 +210,42 @@ async function appReadiness(jwt: string, expectedWebhookUrl: string): Promise<Js
   const installPermissions = object(installBody.permissions);
   const events = Array.isArray(appBody.events) ? appBody.events : [];
   const hookBody = object(hook.body);
-  requireCondition(app.status === 200 && Number(appBody.id) === APP_ID && appBody.slug === "breakglass-c0r-jit-probe", `App readback failed HTTP ${app.status}`);
-  requireCondition(appPermissions.administration === "write" && appPermissions.contents === "read" && appPermissions.metadata === "read" && events.includes("push"), "App registration permissions/events are not exact");
-  requireCondition(installation.status === 200 && Number(installBody.id) === INSTALLATION_ID && installBody.repository_selection === "selected", "installation readback is not exact");
-  requireCondition(installPermissions.administration === "write" && installPermissions.contents === "read" && installPermissions.metadata === "read", "installation permissions are not exact");
-  requireCondition(hook.status === 200 && hookBody.active === true && hookBody.url === expectedWebhookUrl && hookBody.content_type === "json" && hookBody.insecure_ssl === "0", "configured webhook readback is not exact");
   return {
+    facts: {
+      expected_url: expectedWebhookUrl,
+      app: { http_status: app.status, id: Number.isSafeInteger(Number(appBody.id)) ? Number(appBody.id) : null, slug: typeof appBody.slug === "string" ? appBody.slug : null, permissions: appPermissions, events },
+      installation: { http_status: installation.status, id: Number.isSafeInteger(Number(installBody.id)) ? Number(installBody.id) : null, repository_selection: typeof installBody.repository_selection === "string" ? installBody.repository_selection : null, permissions: installPermissions },
+      hook: { http_status: hook.status, url: typeof hookBody.url === "string" ? hookBody.url : null, content_type: typeof hookBody.content_type === "string" ? hookBody.content_type : null, insecure_ssl: typeof hookBody.insecure_ssl === "string" || typeof hookBody.insecure_ssl === "number" ? hookBody.insecure_ssl : null },
+    },
+    evidence: {
     app: safeApiResponse(app),
     installation: safeApiResponse(installation),
-    hook: { http_status: hook.status, active: hookBody.active, configured: true, url_origin: new URL(expectedWebhookUrl).origin, route: new URL(expectedWebhookUrl).pathname, content_type: hookBody.content_type, insecure_ssl: hookBody.insecure_ssl, secret_value_absent: true },
+    hook: { http_status: hook.status, configured: hook.status === 200, url_origin: typeof hookBody.url === "string" ? new URL(hookBody.url).origin : null, route: typeof hookBody.url === "string" ? new URL(hookBody.url).pathname : null, content_type: hookBody.content_type ?? null, insecure_ssl: hookBody.insecure_ssl ?? null, secret_persisted: false },
     permissions: { app: appPermissions, installation: installPermissions },
     events,
     repository_selection: installBody.repository_selection,
+    },
   };
 }
 
-async function tunnelReadiness(expectedOrigin: string): Promise<JsonObject> {
-  const response = await fetch("http://127.0.0.1:4040/api/tunnels", { signal: AbortSignal.timeout(15_000) });
-  const body = object(await response.json());
-  const tunnels = Array.isArray(body.tunnels) ? body.tunnels.map((entry) => object(entry)) : [];
-  const tunnel = tunnels.find((entry) => entry.public_url === expectedOrigin || String(entry.public_url ?? "").replace(/\/$/, "") === expectedOrigin);
-  requireCondition(response.ok && tunnel && String(object(tunnel.config).addr ?? "").includes("8787"), "configured ngrok tunnel is not active on local port 8787");
-  const publicProbe = await fetch(`${expectedOrigin}${WEBHOOK_ROUTE}`, { method: "GET", signal: AbortSignal.timeout(30_000) });
-  requireCondition(publicProbe.status === 404, `public replay endpoint did not reach the dedicated receiver (HTTP ${publicProbe.status})`);
-  return { ngrok_api_http_status: response.status, public_origin: expectedOrigin, forwarding_address: object(tunnel.config).addr ?? null, public_route_probe_http_status: publicProbe.status };
+async function tunnelReadiness(expectedOrigin: string): Promise<GithubAppWebhookReadinessFacts["tunnel"]> {
+  let apiStatus: number | null = null;
+  let publicOrigin: string | null = null;
+  let forwardingAddress: string | null = null;
+  let publicProbeStatus: number | null = null;
+  try {
+    const response = await fetch("http://127.0.0.1:4040/api/tunnels", { signal: AbortSignal.timeout(15_000) });
+    apiStatus = response.status;
+    const body = object(await response.json());
+    const tunnels = Array.isArray(body.tunnels) ? body.tunnels.map((entry) => object(entry)) : [];
+    const tunnel = tunnels.find((entry) => entry.public_url === expectedOrigin || String(entry.public_url ?? "").replace(/\/$/, "") === expectedOrigin);
+    if (tunnel) {
+      publicOrigin = typeof tunnel.public_url === "string" ? tunnel.public_url.replace(/\/$/, "") : null;
+      forwardingAddress = typeof object(tunnel.config).addr === "string" ? object(tunnel.config).addr : null;
+      try { publicProbeStatus = (await fetch(`${expectedOrigin}${WEBHOOK_ROUTE}`, { method: "GET", signal: AbortSignal.timeout(30_000) })).status; } catch { publicProbeStatus = null; }
+    }
+  } catch { /* readiness helper returns an endpoint-unreachable classification */ }
+  return { ngrok_api_http_status: apiStatus, public_origin: publicOrigin, forwarding_address: forwardingAddress, public_route_probe_http_status: publicProbeStatus };
 }
 
 async function originalDelivery(jwt: string): Promise<JsonObject> {
@@ -355,7 +368,7 @@ async function main(): Promise<void> {
   const appEnv = await readFile(path.join(root, ".env.c0r-github-app"), "utf8");
   const appConfig = appConfigFromEnvironment({ GITHUB_APP_ID: envLine(appEnv, "GITHUB_APP_ID"), GITHUB_APP_INSTALLATION_ID: envLine(appEnv, "GITHUB_APP_INSTALLATION_ID"), GITHUB_APP_PRIVATE_KEY_PATH: envLine(appEnv, "GITHUB_APP_PRIVATE_KEY_PATH"), GITHUB_OWNER: SANDBOX_OWNER, GITHUB_REPO: SANDBOX_REPOSITORY });
   const jwt = await appJwt(appConfig);
-  const readiness = await appReadiness(jwt, webhookUrl);
+  const appReadback = await readAppConfiguration(jwt, webhookUrl);
 
   const captureFile = path.join(os.tmpdir(), `t3n-c2-e2e-r2b-capture-${process.pid}.json`);
   const receiver = createR2BReplayWebhookServer({ webhookSecret, capturePath: captureFile, expectedDeliveryId: HISTORICAL_DELIVERY_ID, expectedBefore: HISTORICAL_BEFORE, expectedAfter: HISTORICAL_AFTER, route: WEBHOOK_ROUTE });
@@ -363,6 +376,8 @@ async function main(): Promise<void> {
   try {
     await listen(receiver.server, 8787, "127.0.0.1");
     const tunnel = await tunnelReadiness(new URL(webhookUrl).origin);
+    const readiness = evaluateGithubAppWebhookReadiness({ ...appReadback.facts, tunnel, receiver: { listening_locally: true } });
+    requireCondition(readiness.valid && readiness.classification === "WEBHOOK_CONFIGURED_AND_REACHABLE", `webhook readiness failed: ${readiness.reasons.join("; ")}`);
     const original = await originalDelivery(jwt);
     const redeliveryResponse = await githubRequest(jwt, `/app/hook/deliveries/${encodeURIComponent(String(original.numeric_delivery_id))}/attempts`, { method: "POST" });
     requireCondition(redeliveryResponse.status === 202, `GitHub redelivery request failed HTTP ${redeliveryResponse.status}`);
@@ -396,7 +411,10 @@ async function main(): Promise<void> {
       authenticated_event: { guid: capture.delivery_id, event: capture.event, repository_id: capture.repository_id, repository_full_name: capture.repository_full_name, ref: capture.ref, before: capture.before, after: capture.after, created: capture.created, forced: capture.forced, deleted: capture.deleted, raw_body_sha256: capture.raw_body_sha256, hmac_valid: capture.signature_verified, raw_body_persisted: false },
       c2_replay: { classification: c2Replay.classification, dedupe_status: c2Replay.dedupe.status, receipt_replay: c2Replay.receipt_replay === true, authority_rederived: c2Replay.authority_rederived, source_reads: c2Replay.source_reads, source_observation_accesses: observationAccesses, active_policy_candidates_for_replay: 0, policy_selection_count: 0, incident_id: c2Replay.incident_id, incident_id_equal: c2Replay.incident_id === receipt.record.derived_incident_id, create_request_equal: JSON.stringify(c2Replay.create_request) === JSON.stringify(receipt.record.create_request), provider_authority: 0, t3n_calls: 0 },
       c1_closed_replay: { terminal_before: c1.before, remediation_reserve: c1.reserve, broker: c1.broker, broker_adjudication: c1.adjudication, terminal_after: c1.after, terminal_unchanged: JSON.stringify(terminalProjection(c1.before)) === JSON.stringify(terminalProjection(c1.after)), t3n_calls: c1.t3n_calls, new_incidents: 0, new_effect_starts: 0, provider_token_mints: 0, provider_deletes: 0 },
-      readiness: { app: readiness, tunnel, active_policy_candidates_for_replay: 0 },
+      webhook_readiness: readiness.classification,
+      github_app_hook_active_field_required: false,
+      github_app_hook_active_state_claimed: false,
+      readiness: { app: appReadback.evidence, evaluation: readiness, tunnel, active_policy_candidates_for_replay: 0 },
       mutation_counters: { c2_replay: { github_webhook_redelivery_calls: 1, github_repository_reads: 0, github_repository_mutations: 0, source_reader_token_mints: 0, effect_token_mints: 0, verifier_token_mints: 0, immutable_source_reads: 0, policy_selections: 0, authority_rederivations: 0, t3n_calls: 0, c1_create_calls: 0, provider_mutations: 0, deploy_key_deletes: 0 }, c1_closed_replay: { t3n_calls: c1.t3n_calls, incident_creates: 0, effect_starts: 0, provider_effect_token_mints: 0, provider_mutations: 0, deploy_key_deletes: 0 }, total_mutations: 0 },
       sensitive_value_hygiene: { raw_webhook_body_persisted: false, raw_webhook_body_in_evidence: false, webhook_secret_in_evidence: false, app_jwt_in_evidence: false, installation_token_in_evidence: false, t3n_credentials_in_evidence: false, private_ssh_material_in_evidence: false },
       tests: { c2_replay: "PASS", poison_source_observations: "PASS", receipt_unchanged: "PASS", closed_incident_replay: "PASS", broker_adjudication: "PASS", exact_digest: "PASS" },

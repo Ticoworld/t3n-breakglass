@@ -220,8 +220,8 @@ async function appReadiness(): Promise<JsonObject> {
   requireCondition(installation.status === 200 && Number(installationBody.id) === Number(INSTALLATION_ID) && installationBody.repository_selection === "selected", "installation readback is not exact");
   requireCondition(installationPermissions.administration === "write" && installationPermissions.contents === "read" && installationPermissions.metadata === "read", "installation permissions are not exact");
   const hookBody = object(hook.body);
-  requireCondition(hook.status === 200 && typeof hookBody.url === "string" && new URL(hookBody.url).origin === EXPECTED_PUBLIC_URL && new URL(hookBody.url).pathname === WEBHOOK_ROUTE && hookBody.content_type === "json" && hookBody.insecure_ssl === "0", "active configured webhook URL/configuration is not exact");
-  return { app: safeResponse(app), installation: safeResponse(installation), hook: { http_status: hook.status, active: hookBody.active ?? null, configured: true, url_origin: EXPECTED_PUBLIC_URL, route: WEBHOOK_ROUTE, content_type: hookBody.content_type ?? null, insecure_ssl: hookBody.insecure_ssl ?? null }, app_permissions: appPermissions, installation_permissions: installationPermissions, events, repository_selection: installationBody.repository_selection };
+  requireCondition(hook.status === 200 && typeof hookBody.url === "string" && new URL(hookBody.url).origin === EXPECTED_PUBLIC_URL && new URL(hookBody.url).pathname === WEBHOOK_ROUTE && hookBody.content_type === "json" && hookBody.insecure_ssl === "0", "configured webhook URL/configuration is not exact");
+  return { app: safeResponse(app), installation: safeResponse(installation), hook: { http_status: hook.status, configured: true, url_origin: EXPECTED_PUBLIC_URL, route: WEBHOOK_ROUTE, content_type: hookBody.content_type ?? null, insecure_ssl: hookBody.insecure_ssl ?? null }, app_permissions: appPermissions, installation_permissions: installationPermissions, events, repository_selection: installationBody.repository_selection };
 }
 
 async function curlStatus(url: string): Promise<number> {
