@@ -43,6 +43,7 @@ function validBundle(): Record<string, unknown> {
   };
   const winner = {
     contender: "broker-a",
+    claim_outcome: "CLAIM_WON",
     ownership_confirmation: "CONFIRMED",
     provider_credential_mint_count: 1,
     token_minted: true,
@@ -52,7 +53,7 @@ function validBundle(): Record<string, unknown> {
     effect_start_confirmation: { result: "CONFIRMED", function: "confirm-effect-start" },
     effect_start_confirmed: true,
     effect_start_id: "effect-start-1",
-    authority_loaded_target: { claim_id: "claim-1" },
+    authority_loaded_target: { claim_id: "claim-1", claim_version: 1 },
     effect_token: { issued: true, minted_after_confirmed_effect_start: true },
     before: { target_present: true, exact_get_http_status: 200, read_after_confirmed_effect_start: true },
     delete: { attempt_number: 1, method: "DELETE", http_status: 204, target_id: targetId },
@@ -65,6 +66,10 @@ function validBundle(): Record<string, unknown> {
   };
   const loser = {
     contender: "broker-b",
+    claim: { result: "LOST" },
+    claim_outcome: "CLAIM_LOST",
+    claim_proposal: { claim_id: "claim-b", claim_version: 1 },
+    claim_confirmation: { result: "LOST", detail: {} },
     ownership_confirmation: "NOT_OWNER",
     token_minted: false,
     provider_credential_mint_count: 0,

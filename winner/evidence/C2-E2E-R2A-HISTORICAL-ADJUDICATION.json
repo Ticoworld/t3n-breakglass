@@ -1,0 +1,82 @@
+{
+  "artifact": "C2-E2E-R2A-HISTORICAL-ADJUDICATION",
+  "classification": "C2_E2E_R2A_HISTORICAL_CORE_ADJUDICATION_PASS",
+  "historical_r2": {
+    "classification_remains": "C2_E2E_R2_FAIL_BROKER_OWNER_EVIDENCE_ADJUDICATION",
+    "failure_reason": "the prior runner required confirm-stage NOT_OWNER evidence for every loser, although Broker B had already lost at claim-effect",
+    "starting_checkpoint_mismatch_acknowledged": {
+      "required": "49499358463c40987cc1d0b78f5428e5e30bbee7",
+      "actual": "3a0d7aa601920bdd7be716dbe8acd31714b32f0c"
+    },
+    "policy_id": "c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86",
+    "policy_retired": true,
+    "target_id": 162525303,
+    "target_state_from_historical_evidence": "ABSENT_AFTER_VERIFIED_CLEANUP",
+    "r2a_read_only_target_check": { "http_status": 404, "absent": true, "mutation": false },
+    "live_effect_completed": true,
+    "t3n_terminal_state": "CLOSED / VERIFIED_ABSENT",
+    "c2_replay_proven_in_r2": false,
+    "c1_replay_proven_in_r2": false,
+    "promoted_to_r2_pass": false
+  },
+  "canonical_adjudication": {
+    "module": "winner/c2/broker-adjudication.ts",
+    "broker_a": {
+      "claim_outcome": "CLAIM_WON",
+      "ownership_confirmation": "CONFIRMED",
+      "exact_claim_identity_required": true,
+      "provider_credential_mint_count": 1,
+      "delete_count": 1,
+      "delete_http_status": 204,
+      "independent_absence": true,
+      "normalized_state": "CONFIRMED_OWNER"
+    },
+    "broker_b": {
+      "claim_outcome": "CLAIM_LOST",
+      "claim_effect_result": "LOST",
+      "ownership_confirmation": "NOT_EMITTED_AFTER_EARLY_LOSS",
+      "provider_credential_mint_count": 0,
+      "delete_count": 0,
+      "provider_calls_after_loss": 0,
+      "normalized_state": "NON_OWNER_EARLY_CLAIM_LOST"
+    },
+    "confirmed_owner_count": 1,
+    "safe_non_owner_count": 1,
+    "global_result": "PASS",
+    "provider_boundary_for_broker_b_crossed": false
+  },
+  "interpretation": {
+    "exactly_one_owner_existed": true,
+    "broker_a_effect_and_independent_absence_were_already_complete": true,
+    "repair_is_generic": true,
+    "historical_failure_artifacts_edited": false,
+    "historical_failure_artifacts": [
+      "winner/evidence/C2-E2E-R2-FAILURE.json",
+      "winner/evidence/C2-E2E-R2-POLICY-RETIREMENT.json"
+    ]
+  },
+  "mutation_counters": {
+    "fresh_ssh_key_generations": 0,
+    "deploy_key_creates": 0,
+    "deploy_key_deletes": 0,
+    "secret_pushes": 0,
+    "live_policy_creates": 0,
+    "webhook_redeliveries": 0,
+    "t3n_calls": 0,
+    "c1_create_calls": 0,
+    "provider_effect_token_mints": 0,
+    "provider_mutations": 0
+  },
+  "claims_earned": [
+    "generic owner adjudication accepts the historical R2 early CLAIM_LOST contender without requiring fabricated confirmation evidence",
+    "exactly one confirmed owner and one provider-safe non-owner are established by repaired offline logic",
+    "retired-policy durable receipt replay semantics are covered by offline tests"
+  ],
+  "claims_forbidden": [
+    "historical R2 full PASS",
+    "new live replay proof",
+    "C2 or C1 replay proof for R2",
+    "new provider mutation or remediation",
+    "submission readiness"
+  ]
+}

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { adjudicateBrokerResults } from "./broker-adjudication.js";
 
 export interface E2EVerificationResult {
   ok: boolean;
@@ -93,8 +94,10 @@ export function verifyE2EBundle(source: string | Record<string, unknown>, contex
   const brokers = object(t3n.brokers);
   const brokerA = object(brokers.broker_a);
   const brokerB = object(brokers.broker_b);
-  const winner = brokers.winner === brokerA.contender ? brokerA : brokers.winner === brokerB.contender ? brokerB : {};
-  const loser = brokers.loser === brokerA.contender ? brokerA : brokers.loser === brokerB.contender ? brokerB : {};
+  const brokerAdjudication = adjudicateBrokerResults([brokerA, brokerB]);
+  const winner = brokerAdjudication.owner_contender === brokerA.contender ? brokerA : brokerAdjudication.owner_contender === brokerB.contender ? brokerB : {};
+  const loser = brokerAdjudication.owner_contender === brokerA.contender ? brokerB : brokerAdjudication.owner_contender === brokerB.contender ? brokerA : {};
+  const loserOutcome = brokerAdjudication.outcomes.find((outcome) => outcome.contender === loser.contender);
   const effectStart = object(winner.effect_start);
   const effectStartConfirmation = object(winner.effect_start_confirmation);
   const effectToken = object(winner.effect_token);
@@ -137,8 +140,8 @@ export function verifyE2EBundle(source: string | Record<string, unknown>, contex
   check("create_once", create.result === "WON" && create.function === "create-incident" && create.state === "ACTIVE" && createDetail.deploy_key_id === target.id && createDetail.remediation_agent_did === REMEDIATION_DID && createDetail.effect_broker_did === BROKER_DID && createDetail.action === "revoke_github_deploy_key");
   check("active_readback", active.state === "ACTIVE" && active.detail?.deploy_key_id === target.id && active.detail?.effect_attempts === 0);
   check("reservation", reservation.result === "WON" && reservation.function === "reserve-incident" && reservation.state === "RESERVED" && reserved.state === "RESERVED" && reserved.detail?.effect_attempts === 0);
-  check("one_confirmed_owner", brokers.confirmed_owner_count === 1 && winner.ownership_confirmation === "CONFIRMED" && loser.ownership_confirmation === "NOT_OWNER");
-  check("loser_zero_authority", loser.token_minted === false && loser.provider_credential_mint_count === 0 && loser.destructive_call_count === 0 && loser.delete_attempted === false && loser.provider_calls_after_ownership_loss === 0 && !has(loser, "effect_token") && !has(loser, "before") && !has(loser, "delete"));
+  check("one_confirmed_owner", brokerAdjudication.valid && brokerAdjudication.confirmed_owner_count === 1 && brokers.confirmed_owner_count === 1 && brokers.winner === brokerAdjudication.owner_contender && winner.ownership_confirmation === "CONFIRMED" && (loserOutcome?.state === "NON_OWNER_EARLY_CLAIM_LOST" || loserOutcome?.state === "NON_OWNER_CONFIRM_REJECTED"));
+  check("loser_zero_authority", loserOutcome !== undefined && loserOutcome.state !== "INVALID_INDETERMINATE" && loser.token_minted === false && loser.provider_credential_mint_count === 0 && (loser.destructive_call_count ?? loser.delete_count) === 0 && (loser.delete_attempted === undefined || loser.delete_attempted === false) && loser.provider_calls_after_ownership_loss === 0 && !has(loser, "effect_token") && !has(loser, "before") && !has(loser, "delete"));
   check("effect_start", effectStart.result === "WON" && effectStart.function === "begin-effect" && effectStart.state === "EFFECT_STARTED" && effectStart.effect_attempts === 1 && effectStartConfirmation.result === "CONFIRMED" && winner.effect_start_confirmed === true);
   check("effect_token_order", effectToken.issued === true && effectToken.minted_after_confirmed_effect_start === true && winner.provider_credential_mint_count === 1);
   check("pre_delete_target", object(winner.before).target_present === true && object(winner.before).exact_get_http_status === 200 && object(winner.before).read_after_confirmed_effect_start === true);

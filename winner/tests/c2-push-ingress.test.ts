@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { reserveDedupe } from "../c2/dedupe.js";
 import { processPushWebhook } from "../c2/push-ingress.js";
+import { normalizeVerifiedPushEvent } from "../c2/push-source.js";
 import { PUSH_AFTER_SHA, PUSH_BEFORE_SHA, PUSH_PRIVATE_MATERIAL, PUSH_PRIVATE_MATERIAL_SHA256, PUSH_TEST_SECRET, fixturePolicy, observation, signedPush } from "./c2-push-fixture.js";
 
 async function directory(): Promise<string> {
@@ -22,6 +24,8 @@ test("valid local push transition produces one exact C1 request plan", async (t)
   assert.equal(result.classification, "C2_PUSH_SELECTED");
   if (result.classification !== "C2_PUSH_SELECTED") return;
   assert.equal(result.replayed, false);
+  assert.equal(result.authority_rederived, true);
+  assert.equal(result.source_reads, 2);
   assert.deepEqual(result.create_request, {
     incident_id: result.incident_id,
     remediation_agent_did: "did:t3n:c2-push-local-agent",
@@ -141,15 +145,131 @@ test("duplicate durable replay identity is ambiguous across policy versions", as
   assert.equal(reversed.classification, "C2_PUSH_POLICY_AMBIGUOUS");
 });
 
-test("retired durable replay identity cannot be selected", async (t) => {
+test("retired durable accepted receipt replays without policy lookup", async (t) => {
   const dedupeDirectory = await directory();
   t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
   const policy = fixturePolicy({ policy_id: "c2-push-local-retired-replay" });
   const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true });
   assert.equal(first.classification, "C2_PUSH_SELECTED");
-  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true, retiredPolicyIds: new Set([policy.policy_id]) });
+  const forbiddenObservationAccess = {
+    get before(): never { throw new Error("accepted receipt replay must not read source content"); },
+    get after(): never { throw new Error("accepted receipt replay must not read source content"); },
+  };
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy], forbiddenObservationAccess, { allowLocalFixture: true, retiredPolicyIds: new Set([policy.policy_id]) });
+  assert.equal(replay.classification, "C2_PUSH_SELECTED");
+  if (replay.classification !== "C2_PUSH_SELECTED") return;
+  assert.equal(replay.replayed, true);
+  assert.equal(replay.receipt_replay, true);
+  assert.equal(replay.authority_rederived, false);
+  assert.equal(replay.source_reads, 0);
+  assert.equal(replay.policy, undefined);
+  assert.deepEqual(replay.create_request, first.classification === "C2_PUSH_SELECTED" ? first.create_request : undefined);
+});
+
+test("accepted durable receipt replays even when the policy is removed from the live registry", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy({ policy_id: "c2-push-local-removed-policy" })], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [], {
+    get before(): never { throw new Error("removed-policy receipt replay must not read source content"); },
+    get after(): never { throw new Error("removed-policy receipt replay must not read source content"); },
+  }, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_SELECTED");
+  if (replay.classification === "C2_PUSH_SELECTED") {
+    assert.equal(replay.receipt_replay, true);
+    assert.equal(replay.source_reads, 0);
+  }
+});
+
+test("unresolved RESERVED duplicate cannot become a fresh authority decision", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const event = normalizeVerifiedPushEvent(signedPush(), PUSH_TEST_SECRET);
+  await reserveDedupe(dedupeDirectory, event);
+  const result = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], {
+    get before(): never { throw new Error("reserved duplicate must not read source content"); },
+    get after(): never { throw new Error("reserved duplicate must not read source content"); },
+  }, { allowLocalFixture: true });
+  assert.equal(result.classification, "C2_PUSH_REJECTED");
+  assert.match(result.reason, /unresolved durable reservation/);
+});
+
+test("malformed accepted durable receipts fail closed", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const recordPath = path.join(dedupeDirectory, `${first.dedupe.key}.json`);
+  const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
+  delete malformed.create_request;
+  await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
   assert.equal(replay.classification, "C2_PUSH_REJECTED");
-  assert.match(replay.reason, /durable terminal decision|original policy version/);
+  assert.match(replay.reason, /no exact C1 create request/);
+});
+
+test("accepted durable receipt without an incident identity fails closed", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const recordPath = path.join(dedupeDirectory, `${first.dedupe.key}.json`);
+  const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
+  delete malformed.derived_incident_id;
+  await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_REJECTED");
+  assert.match(replay.reason, /no incident identity/);
+});
+
+test("accepted durable receipt without exact policy identity/version fails closed", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const recordPath = path.join(dedupeDirectory, `${first.dedupe.key}.json`);
+  const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
+  delete malformed.policy_id;
+  await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_REJECTED");
+  assert.match(replay.reason, /policy identity\/version/);
+});
+
+test("accepted durable receipt with corrupted source identity fails closed", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_SELECTED");
+  const recordPath = path.join(dedupeDirectory, `${first.dedupe.key}.json`);
+  const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, any>;
+  malformed.source_event_id = "corrupted";
+  await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_REJECTED");
+  assert.match(replay.reason, /source identity is corrupted/);
+});
+
+test("a rejected durable decision remains rejected and is never re-authorized", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const first = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [], observations, { allowLocalFixture: true });
+  assert.equal(first.classification, "C2_PUSH_NO_MATCHING_POLICY");
+  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], {
+    get before(): never { throw new Error("rejected replay must not read source content"); },
+    get after(): never { throw new Error("rejected replay must not read source content"); },
+  }, { allowLocalFixture: true });
+  assert.equal(replay.classification, "C2_PUSH_REJECTED");
+  assert.match(replay.reason, /durable terminal decision/);
+});
+
+test("a new event cannot use a retired policy", async (t) => {
+  const dedupeDirectory = await directory();
+  t.after(() => rm(dedupeDirectory, { recursive: true, force: true }));
+  const policy = fixturePolicy({ policy_id: "c2-push-local-retired-new-event" });
+  const result = await processPushWebhook(signedPush({ deliveryId: "87654321-4321-4321-4321-210987654321", after: "c".repeat(40) }), PUSH_TEST_SECRET, dedupeDirectory, [policy], observations, { allowLocalFixture: true, retiredPolicyIds: new Set([policy.policy_id]) });
+  assert.equal(result.classification, "C2_PUSH_POLICY_DISABLED");
 });
 
 test("commit-message injection and secret material never enter normalized evidence or dedupe", async (t) => {

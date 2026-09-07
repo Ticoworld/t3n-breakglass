@@ -25,7 +25,7 @@ test("claim-before-effect ordering is source-enforced", () => {
   const begin = runSource.indexOf('"begin-effect"');
   const deleteBoundary = runSource.indexOf("deleteMayHaveBeenInitiated = true");
   const cleanup = runSource.indexOf("const effectCleanup = await revokeAndRefuse");
-  assert.ok(begin > providerGet && deleteBoundary > begin && cleanup > deleteBoundary);
+  assert.ok(begin > jwt && begin < token && providerGet > token && deleteBoundary > providerGet && cleanup > deleteBoundary);
   assert.match(runSource, /begin-effect did not return a committed EFFECT_STARTED result/);
 });
 
