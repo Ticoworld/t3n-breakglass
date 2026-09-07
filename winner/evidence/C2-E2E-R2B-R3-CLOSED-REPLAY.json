@@ -1,0 +1,243 @@
+{
+  "classification": "C2_E2E_R2B_R3_CLOSED_REPLAY_PASS",
+  "live_start_sha": "7626cc618356f44e30afb16e3758cd99fee94214",
+  "main_sha": "4a077035474337b7a1ad16204820e68ed3020477",
+  "historical_r2": {
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "policy_id": "c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86",
+    "target_id": 162525303,
+    "classification": "C2_E2E_R2_FAIL_BROKER_OWNER_EVIDENCE_ADJUDICATION"
+  },
+  "historical_r2b": {
+    "r2b_r1_failure": "winner/evidence/C2-E2E-R2B-R1-FAILURE.json",
+    "r2b_r2_failure": "winner/evidence/C2-E2E-R2B-R2-FAILURE.json",
+    "r2b_r2_classification": "C2_E2E_R2B_R2_FAIL_CLOSED_REPLAY_BROKER_ADJUDICATION_INDETERMINATE"
+  },
+  "retired_policy_evidence": {
+    "policy_retirement": "winner/evidence/C2-E2E-R2-POLICY-RETIREMENT.json",
+    "r2a_adjudication": "winner/evidence/C2-E2E-R2A-HISTORICAL-ADJUDICATION.json",
+    "policy_id": "c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86",
+    "policy_version": 2,
+    "retired": true
+  },
+  "terminal_before": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788774309,
+      "deploy_key_id": 162525303,
+      "effect_attempts": 1,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": "claim-1-93d7cd1a71d8a1b717206989f0865e1b",
+      "effect_claim_version": 1,
+      "effect_start_id": "start-1-51b4caf34d75e7e3694f9a68ccd84a97",
+      "expires_at": 1788775209,
+      "final_result_classification": "VERIFIED_ABSENT",
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3-1",
+      "reservation_version": 1,
+      "status": "CLOSED"
+    },
+    "effect_attempts": 1,
+    "function": "get-incident",
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "CLOSED"
+  },
+  "remediation_reserve_replay": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "reserve-incident",
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "note": "incident expired according to cluster time",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "CLOSED"
+  },
+  "production_broker": {
+    "contender": "r2b-r3-closed-replay",
+    "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "process_id": 36764,
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "input": {
+      "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+      "expected_claim_version": 1,
+      "contender_nonce": "8e8d52bc55f2a047305128b27254977a"
+    },
+    "ready": {
+      "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+      "broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "contender": "r2b-r3-closed-replay",
+      "contender_nonce": "8e8d52bc55f2a047305128b27254977a",
+      "ready_at_unix_ms": 1788796327579,
+      "process_id": 36764
+    },
+    "contender_nonce": "8e8d52bc55f2a047305128b27254977a",
+    "t3n_contract": {
+      "name": "z:adb9365ee986cc6d0cb4006580782fe6fc7a431f:breakglass-winner-c1",
+      "version": "2.0.4"
+    },
+    "token_minted": false,
+    "destructive_call_count": 0,
+    "delete_attempted": false,
+    "provider_credential_mint_count": 0,
+    "provider_calls_after_ownership_loss": 0,
+    "started_at_unix_ms": 1788796327826,
+    "claim": {
+      "detail": {},
+      "effect_attempts": 1,
+      "function": "claim-effect",
+      "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+      "note": "incident expired according to cluster time",
+      "provider_http": {
+        "attempted": false,
+        "count": 0
+      },
+      "result": "DENIED",
+      "state": "CLOSED"
+    },
+    "claim_outcome": "CLAIM_DENIED",
+    "finished_at_unix_ms": 1788796329516
+  },
+  "broker_claim_outcome": "CLAIM_DENIED",
+  "raw_claim": {
+    "detail": {},
+    "effect_attempts": 1,
+    "function": "claim-effect",
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "note": "incident expired according to cluster time",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "DENIED",
+    "state": "CLOSED"
+  },
+  "closed_replay_adjudication": {
+    "valid": true,
+    "state": "SAFE_CLOSED_REPLAY_DENIED",
+    "reason": "incident expired according to cluster time"
+  },
+  "provider_boundary_counters": {
+    "token_minted": false,
+    "provider_credential_mint_count": 0,
+    "destructive_call_count": 0,
+    "delete_count": 0,
+    "delete_attempted": false,
+    "provider_calls_after_ownership_loss": 0,
+    "effect_token_present": false,
+    "github_calls": 0,
+    "webhook_redelivery_posts": 0,
+    "provider_token_mints": 0,
+    "provider_mutations": 0,
+    "deletes": 0
+  },
+  "terminal_after": {
+    "detail": {
+      "action": "revoke_github_deploy_key",
+      "created_at": 1788774309,
+      "deploy_key_id": 162525303,
+      "effect_attempts": 1,
+      "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+      "effect_claim_id": "claim-1-93d7cd1a71d8a1b717206989f0865e1b",
+      "effect_claim_version": 1,
+      "effect_start_id": "start-1-51b4caf34d75e7e3694f9a68ccd84a97",
+      "expires_at": 1788775209,
+      "final_result_classification": "VERIFIED_ABSENT",
+      "github_owner": "Ticoworld",
+      "github_repo": "t3n-breakglass-sandbox",
+      "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+      "max_effects": 1,
+      "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+      "reservation_id": "reservation-C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3-1",
+      "reservation_version": 1,
+      "status": "CLOSED"
+    },
+    "effect_attempts": 1,
+    "function": "get-incident",
+    "incident_id": "C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3",
+    "note": "incident authority read through the C1 contract",
+    "provider_http": {
+      "attempted": false,
+      "count": 0
+    },
+    "result": "FOUND",
+    "state": "CLOSED"
+  },
+  "terminal_projection_before": {
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 162525303,
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "effect_attempts": 1,
+    "reservation_id": "reservation-C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3-1",
+    "reservation_version": 1,
+    "effect_claim_id": "claim-1-93d7cd1a71d8a1b717206989f0865e1b",
+    "effect_claim_version": 1,
+    "effect_start_id": "start-1-51b4caf34d75e7e3694f9a68ccd84a97",
+    "final_result_classification": "VERIFIED_ABSENT",
+    "state": "CLOSED"
+  },
+  "terminal_projection_after": {
+    "action": "revoke_github_deploy_key",
+    "github_owner": "Ticoworld",
+    "github_repo": "t3n-breakglass-sandbox",
+    "deploy_key_id": 162525303,
+    "remediation_agent_did": "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019",
+    "effect_broker_did": "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57",
+    "effect_attempts": 1,
+    "reservation_id": "reservation-C2-c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86-a342e0161cb466d736e34bb3-1",
+    "reservation_version": 1,
+    "effect_claim_id": "claim-1-93d7cd1a71d8a1b717206989f0865e1b",
+    "effect_claim_version": 1,
+    "effect_start_id": "start-1-51b4caf34d75e7e3694f9a68ccd84a97",
+    "final_result_classification": "VERIFIED_ABSENT",
+    "state": "CLOSED"
+  },
+  "terminal_unchanged": true,
+  "t3n_contract_calls": 4,
+  "github_webhook_redelivery_posts": 0,
+  "sensitive_value_hygiene": {
+    "broker_result_sanitized": true,
+    "credentials_in_evidence": false,
+    "github_calls": 0,
+    "raw_webhook_body": false,
+    "webhook_secret": false,
+    "provider_token": false
+  },
+  "tests": {
+    "closed_replay_adjudication": "PASS",
+    "terminal_before": "PASS",
+    "terminal_after_unchanged": "PASS",
+    "provider_boundary": "PASS",
+    "normal_race_denied_strictness": "PASS"
+  },
+  "claims_earned": [
+    "an independently read CLOSED/VERIFIED_ABSENT incident rejected remediation replay",
+    "the elapsed CLOSED claim denial was distinguished from normal race ownership loss",
+    "the replay broker minted zero provider credentials and performed zero provider mutation",
+    "terminal authority remained unchanged"
+  ],
+  "claims_forbidden": [
+    "R2 PASS",
+    "R2B-R2 PASS",
+    "another GitHub redelivery",
+    "new causal event or authority",
+    "GitHub exactly-once",
+    "T3N/GitHub atomicity",
+    "submission readiness"
+  ]
+}
