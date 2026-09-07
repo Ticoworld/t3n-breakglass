@@ -1,0 +1,77 @@
+{
+  "classification": "C2_E2E_R2B_R2_FAIL_CLOSED_REPLAY_BROKER_ADJUDICATION_INDETERMINATE",
+  "r2b_r2_live_start_sha": "5c1c824516047d6092c728dba7451660c0c2ece4",
+  "historical_r2b_r1": {
+    "classification": "C2_E2E_R2B_R1_REDELIVERY_REQUEST_FAILED_HTTP_404",
+    "redelivery_post_http_status": 404,
+    "downstream_replay_attempted": false
+  },
+  "delivery_id_rounding_root_cause": {
+    "exact_original_delivery_id": "3841363528254496768",
+    "prior_displayed_id": "3841363528254497000",
+    "exact_detail_get_http_status": 200,
+    "prior_rounded_get_http_status": 404,
+    "confirmed": true
+  },
+  "redelivery": {
+    "post_http_status": 202,
+    "redelivery_delivery_id": "3841393205291515904",
+    "guid": "c1278f3a-aaa0-11f1-9f5f-1f10261aa34b",
+    "same_guid_observed": true,
+    "history_status": "OK",
+    "history_status_code": 202
+  },
+  "c2_receipt_replay": {
+    "durable_receipt_state": "ACCEPTED",
+    "decision": "C2_PUSH_SELECTED",
+    "receipt_sha256_before": "9a5f4c7913e42bf440840a7b7a615663f361f18a830c15c0e5eea7d97abce80e",
+    "receipt_sha256_after": "9a5f4c7913e42bf440840a7b7a615663f361f18a830c15c0e5eea7d97abce80e",
+    "receipt_unchanged": true,
+    "source_event_digest": "e542fbd83a0ed290440e626eba03abf03b29ea5567ee2c30c8fc6b8d369ba6c7",
+    "same_authenticated_digest_observed": true,
+    "classification": "C2_PUSH_SELECTED",
+    "dedupe_status": "DUPLICATE_SAME",
+    "replayed": true,
+    "receipt_replay": true,
+    "authority_rederived": false,
+    "source_reads": 0,
+    "active_policy_candidates": 0,
+    "poison_observation_accesses": 0
+  },
+  "closed_replay_failure": {
+    "failure_stage": "production broker adjudication",
+    "runner_failure": "closed replay broker adjudication was not a safe non-owner result",
+    "normalized_state": "INVALID_INDETERMINATE",
+    "raw_broker_result": "NOT_PERSISTED_FROM_LIVE_PROCESS",
+    "terminal_before_process_snapshot": "NOT_PERSISTED_FROM_LIVE_PROCESS",
+    "provider_boundary_counters_checked_before_failure": {
+      "token_minted": false,
+      "provider_credential_mint_count": 0,
+      "destructive_call_count": 0,
+      "delete_attempted": false,
+      "provider_calls_after_ownership_loss": 0
+    },
+    "provider_authority_or_mutation_observed": false,
+    "historical_r2b_r2_promoted_to_pass": false
+  },
+  "current_read_only_terminal_readback": {
+    "state": "CLOSED",
+    "effect_attempts": 1,
+    "final_result_classification": "VERIFIED_ABSENT",
+    "deploy_key_id": 162525303
+  },
+  "claims": {
+    "earned": [
+      "lossless delivery-ID repair proved the exact original ID and confirmed the prior rounded-ID diagnosis",
+      "one real GitHub redelivery was accepted and the historical C2 durable receipt replay passed",
+      "the C2 replay performed zero source reads and zero authority rederivation"
+    ],
+    "forbidden": [
+      "R2B-R2 full PASS",
+      "new remediation",
+      "new provider authority or mutation",
+      "GitHub exactly-once",
+      "submission readiness"
+    ]
+  }
+}

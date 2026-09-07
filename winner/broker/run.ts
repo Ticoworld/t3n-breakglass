@@ -109,7 +109,12 @@ async function main() {
     const claimRaw = await invokeC1(broker.apiKey, broker.nodeUrl, contractId, "claim-effect", { incident_id: incidentId, expected_claim_version: expectedClaimVersion, contender_nonce: contenderNonce });
     evidence.claim = claimRaw;
     const parsed = parseClaimProposal(claimRaw);
-    if (!parsed.proposed) { const response = responseObject(claimRaw); evidence.claim_outcome = response.result === "LOST" ? "CLAIM_LOST" : "CLAIM_NOT_PROPOSED"; await persist(); return; }
+    if (!parsed.proposed) {
+      const response = responseObject(claimRaw);
+      evidence.claim_outcome = response.result === "LOST" ? "CLAIM_LOST" : response.result === "DENIED" ? "CLAIM_DENIED" : "CLAIM_NOT_PROPOSED";
+      await persist();
+      return;
+    }
     proposal = parsed.claim;
     evidence.claim_outcome = "CLAIM_PROPOSED";
     evidence.claim_proposal = { claim_id: proposal!.claim_id, claim_version: proposal!.claim_version };
