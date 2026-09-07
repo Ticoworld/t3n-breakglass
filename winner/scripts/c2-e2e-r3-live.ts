@@ -25,6 +25,7 @@ import { freezeLiveExecutionCheckpoint } from "../c2/execution-checkpoint.js";
 import { parseGithubDeliveryList, selectOriginalDelivery } from "../c2/github-delivery-json.js";
 import { evaluateGithubAppWebhookReadiness } from "../c2/github-app-webhook-readiness.js";
 import { R3_E2E_SCHEMA } from "../c2/e2e-schema.js";
+import { assertLocalMatchesRemote, remoteBranchHead } from "../c2/git-remote-branch.js";
 import { writeAtomicJson } from "./result-file.js";
 
 const execFileAsync = promisify(execFile);
@@ -57,6 +58,7 @@ const CONTRACT = { name: CONTRACT_ID, version: "2.0.4", numeric_id: 878, wasm_by
 const POLICY_FILE = "winner/evidence/C2-E2E-R3-LIVE-POLICY.json";
 const MARKER_FILE = "winner/evidence/C2-E2E-R3-POLICY-FROZEN-AND-REMOTE-CONFIRMED.json";
 const FINAL_FILE = "winner/evidence/C2-E2E-R3-FULL-CAUSAL-REMEDIATION.json";
+const OFFLINE_VERIFIER_FILE = "winner/evidence/C2-E2E-R3-OFFLINE-VERIFIER.json";
 const RETIREMENT_FILE = "winner/evidence/C2-E2E-R3-POLICY-RETIREMENT.json";
 const HISTORICAL_B1_POLICY_FILE = "winner/evidence/C2-B1-LIVE-POLICY.json";
 const HISTORICAL_B1_RETIREMENT_FILE = "winner/evidence/C2-B1-R1-HISTORICAL-POLICY-RETIREMENT.json";
@@ -153,6 +155,10 @@ async function runGit(args: string[], cwd = root): Promise<string> {
 async function implementationManifest(commit: string): Promise<{ commit: string; paths: string[]; sha256: string }> {
   const listing = await runGit(["ls-tree", "-r", "--format=%(objectname) %(path)", commit, "--", ...IMPLEMENTATION_PATHS]);
   return { commit, paths: listing ? listing.split(/\r?\n/).filter(Boolean) : [], sha256: sha256(Buffer.from(listing, "utf8")) };
+}
+
+async function remoteCodeBranchHead(): Promise<string> {
+  return remoteBranchHead(root, "origin", CODE_BRANCH);
 }
 
 async function assertImplementationUnchanged(startingCommit: string, frozenManifest: { sha256: string }): Promise<void> {
@@ -369,9 +375,9 @@ async function deliveryHistory(deliveryId: string): Promise<JsonObject> {
 }
 
 async function commitAndPush(files: string[], message: string): Promise<string> {
-  const expectedRemoteHead = await runGit(["rev-parse", "HEAD"]);
-  await runGit(["fetch", "origin", `refs/heads/${CODE_BRANCH}`]);
-  requireCondition(await runGit(["rev-parse", "origin/${CODE_BRANCH}"]) === expectedRemoteHead, "winner branch moved before the controlled commit");
+  const localBefore = await runGit(["rev-parse", "HEAD"]);
+  const remoteBefore = await remoteCodeBranchHead();
+  assertLocalMatchesRemote(localBefore, remoteBefore);
   const relative = files.map((file) => file.replaceAll("\\", "/")).sort();
   const status = (await runGit(["status", "--short", "--untracked-files=all"])).split(/\r?\n/).filter(Boolean).map((line) => line.slice(3)).sort();
   requireCondition(JSON.stringify(status) === JSON.stringify(relative), `unexpected working tree before commit: ${status.join(",")}`);
@@ -379,10 +385,12 @@ async function commitAndPush(files: string[], message: string): Promise<string> 
   const staged = (await runGit(["diff", "--cached", "--name-only"])).split(/\r?\n/).filter(Boolean).sort();
   requireCondition(JSON.stringify(staged) === JSON.stringify(relative), "commit would include unexpected paths");
   await runGit(["commit", "--no-verify", "-m", message]);
-  const sha = await runGit(["rev-parse", "HEAD"]);
-  await runGit(["push", "origin", CODE_BRANCH]);
-  requireCondition(await runGit(["rev-parse", "HEAD"]) === sha, "HEAD changed unexpectedly after push");
-  return sha;
+  const newSha = await runGit(["rev-parse", "HEAD"]);
+  await runGit(["push", "origin", `HEAD:refs/heads/${CODE_BRANCH}`]);
+  const remoteAfter = await remoteCodeBranchHead();
+  assertLocalMatchesRemote(newSha, remoteAfter);
+  requireCondition(await runGit(["rev-parse", "HEAD"]) === newSha, "HEAD changed unexpectedly after push");
+  return newSha;
 }
 
 async function generateKeyAndStage(): Promise<{ title: string; publicKey: string; fingerprint: string; privateDigest: string; blobSha: string }> {
@@ -596,7 +604,7 @@ async function main(): Promise<void> {
   const frozenImplementationManifest = await implementationManifest(executionHead);
   const registration = await readJson<JsonObject>("winner/evidence/contract-registration.json");
   requireCondition(registration.contract?.version === CONTRACT.version && registration.contract?.contract_id === CONTRACT.numeric_id && registration.contract?.wasm_bytes === CONTRACT.wasm_bytes && registration.contract?.wasm_sha256 === CONTRACT.wasm_sha256, "C1 artifact identity changed");
-  for (const file of [POLICY_FILE, MARKER_FILE, FINAL_FILE, RETIREMENT_FILE]) { try { await access(path.join(root, file)); throw new Error(`${file} already exists; refusing a second E2E run`); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; } }
+  for (const file of [POLICY_FILE, MARKER_FILE, FINAL_FILE, OFFLINE_VERIFIER_FILE, RETIREMENT_FILE]) { try { await access(path.join(root, file)); throw new Error(`${file} already exists; refusing a second E2E run`); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; } }
 
   progress("start-receiver-and-verify-ingress");
   tempRunDirectory = await mkdtemp(path.join(os.tmpdir(), "t3n-c2-e2e-r3-run-"));
@@ -794,11 +802,35 @@ async function main(): Promise<void> {
     { historical_policy_id: r1Retirement.policy_id, historical_deploy_key_id: r1Retirement.deploy_key_id, retired: true, cleanup_proven: r1Retirement.cleanup_proven },
     { historical_policy_id: r2Retirement.policy_id, historical_deploy_key_id: r2Retirement.deploy_key_id, retired: true, cleanup_proven: r2Retirement.cleanup_proven ?? true },
   ];
+  bundle.previous_pretrigger_abort = {
+    implementation_sha: "5c3654ccf5974636a15017034cbd348cca541d32",
+    temporary_fixture_disposed: true,
+    temporary_key_generations: 1,
+    temporary_deploy_key_creates: 1,
+    temporary_deploy_key_cleanup_deletes: 1,
+    cleanup_delete_http_204: 1,
+    cleanup_absence_http_404: 1,
+    policy_freeze_commits: 0,
+    causal_pushes: 0,
+    webhook_events_processed: 0,
+    t3n_incident_creates: 0,
+    provider_remediation_effects: 0,
+    classification: "C2_E2E_R3_FAIL_PRE_TRIGGER_RUNNER_COMMIT_GUARD",
+  };
   target.pre_trigger_target_readback = { ...preTriggerTarget, token_lifecycle: { ...targetVerifierCapability.metadata, lifecycle: targetVerifierCleanup } };
   const offline = verifyE2EBundle(bundle, verificationContext satisfies E2EVerificationContext); requireCondition(offline.ok, `offline E2E verifier failed: ${offline.errors.join(", ")}`); bundle.tests.offline_e2e_verifier = "PASS";
+  await writeJson(OFFLINE_VERIFIER_FILE, {
+    artifact: "C2-E2E-R3-OFFLINE-VERIFIER",
+    classification: "C2_E2E_R3_OFFLINE_VERIFIER_PASS",
+    execution_context: verificationContext,
+    valid: offline.ok,
+    errors: offline.errors,
+    network_calls: 0,
+    checks: offline.checks,
+  });
   progress("write-final-evidence");
   await writeJson(FINAL_FILE, bundle);
-  const finalSha = await commitAndPush([FINAL_FILE], "c2: prove full causal GitHub-to-T3N remediation");
+  const finalSha = await commitAndPush([FINAL_FILE, OFFLINE_VERIFIER_FILE], "c2: prove full causal GitHub-to-T3N remediation");
   if (receiver) { await receiver.close(); const rawToClear = receiver.getRaw(); rawToClear?.fill(0); receiver = null; }
   console.log(JSON.stringify({ classification: bundle.classification, final_sha: finalSha, policy_freeze_sha: policyFreezeSha, incident_id: derivedRequest.incident_id, deploy_key_id: target.id, delivery_id: event.delivery_id, secret_commit_sha: trigger.sha, delete_count: winner.destructive_call_count, final_state: closed.state, final_result_classification: "VERIFIED_ABSENT", evidence: FINAL_FILE }, null, 2));
 }
