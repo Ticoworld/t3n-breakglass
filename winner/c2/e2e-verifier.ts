@@ -21,7 +21,8 @@ const REF = "refs/heads/c2-breakglass-demo";
 const SECRET_PATH = ".breakglass-c2/exposed-deploy-key";
 const REMEDIATION_DID = "did:t3n:c2cb33e0cb6838dafef6519e5d44a20b56069019";
 const BROKER_DID = "did:t3n:71612737505d7fbbd39e03b4d7a89e31d6346a57";
-const HISTORICAL_POLICY = "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89";
+const HISTORICAL_B1_POLICY = "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89";
+const HISTORICAL_R1_POLICY = "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -74,6 +75,9 @@ export function verifyE2EBundle(source: string | Record<string, unknown>, contex
   const policy = object(bundle.policy);
   const authority = object(policy.authority_fields);
   const retired = object(bundle.historical_policy_retirement);
+  const retiredList = Array.isArray(bundle.historical_policy_retirements)
+    ? bundle.historical_policy_retirements.map((entry: unknown) => object(entry))
+    : [];
   const delivery = object(bundle.real_delivery);
   const trigger = object(bundle.secret_trigger_commit);
   const before = object(bundle.immutable_before);
@@ -106,19 +110,24 @@ export function verifyE2EBundle(source: string | Record<string, unknown>, contex
   const c1Replay = object(bundle.c1_replay);
   const counters = object(bundle.mutation_counters);
 
-  check("classification", bundle.classification === "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS");
+  const isR1 = bundle.classification === "C2_E2E_R1_FULL_CAUSAL_REMEDIATION_PASS";
+  const isR2 = bundle.classification === "C2_E2E_R2_FULL_CAUSAL_REMEDIATION_PASS";
+  check("classification", isR1 || isR2);
   check("starting_sha", bundle.starting_sha === context.expectedStartingSha);
   check("main_sha", bundle.main_sha === context.expectedMainSha);
   check("sandbox_before_sha", bundle.sandbox_before_sha === context.expectedBeforeSha);
-  check("target_fresh", Number.isSafeInteger(target.id) && target.id > 0 && typeof target.title === "string" && target.title.startsWith("breakglass-c2-b1-e2e-r1-"));
+  check("target_fresh", Number.isSafeInteger(target.id) && target.id > 0 && typeof target.title === "string" && /^(?:breakglass-c2-b1-e2e-r1-|breakglass-c2-b1-e2e-r2-)/.test(target.title));
   check("target_exact", target.repository === REPOSITORY && target.read_only === true && target.provider_readback_exact === true);
   check("private_public_target_relation", target.private_public_relation_proven === true && target.generated_public_key_fingerprint === target.provider_public_key_fingerprint && target.provider_public_key_fingerprint === authority.expected_public_key_fingerprint);
   check("target_setup_once", targetSetup.create_http_status === 201 && targetSetup.exact_get_http_status === 200 && targetSetup.list_contains_target === true && targetSetup.revoke_http_status === 204 && targetSetup.refusal_http_status >= 401 && targetSetup.refusal_http_status <= 403);
   check("private_digest_binding", /^[0-9a-f]{64}$/.test(String(bundle.private_material_sha256 ?? "")) && authority.expected_private_material_sha256 === bundle.private_material_sha256);
-  check("policy_identity", typeof policy.registry_identity === "string" && policy.registry_identity.startsWith("c2-policy:github-push-c2-e2e-r1-") && policy.policy_version === 2 && authority.policy_id === policy.registry_identity);
+  check("policy_identity", typeof policy.registry_identity === "string" && /^(?:c2-policy:github-push-c2-e2e-r1-|c2-policy:github-push-c2-e2e-r2-)/.test(policy.registry_identity) && policy.policy_version === 2 && authority.policy_id === policy.registry_identity);
   check("policy_exact_binding", authority.repository_id === REPOSITORY_ID && authority.repository_full_name === REPOSITORY && authority.ref === REF && authority.secret_path === SECRET_PATH && authority.deploy_key_id === target.id && authority.expected_deploy_key_title === target.title && authority.expected_read_only === true && authority.ttl_secs === 900 && authority.enabled === true);
   check("policy_live_remote", authority.provenance?.classification === "LIVE_PROVENANCE" && policy.remote_readback?.success === true && typeof policy.content_sha256 === "string");
-  check("historical_policy_retired", retired.historical_policy_id === HISTORICAL_POLICY && retired.retired === true && retired.cleanup_proven === true);
+  const b1Retired = retired.historical_policy_id === HISTORICAL_B1_POLICY && retired.retired === true && retired.cleanup_proven === true;
+  const r1Retired = retiredList.some((entry: JsonObject) => entry.historical_policy_id === HISTORICAL_R1_POLICY && entry.retired === true && entry.cleanup_proven === true);
+  const listedB1Retired = retiredList.some((entry: JsonObject) => entry.historical_policy_id === HISTORICAL_B1_POLICY && entry.retired === true && entry.cleanup_proven === true);
+  check("historical_policy_retired", b1Retired && (!isR2 || (listedB1Retired && r1Retired)));
   check("policy_before_event", object(bundle.policy_before_event).remote_policy_readback_before_trigger === true && object(bundle.policy_before_event).marker_persisted_before_trigger === true && object(bundle.policy_before_event).trigger_issued_after_marker === true);
   check("real_delivery", delivery.event_type === "push" && delivery.repository_id === REPOSITORY_ID && delivery.repository_full_name === REPOSITORY && delivery.ref === REF && delivery.created === false && delivery.forced === false && delivery.deleted === false && delivery.signature_verified === true && delivery.hmac_verified === true && typeof delivery.delivery_id === "string" && delivery.dedupe_status === "NEW");
   check("trigger_exact", trigger.parent_sha === context.expectedBeforeSha && trigger.only_changed_path === SECRET_PATH && trigger.fast_forward === true && delivery.before === context.expectedBeforeSha && delivery.after === trigger.sha && /^[0-9a-f]{40}$/i.test(String(trigger.sha ?? "")));
