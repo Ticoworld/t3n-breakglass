@@ -15,6 +15,11 @@ const EXPECTED_TARGET_ID = 162525303;
 const EXPECTED_FINAL_CLASSIFICATION = "VERIFIED_ABSENT";
 const EXPECTED_EXPIRY_NOTE = "incident expired according to cluster time";
 
+export interface ClosedReplayAdjudicationOptions {
+  expectedDeployKeyId?: number;
+  expectedExpiryNote?: string;
+}
+
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
 }
@@ -29,13 +34,13 @@ function effective(snapshot: unknown, field: string): unknown {
   return response[field] ?? detail[field];
 }
 
-function exactClosedTerminal(snapshot: unknown): { valid: boolean; reason: string } {
+function exactClosedTerminal(snapshot: unknown, expectedDeployKeyId: number): { valid: boolean; reason: string } {
   const response = object(snapshot);
   if (response.result !== "FOUND") return { valid: false, reason: "terminal-before did not return FOUND" };
   if (effective(response, "state") !== "CLOSED") return { valid: false, reason: "terminal-before was not CLOSED" };
   if (effective(response, "effect_attempts") !== 1) return { valid: false, reason: "terminal-before effect_attempts was not exactly one" };
   if (effective(response, "final_result_classification") !== EXPECTED_FINAL_CLASSIFICATION) return { valid: false, reason: "terminal-before was not VERIFIED_ABSENT" };
-  if (effective(response, "deploy_key_id") !== EXPECTED_TARGET_ID) return { valid: false, reason: "terminal-before target did not match the historical closed target" };
+  if (effective(response, "deploy_key_id") !== expectedDeployKeyId) return { valid: false, reason: "terminal-before target did not match the expected closed target" };
   if (!nonEmptyString(effective(response, "effect_claim_id"))) return { valid: false, reason: "terminal-before has no effect claim identity" };
   if (!nonEmptyString(effective(response, "effect_start_id"))) return { valid: false, reason: "terminal-before has no effect-start identity" };
   return { valid: true, reason: "terminal-before is an independently verified CLOSED/VERIFIED_ABSENT incident" };
@@ -66,8 +71,8 @@ function hasClaimIdentity(value: unknown): boolean {
  * a replay of an already completed incident.  A DENIED result is accepted
  * only for the documented expiry branch and only with zero provider authority.
  */
-export function adjudicateClosedReplayBrokerResult(terminalBefore: unknown, brokerResult: unknown): ClosedReplayAdjudication {
-  const terminal = exactClosedTerminal(terminalBefore);
+export function adjudicateClosedReplayBrokerResult(terminalBefore: unknown, brokerResult: unknown, options: ClosedReplayAdjudicationOptions = {}): ClosedReplayAdjudication {
+  const terminal = exactClosedTerminal(terminalBefore, options.expectedDeployKeyId ?? EXPECTED_TARGET_ID);
   if (!terminal.valid) return { valid: false, state: "INVALID_CLOSED_REPLAY", reason: terminal.reason };
 
   const result = object(brokerResult);
@@ -82,7 +87,7 @@ export function adjudicateClosedReplayBrokerResult(terminalBefore: unknown, brok
     return { valid: false, state: "INVALID_CLOSED_REPLAY", reason: "closed replay has no exact CLOSED claim-effect response" };
   }
   if (claim.result === "DENIED" && result.claim_outcome === "CLAIM_DENIED") {
-    if (claim.note !== EXPECTED_EXPIRY_NOTE) return { valid: false, state: "INVALID_CLOSED_REPLAY", reason: "DENIED replay note was not the documented expiry denial" };
+    if (claim.note !== (options.expectedExpiryNote ?? EXPECTED_EXPIRY_NOTE)) return { valid: false, state: "INVALID_CLOSED_REPLAY", reason: "DENIED replay note was not the documented expiry denial" };
     if (hasClaimIdentity(claim.detail)) return { valid: false, state: "INVALID_CLOSED_REPLAY", reason: "DENIED replay exposed a claim identity" };
     return { valid: true, state: "SAFE_CLOSED_REPLAY_DENIED", reason: EXPECTED_EXPIRY_NOTE };
   }

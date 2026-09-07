@@ -4,6 +4,8 @@ import { verifyE2EBundle, type E2EVerificationContext } from "../c2/e2e-verifier
 import { buildB1Evidence, serializeB1Evidence } from "../c2/b1-evidence.js";
 import { buildB1SourceReaderEvidence } from "../c2/b1-source-reader.js";
 import { verifyB1Evidence } from "../c2/b1-verifier.js";
+import { R3_B1_SCHEMA } from "../c2/b1-verifier.js";
+import { R3_E2E_SCHEMA } from "../c2/e2e-schema.js";
 
 const DEFAULT_CONTEXT: E2EVerificationContext = {
   expectedStartingSha: "f66605e924dd1fff81f1cfa522275aa3ab097bad",
@@ -156,6 +158,35 @@ function syntheticB1Evidence(bundle: Record<string, any>, context: E2EVerificati
   });
 }
 
+function r3Bundle(): Record<string, any> {
+  const bundle = JSON.parse(JSON.stringify(validBundle())) as Record<string, any>;
+  const r3PolicyId = "c2-policy:github-push-c2-e2e-r3-synthetic";
+  const r3Title = "breakglass-c2-e2e-r3-synthetic";
+  bundle.classification = R3_E2E_SCHEMA.classification;
+  bundle.fresh_target.title = r3Title;
+  bundle.policy.registry_identity = r3PolicyId;
+  bundle.policy.authority_fields.policy_id = r3PolicyId;
+  bundle.policy.authority_fields.expected_deploy_key_title = r3Title;
+  bundle.historical_policy_retirements = [
+    { historical_policy_id: "c2-policy:github-push-c2-b1-1788654034105-84ba7889df89", retired: true, cleanup_proven: true },
+    { historical_policy_id: "c2-policy:github-push-c2-e2e-r1-1788700798113-e96754eec44a", retired: true, cleanup_proven: true },
+    { historical_policy_id: "c2-policy:github-push-c2-e2e-r2-1788774247501-aac76008bd86", retired: true, terminal_classification: "VERIFIED_ABSENT" },
+  ];
+  bundle.c2_replay = {
+    classification: "C2_PUSH_SELECTED", dedupe_status: "DUPLICATE_SAME", replayed: true,
+    receipt_replay: true, authority_rederived: false, source_reads: 0, source_observation_accesses: 0,
+    active_policy_candidates: 0, incident_id: incidentId, create_request: bundle.derived_c1_request,
+    receipt_sha256_before: "c".repeat(64), receipt_sha256_after: "c".repeat(64),
+    new_immutable_source_reads: 0, new_t3n_incident_creations: 0, provider_authority_count: 0, provider_mutations: 0,
+  };
+  bundle.c1_replay = {
+    closed_replay_rejected: true, new_effect_token_mints: 0, new_delete_count: 0, provider_calls: 0,
+    terminal_unchanged: true, closed_replay_adjudication: { state: "SAFE_CLOSED_REPLAY_DENIED" }, effect_attempts: 1, target_absent: true,
+  };
+  bundle.successful_policy_retirement = { policy_id: r3PolicyId, deploy_key_id: targetId, retired: true, terminal_classification: "VERIFIED_ABSENT" };
+  return bundle;
+}
+
 test("complete sanitized E2E bundle passes with zero network calls", () => {
   const result = verifyE2EBundle(JSON.parse(JSON.stringify(validBundle())), DEFAULT_CONTEXT);
   assert.equal(result.ok, true, result.errors.join(", "));
@@ -217,4 +248,33 @@ test("E2E verifier rejects causal and hygiene substitutions", () => {
     mutate(bundle);
     assert.equal(verifyE2EBundle(bundle, DEFAULT_CONTEXT).ok, false, `${name} was accepted`);
   }
+});
+
+test("R3 schema uses the shared target/policy namespace and live B1 adapter", () => {
+  const bundle = r3Bundle();
+  const b1 = syntheticB1Evidence(bundle, DEFAULT_CONTEXT);
+  const b1RoundTrip = JSON.parse(serializeB1Evidence(b1).toString("utf8")) as Record<string, unknown>;
+  const b1Result = verifyB1Evidence(b1RoundTrip, DEFAULT_CONTEXT, R3_B1_SCHEMA);
+  assert.deepEqual(b1Result, { valid: true, reasons: [] });
+  bundle.b1_verifier = { valid: true, reasons: [], context: DEFAULT_CONTEXT };
+  bundle.b1_evidence = b1RoundTrip;
+  const result = verifyE2EBundle(JSON.parse(JSON.stringify(bundle)), DEFAULT_CONTEXT);
+  assert.equal(result.ok, true, result.errors.join(", "));
+});
+
+test("R3 full verifier is dynamic across arbitrary future checkpoints", () => {
+  const contextA: E2EVerificationContext = { expectedStartingSha: "1".repeat(40), expectedMainSha: "2".repeat(40), expectedBeforeSha: "3".repeat(40) };
+  const bundle = r3Bundle();
+  bundle.starting_sha = contextA.expectedStartingSha;
+  bundle.main_sha = contextA.expectedMainSha;
+  bundle.sandbox_before_sha = contextA.expectedBeforeSha;
+  bundle.secret_trigger_commit.parent_sha = contextA.expectedBeforeSha;
+  bundle.real_delivery.before = contextA.expectedBeforeSha;
+  bundle.immutable_before.commit_sha = contextA.expectedBeforeSha;
+  bundle.b1_verifier.context = contextA;
+  bundle.b1_evidence = syntheticB1Evidence(bundle, contextA);
+  assert.equal(verifyE2EBundle(bundle, contextA).ok, true);
+  assert.equal(verifyE2EBundle(bundle, { ...contextA, expectedStartingSha: "4".repeat(40) }).ok, false);
+  assert.equal(verifyE2EBundle(bundle, { ...contextA, expectedBeforeSha: "5".repeat(40) }).ok, false);
+  assert.equal(verifyE2EBundle(bundle).ok, false);
 });

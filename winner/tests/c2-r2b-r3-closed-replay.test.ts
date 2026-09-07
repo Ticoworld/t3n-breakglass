@@ -106,6 +106,13 @@ test("terminal-after authority changes are detected", () => {
   assert.equal(closedTerminalAuthorityUnchanged(before, terminal()), true);
 });
 
+test("closed replay can validate a fresh target without weakening the historical default", () => {
+  const freshTarget = 314159265;
+  const snapshot = terminal({ deploy_key_id: freshTarget, detail: { ...(terminal().detail as Record<string, unknown>), deploy_key_id: freshTarget } });
+  assert.equal(adjudicateClosedReplayBrokerResult(snapshot, denied(), { expectedDeployKeyId: freshTarget }).state, "SAFE_CLOSED_REPLAY_DENIED");
+  assert.equal(adjudicateClosedReplayBrokerResult(snapshot, denied()).valid, false);
+});
+
 test("broker production runner labels DENIED distinctly and does not confirm it", async () => {
   const source = await readFile(new URL("../broker/run.ts", import.meta.url), "utf8");
   assert.match(source, /response\.result === "DENIED" \? "CLAIM_DENIED"/);
