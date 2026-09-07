@@ -57,6 +57,14 @@ test("original and redelivery selection preserves exact string IDs", () => {
   assert.equal(selectRedelivery(rows, query, originalId).id, redeliveryId);
 });
 
+test("heterogeneous GitHub history rows do not prevent exact candidate selection", () => {
+  const valid = deliveryJson("3841363528254496768");
+  const unrelated = deliveryJson("3841363528254497002").replace('"installation_id":158227303', '"installation_id":null').replace('"repository_id":1350596128', '"repository_id":null');
+  const rows = parseGithubDeliveryList(`[${valid},${unrelated}]`);
+  const selected = selectOriginalDelivery(rows, { guid: GUID, event: "push", installation_id: INSTALLATION_ID, repository_id: REPOSITORY_ID });
+  assert.equal(selected.id, "3841363528254496768");
+});
+
 test("selection fails closed for duplicate original identities and does not use input order", () => {
   const first = deliveryJson("9007199254740992");
   const second = deliveryJson("9007199254740993");

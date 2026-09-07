@@ -2,8 +2,8 @@ export interface LosslessGithubDelivery {
   id: string;
   guid: string;
   event: string;
-  installation_id: number;
-  repository_id: number;
+  installation_id?: number | null;
+  repository_id?: number | null;
   redelivery: boolean;
   delivered_at?: string | null;
   status?: string | null;
@@ -167,7 +167,8 @@ function validateDelivery(value: Record<string, unknown>): LosslessGithubDeliver
   if (!DECIMAL_ID.test(id) || id === "") throw new LosslessJsonError("delivery id must be an exact decimal string");
   if (!GUID.test(requiredDeliveryString(value.guid, "guid"))) throw new LosslessJsonError("delivery guid is malformed");
   const event = requiredDeliveryString(value.event, "event");
-  if (!safeInteger(value.installation_id) || !safeInteger(value.repository_id)) throw new LosslessJsonError("delivery installation/repository identity is not a safe integer");
+  if (value.installation_id !== undefined && value.installation_id !== null && !safeInteger(value.installation_id)) throw new LosslessJsonError("delivery installation identity is not a safe integer");
+  if (value.repository_id !== undefined && value.repository_id !== null && !safeInteger(value.repository_id)) throw new LosslessJsonError("delivery repository identity is not a safe integer");
   if (typeof value.redelivery !== "boolean") throw new LosslessJsonError("delivery redelivery flag is malformed");
   if (value.status_code !== undefined && value.status_code !== null && !safeInteger(value.status_code)) throw new LosslessJsonError("delivery status_code is malformed");
   if (value.response_code !== undefined && value.response_code !== null && !safeInteger(value.response_code)) throw new LosslessJsonError("delivery response_code is malformed");
