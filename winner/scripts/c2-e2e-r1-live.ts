@@ -223,7 +223,7 @@ async function appReadiness(): Promise<JsonObject> {
 }
 
 async function curlStatus(url: string): Promise<number> {
-  const result = await execFileAsync("curl.exe", ["--silent", "--show-error", "--connect-timeout", "10", "--max-time", "30", "--output", "NUL", "--write-out", "%{http_code}", url], { encoding: "utf8", windowsHide: true });
+  const result = await execFileAsync("curl.exe", ["--silent", "--show-error", "--ssl-no-revoke", "--connect-timeout", "10", "--max-time", "30", "--output", "NUL", "--write-out", "%{http_code}", url], { encoding: "utf8", windowsHide: true });
   const code = Number(String(result.stdout).trim());
   requireCondition(Number.isInteger(code), "curl did not return an HTTP status");
   return code;
