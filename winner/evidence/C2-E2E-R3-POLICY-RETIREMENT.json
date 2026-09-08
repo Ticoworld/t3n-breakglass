@@ -1,0 +1,11 @@
+{
+  "artifact": "C2-E2E-R3-POLICY-RETIREMENT",
+  "policy_id": "c2-policy:github-push-c2-e2e-r3-1788847346189-0473499f318b",
+  "deploy_key_id": 162612327,
+  "terminal_incident_id": "C2-c2-policy:github-push-c2-e2e-r3-1788847346189-0473499f318b-a2b60f888de914eeda4f4ecd",
+  "terminal_classification": "VERIFIED_ABSENT",
+  "retired": true,
+  "retirement_timestamp": "2026-09-08T06:04:53.578Z",
+  "retirement_evidence_identity": "winner/evidence/C2-E2E-R3-FULL-CAUSAL-REMEDIATION.json",
+  "reason": "C2_E2E_R3_COMPLETED_TARGET_REMOVED"
+}
