@@ -26,6 +26,7 @@ import { parseGithubDeliveryList, selectOriginalDelivery } from "../c2/github-de
 import { evaluateGithubAppWebhookReadiness } from "../c2/github-app-webhook-readiness.js";
 import { R3_E2E_SCHEMA } from "../c2/e2e-schema.js";
 import { assertLocalMatchesRemote, remoteBranchHead } from "../c2/git-remote-branch.js";
+import { requirePublicRoute404 } from "../c2/public-route.js";
 import { writeAtomicJson } from "./result-file.js";
 
 const execFileAsync = promisify(execFile);
@@ -254,13 +255,6 @@ async function appReadiness(): Promise<JsonObject> {
   return { app: safeResponse(app), installation: safeResponse(installation), hook: { http_status: hook.status, configured: true, readiness: readiness.classification, url_origin: EXPECTED_PUBLIC_URL, route: WEBHOOK_ROUTE, content_type: hookBody.content_type ?? null, insecure_ssl: hookBody.insecure_ssl ?? null, secret_persisted: false }, app_permissions: appPermissions, installation_permissions: installationPermissions, events, repository_selection: installationBody.repository_selection };
 }
 
-async function curlStatus(url: string): Promise<number> {
-  const result = await execFileAsync("curl.exe", ["--silent", "--show-error", "--ssl-no-revoke", "--connect-timeout", "10", "--max-time", "30", "--output", "NUL", "--write-out", "%{http_code}", url], { encoding: "utf8", windowsHide: true });
-  const code = Number(String(result.stdout).trim());
-  requireCondition(Number.isInteger(code), "curl did not return an HTTP status");
-  return code;
-}
-
 async function ingressReachability(): Promise<JsonObject> {
   const local = await fetch(`http://127.0.0.1:8787${WEBHOOK_ROUTE}`, { method: "GET", signal: AbortSignal.timeout(15_000) });
   const tunnels = await fetch("http://127.0.0.1:4040/api/tunnels", { signal: AbortSignal.timeout(15_000) });
@@ -268,9 +262,8 @@ async function ingressReachability(): Promise<JsonObject> {
   const body = object(await tunnels.json());
   const tunnel = Array.isArray(body.tunnels) ? body.tunnels.find((row) => object(row).public_url === EXPECTED_PUBLIC_URL) : null;
   requireCondition(tunnel && String(object(tunnel.config).addr ?? "").includes("8787"), "frozen ngrok endpoint is not forwarding to port 8787");
-  const publicStatus = await curlStatus(`${EXPECTED_PUBLIC_URL}${WEBHOOK_ROUTE}`);
-  requireCondition(publicStatus === 404, `public receiver reachability returned HTTP ${publicStatus}`);
-  return { local_http_status: local.status, public_http_status: publicStatus, ngrok_api_http_status: 200, public_url_origin: EXPECTED_PUBLIC_URL, route: WEBHOOK_ROUTE, tunnel_addr: object(tunnel.config).addr };
+  const publicStatus = await requirePublicRoute404(`${EXPECTED_PUBLIC_URL}${WEBHOOK_ROUTE}`);
+  return { local_http_status: local.status, public_http_status: publicStatus, public_probe: "node_fetch", ngrok_api_http_status: 200, public_url_origin: EXPECTED_PUBLIC_URL, route: WEBHOOK_ROUTE, tunnel_addr: object(tunnel.config).addr };
 }
 
 async function listenerPid(): Promise<number | null> {
