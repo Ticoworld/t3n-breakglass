@@ -10,6 +10,7 @@ const REPOSITORY_ROOT = path.resolve(import.meta.dirname, "../..");
 export type GithubResponse = { status: number; body: unknown; responseHeaders: Record<string, string> };
 export type InstallationTokenPermission = "read" | "write";
 export type InstallationTokenPurpose = "target-preflight" | "effect" | "verifier";
+export type InstallationContentsPermission = "read";
 
 function b64url(value: string | Uint8Array): string {
   return Buffer.from(value).toString("base64url");
@@ -80,13 +81,22 @@ export async function validateInstallation(config: AppConfig, jwt: string): Prom
   return request("GET", `/app/installations/${config.installationId}`, jwt);
 }
 
-export async function mintInstallationToken(config: AppConfig, jwt: string, permission: InstallationTokenPermission = "write", purpose: InstallationTokenPurpose = "effect"): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
-  const response = await request("POST", `/app/installations/${config.installationId}/access_tokens`, jwt, { repositories: [config.repository], permissions: { administration: permission } });
+async function mintInstallationTokenWithPermissions(
+  config: AppConfig,
+  jwt: string,
+  permissions: Record<string, string>,
+  purpose: string,
+): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  const response = await request("POST", `/app/installations/${config.installationId}/access_tokens`, jwt, { repositories: [config.repository], permissions });
   if (response.status < 200 || response.status >= 300 || !response.body || typeof response.body !== "object") return { response, token: null, metadata: {} };
   const body = response.body as Record<string, unknown>;
   const token = typeof body.token === "string" ? body.token : null;
   const repositories = Array.isArray(body.repositories) ? body.repositories.filter((repo) => repo && typeof repo === "object").map((repo) => ({ name: (repo as Record<string, unknown>).name, full_name: (repo as Record<string, unknown>).full_name, private: (repo as Record<string, unknown>).private })) : [];
-  return { response, token, metadata: { purpose, requested_permissions: { administration: permission }, expires_at: body.expires_at ?? null, repository_selection: body.repository_selection ?? null, permissions: body.permissions ?? null, repositories } };
+  return { response, token, metadata: { purpose, requested_permissions: permissions, expires_at: body.expires_at ?? null, repository_selection: body.repository_selection ?? null, permissions: body.permissions ?? null, repositories } };
+}
+
+export async function mintInstallationToken(config: AppConfig, jwt: string, permission: InstallationTokenPermission = "write", purpose: InstallationTokenPurpose = "effect"): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  return mintInstallationTokenWithPermissions(config, jwt, { administration: permission }, purpose);
 }
 
 /** The target preflight and independent reconciliation paths can only mint read authority. */
@@ -99,12 +109,22 @@ export async function mintEffectInstallationToken(config: AppConfig, jwt: string
   return mintInstallationToken(config, jwt, "write", "effect");
 }
 
+/** The immutable source reader receives no administration permission. */
+export async function mintContentsReadInstallationToken(config: AppConfig, jwt: string, purpose = "source-reader"): Promise<{ response: GithubResponse; token: string | null; metadata: Record<string, unknown> }> {
+  return mintInstallationTokenWithPermissions(config, jwt, { contents: "read" }, purpose);
+}
+
 export async function listInstallationRepositories(token: string): Promise<GithubResponse> { return request("GET", "/installation/repositories?per_page=100", token); }
 export async function exactKey(token: string, owner: string, repository: string, keyId: number): Promise<GithubResponse> { return request("GET", `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/keys/${keyId}`, token); }
 export async function listKeys(token: string, owner: string, repository: string): Promise<GithubResponse> { return request("GET", `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/keys?per_page=100`, token); }
 export async function deleteKey(token: string, owner: string, repository: string, keyId: number): Promise<GithubResponse> { return request("DELETE", `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/keys/${keyId}`, token); }
 export async function revokeInstallationToken(token: string): Promise<GithubResponse> { return request("DELETE", "/installation/token", token); }
 export async function repositoryRead(token: string, owner: string, repository: string): Promise<GithubResponse> { return request("GET", `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}`, token); }
+
+export async function repositoryContentAtRef(token: string, owner: string, repository: string, filePath: string, ref: string): Promise<GithubResponse> {
+  const encodedPath = filePath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  return request("GET", `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/contents/${encodedPath}?ref=${encodeURIComponent(ref)}`, token);
+}
 
 export async function createDisposableDeployKey(token: string, config: AppConfig): Promise<{ id: number; title: string; readOnly: boolean; repository: string; cleanup: () => Promise<void> }> {
   const directory = await mkdtemp(path.join(os.tmpdir(), "breakglass-c1-ssh-"));

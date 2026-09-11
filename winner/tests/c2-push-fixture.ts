@@ -7,9 +7,12 @@ import {
   C2_PUSH_REPOSITORY_ID,
 } from "../c2/push-source.js";
 import { buildC2PushPolicyV2, type C2PushPolicyV2 } from "../c2/push-policy.js";
+import { C2_ACTION } from "../c2/types.js";
 import type { ImmutablePathObservation } from "../c2/push-transition.js";
 
 export const PUSH_TEST_SECRET = "c2-push-local-fixture-secret";
+export const PUSH_STATE_INTEGRITY_KEY = "c2-push-local-state-integrity-key-012345678901234567890123456789";
+if (!process.env.BREAKGLASS_STATE_INTEGRITY_KEY) process.env.BREAKGLASS_STATE_INTEGRITY_KEY = PUSH_STATE_INTEGRITY_KEY;
 export const PUSH_DELIVERY_ID = "22222222-2222-4222-8222-222222222222";
 export const PUSH_BEFORE_SHA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 export const PUSH_AFTER_SHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -67,6 +70,7 @@ export function fixturePolicy(overrides: Partial<C2PushPolicyV2> = {}): C2PushPo
     policy_id: "c2-push-local-policy",
     policy_version: 2,
     deploy_key_id: 987654321,
+    action: C2_ACTION,
     expected_deploy_key_title: "c2-push-local-target",
     expected_read_only: true,
     expected_public_key_fingerprint: "SHA256/c2LocalFixtureFingerprint",

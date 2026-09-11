@@ -102,6 +102,9 @@ export interface C1CreateRequest {
 export type DedupeStatus = "NEW" | "DUPLICATE_SAME" | "CONFLICT";
 
 export interface DedupeRecord {
+  schema_version: 3;
+  key_id: string;
+  mac: string;
   dedupe_key: string;
   source_event_id: string;
   event_identity: {
@@ -112,10 +115,18 @@ export interface DedupeRecord {
   source_event_digest: string;
   normalized_event: NormalizedSourceEvent;
   state: "RESERVED" | "ACCEPTED" | "REJECTED";
+  reservation_id?: string;
+  reserved_at?: string;
+  accepted_at?: string;
   decision?: string;
   reason?: string;
   policy_id?: string;
   policy_version?: number;
+  registry_identity?: string;
+  policy_content_hash?: string;
+  event_binding_identity?: string;
+  action?: string;
+  expected_target_title?: string;
   derived_incident_id?: string;
   create_request?: C1CreateRequest;
   updated_at: string;

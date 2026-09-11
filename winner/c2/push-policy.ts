@@ -1,4 +1,8 @@
 import type { NormalizedPushEvent } from "./types.js";
+import { createHash } from "node:crypto";
+import { canonicalize } from "../runtime/integrity.js";
+import type { IntegrityKeyInput } from "../runtime/integrity.js";
+import type { PushTransitionResult } from "./push-transition.js";
 import {
   C2_PUSH_EVENT_TYPE,
   C2_PUSH_REF,
@@ -36,6 +40,7 @@ export interface C2PushPolicyV2 {
   repository_full_name: typeof C2_PUSH_REPOSITORY;
   ref: typeof C2_PUSH_REF;
   secret_path: typeof C2_PUSH_SECRET_PATH;
+  action: "revoke_github_deploy_key";
   deploy_key_id: number;
   expected_deploy_key_title: string;
   expected_read_only: true;
@@ -58,6 +63,10 @@ export interface PushPolicyValidation {
   reasons: string[];
 }
 
+export function pushPolicyContentHash(policy: C2PushPolicyV2): string {
+  return createHash("sha256").update(canonicalize(policy), "utf8").digest("hex");
+}
+
 export function validateC2PushPolicyV2(
   policy: C2PushPolicyV2,
   options: { requireLiveProvenance?: boolean } = {},
@@ -67,6 +76,7 @@ export function validateC2PushPolicyV2(
   if (policy.source_provider !== "github" || policy.source_event_type !== C2_PUSH_EVENT_TYPE) reasons.push("source is not the frozen GitHub push source");
   if (policy.repository_id !== C2_PUSH_REPOSITORY_ID || policy.repository_full_name !== C2_PUSH_REPOSITORY) reasons.push("repository binding is not exact");
   if (policy.ref !== C2_PUSH_REF || policy.secret_path !== C2_PUSH_SECRET_PATH) reasons.push("ref/path binding is not exact");
+  if (policy.action !== "revoke_github_deploy_key") reasons.push("dangerous action is not the frozen deploy-key revocation");
   if (!Number.isSafeInteger(policy.deploy_key_id) || policy.deploy_key_id <= 0 || !policy.expected_deploy_key_title || policy.expected_read_only !== true) reasons.push("deploy-key target binding is incomplete");
   // OpenSSH's canonical fingerprint rendering uses SHA256:<base64>.  Keep
   // accepting the historical fixture's slash spelling for compatibility, but
@@ -113,6 +123,21 @@ export type PushPolicyLookupResult =
 export interface PushPolicyLookupOptions {
   allowLocalFixture?: boolean;
   retiredPolicyIds?: ReadonlySet<string>;
+  stateIntegrityKey?: IntegrityKeyInput;
+  recoverReserved?: boolean;
+  reservedRecoveryMs?: number;
+  requirePolicyBinding?: boolean;
+  policyMetadata?: (policy: C2PushPolicyV2) => { registryIdentity: string; policyContentHash: string } | undefined;
+  bindVerifiedPolicy?: (input: {
+    policy: C2PushPolicyV2;
+    event: NormalizedPushEvent;
+    transition: PushTransitionResult;
+    incidentId: string;
+    dedupeKey: string;
+    registryIdentity: string;
+    policyContentHash: string;
+    eventBindingIdentity: string;
+  }) => Promise<{ eventBindingIdentity: string }>;
 }
 
 export function lookupPreExistingPushPolicy(

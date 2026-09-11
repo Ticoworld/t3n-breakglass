@@ -129,7 +129,11 @@ test("duplicate policy identity cannot alter a durable replay by input order", a
   assert.equal(first.classification, "C2_PUSH_SELECTED");
   const duplicate = { ...policy, deploy_key_id: 987654322 };
   const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy, duplicate], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+  assert.equal(replay.classification, "C2_PUSH_SELECTED");
+  if (replay.classification === "C2_PUSH_SELECTED") {
+    assert.equal(replay.replayed, true);
+    assert.equal(replay.authority_rederived, false);
+  }
 });
 
 test("duplicate durable replay identity is ambiguous across policy versions", async (t) => {
@@ -140,9 +144,11 @@ test("duplicate durable replay identity is ambiguous across policy versions", as
   assert.equal(first.classification, "C2_PUSH_SELECTED");
   const duplicateVersion = { ...policy, policy_version: policy.policy_version + 1 };
   const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [duplicateVersion, policy], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+  assert.equal(replay.classification, "C2_PUSH_SELECTED");
+  if (replay.classification === "C2_PUSH_SELECTED") assert.equal(replay.replayed, true);
   const reversed = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [policy, duplicateVersion], observations, { allowLocalFixture: true });
-  assert.equal(reversed.classification, "C2_PUSH_POLICY_AMBIGUOUS");
+  assert.equal(reversed.classification, "C2_PUSH_SELECTED");
+  if (reversed.classification === "C2_PUSH_SELECTED") assert.equal(reversed.replayed, true);
 });
 
 test("retired durable accepted receipt replays without policy lookup", async (t) => {
@@ -204,9 +210,7 @@ test("malformed accepted durable receipts fail closed", async (t) => {
   const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
   delete malformed.create_request;
   await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
-  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_REJECTED");
-  assert.match(replay.reason, /no exact C1 create request/);
+  await assert.rejects(() => processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true }), /MAC verification|integrity/);
 });
 
 test("accepted durable receipt without an incident identity fails closed", async (t) => {
@@ -218,9 +222,7 @@ test("accepted durable receipt without an incident identity fails closed", async
   const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
   delete malformed.derived_incident_id;
   await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
-  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_REJECTED");
-  assert.match(replay.reason, /no incident identity/);
+  await assert.rejects(() => processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true }), /MAC verification|integrity/);
 });
 
 test("accepted durable receipt without exact policy identity/version fails closed", async (t) => {
@@ -232,9 +234,7 @@ test("accepted durable receipt without exact policy identity/version fails close
   const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, unknown>;
   delete malformed.policy_id;
   await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
-  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_REJECTED");
-  assert.match(replay.reason, /policy identity\/version/);
+  await assert.rejects(() => processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true }), /MAC verification|integrity/);
 });
 
 test("accepted durable receipt with corrupted source identity fails closed", async (t) => {
@@ -246,9 +246,7 @@ test("accepted durable receipt with corrupted source identity fails closed", asy
   const malformed = JSON.parse(await readFile(recordPath, "utf8")) as Record<string, any>;
   malformed.source_event_id = "corrupted";
   await writeFile(recordPath, `${JSON.stringify(malformed)}\n`, "utf8");
-  const replay = await processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true });
-  assert.equal(replay.classification, "C2_PUSH_REJECTED");
-  assert.match(replay.reason, /source identity is corrupted/);
+  await assert.rejects(() => processPushWebhook(signedPush(), PUSH_TEST_SECRET, dedupeDirectory, [fixturePolicy()], observations, { allowLocalFixture: true }), /MAC verification|integrity/);
 });
 
 test("a rejected durable decision remains rejected and is never re-authorized", async (t) => {
