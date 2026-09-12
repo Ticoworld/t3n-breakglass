@@ -1,9 +1,0 @@
-{
-  "request": {
-    "incident_id": "INC-PHASE2E-LIVE-1788249253449"
-  },
-  "fields": [
-    "incident_id"
-  ],
-  "target_fields_in_request": false
-}

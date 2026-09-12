@@ -3,7 +3,6 @@ target/
 tools/rust-sysroot/
 .env
 .env.*
-!.env.example
 evidence/raw/
 *.secret
 *.token

@@ -283,18 +283,7 @@ The frozen runtime is at commit `d26934f52d5fdf84fd0ec5b0d9176dcf54407b96` on `w
 
 ## Historical proof and legacy tooling
 
-The root also contains earlier Phase2E/bootstrap/agent scripts. They are retained as historical or legacy tooling and are not the maintained winner workflow. In particular, do not use these as the runtime quick start:
-
-```text
-npm run demo
-npm run setup-github
-npm run bootstrap
-npm run incident:create
-npm run agent
-npm run agent:execute
-```
-
-Some legacy/setup commands can create or mutate external resources. They are not required for the maintained W1 runtime and are intentionally not hidden behind the winner command surface.
+Earlier prototype source and review material is intentionally absent from the maintained public command surface. Historical claims that matter to the product are preserved under [`winner/evidence/`](winner/evidence/); use only the maintained commands listed above.
 
 ## Remit / Sluice
 
